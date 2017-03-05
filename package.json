@@ -1,0 +1,25 @@
+{
+  "name": "bands-io",
+  "version": "0.0.1",
+  "description": "A real-time online multiplayer CTF shooter game",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/crkellen/bands.git"
+  },
+  "keywords": [
+    "real-time",
+    "socket.io",
+    "game",
+    "multiplayer"
+  ],
+  "author": "Lutz Kellen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/crkellen/bands/issues"
+  },
+  "homepage": "https://github.com/crkellen/bands#readme"
+}
