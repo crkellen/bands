@@ -2,8 +2,11 @@
   "name": "bands-io",
   "version": "0.0.1",
   "description": "A real-time online multiplayer CTF shooter game",
-  "main": "app.js",
+  "main": "src/app.js",
   "scripts": {
+    "dev": "nodemon src/app.js --exec babel-node",
+    "build": "babel src -d dist",
+    "buildc": "webpack -wd",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -21,5 +24,22 @@
   "bugs": {
     "url": "https://github.com/crkellen/bands/issues"
   },
-  "homepage": "https://github.com/crkellen/bands#readme"
+  "homepage": "https://github.com/crkellen/bands#readme",
+  "dependencies": {
+    "ejs": "^2.5.6",
+    "express": "^4.15.0",
+    "socket-io": "^1.7.3",
+    "socket.io-client": "^1.7.3"
+  },
+  "engines": {
+    "node": "^6.10.x"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.23.0",
+    "babel-loader": "^6.4.1",
+    "babel-preset-es2015": "^6.22.0",
+    "babel-preset-stage-2": "^6.22.0",
+    "nodemon": "^1.11.0",
+    "webpack": "^2.2.1"
+  }
 }
