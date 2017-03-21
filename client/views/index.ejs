@@ -3,7 +3,7 @@
 <%- include('header', {pageTitle: 'bands.io'}) %>
 <body>
   <div id="prompt" class="name-prompt">
-     <input id="player-name" type="text" class="form-control" placeholder="Name" autocomplete="off">
+     <input id="player-name" type="text" class="form-control" placeholder="Enter your Name" autocomplete="off">
      <span class="input-group-btn">
        <input id="play" class="btn btn-primary" type="submit" value="Join the battle">
      </span>
@@ -11,6 +11,7 @@
 
   <div id="arena" class="arena">
     <canvas id="canvas-game">Your browser does not support HTML 5 Canvas Tag</canvas>
+    <canvas id="canvas-ui">Your browser does not support HTML 5 Canvas Tag</canvas>
   </div>
 
   <%- include('footer') %>

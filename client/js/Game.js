@@ -1,24 +1,84 @@
-//const DEBUG = true;
-const INTERVAL = 50;
-//const ROTATION_SPEED = 5;
-const ARENA_MARGIN = 30;
+export var Imgs = {};
+Imgs.player = new Image();
+Imgs.player.src = './../img/player.png';
+Imgs.bullet = new Image();
+Imgs.bullet.src = './../img/bullet.png';
+//Imgs.background = new Image();
+//Imgs.background.src = '/client/img/map1.png';
+Imgs.grid = new Image();
+Imgs.grid.src = './../img/map1.png';
 
 export class Game {
-  constructor(w, h, socket) {
+  constructor(ctx, ctxUI) {
+    this.ctx = ctx;
+    this.ctxUI = ctxUI;
+
+    this.cPlayers = [];
+    this.cBullets = [];
+    this.selfID = null;
+    this.prevScore = 0;
+  } //Game.constructor()
+} //class Game
+
+export class cPlayer {
+  constructor(initPack) {
+    this.ID = initPack.ID;
+    this.x = initPack.x;
+    this.y = initPack.y;
+    this.HP = initPack.HP;
+    this.maxHP = initPack.maxHP;
+    this.score = initPack.score;
+  } //cPlayer.constructor
+
+  drawSelf(cGame) {
+    let x = this.x - cGame.cPlayers[this.ID] + cGame.ctx.canvas.width/2;
+    let y = this.y - cGame.cPlayers[this.ID] + cGame.ctx.canvas.height/2;
+    let HPWidth = 30 * this.HP / this.maxHP;
+
+    cGame.ctx.fillStyle = 'red';
+    cGame.ctx.fillRect(x - HPWidth/2, y - 40, HPWidth, 4);
+
+    let width = Imgs.player.width*2;
+    let height = Imgs.player.height*2;
+
+    cGame.ctx.drawImage(Imgs.player, 0, 0, Imgs.player.width, Imgs.player.height, x - width/2, y - height/2, width, height);
+  } //cPlayer.drawSelf()
+} //class cPlayer
+
+export class cBullet {
+  constructor(initPack) {
+    this.ID = initPack.ID;
+    this.x = initPack.x;
+    this.y = initPack.y;
+  } //cBullet.constructor()
+
+  drawSelf(cGame) {
+    let width = Imgs.bullet.width/2;
+    let height = Imgs.bullet.height/2;
+    let x = this.x - cGame.cPlayers[this.ID] + cGame.ctx.canvas.width/2;
+    let y = this.y - cGame.cPlayers[this.ID] + cGame.ctx.canvas.height/2;
+
+    cGame.ctx.drawImage(Imgs.bullet, 0, 0, Imgs.bullet.width, Imgs.bullet.height, x - width/2, y - height/2, width, height);
+  } //cBullet.drawSelf()
+} //class cBullet
+
+//##############################################################################
+
+/*
+export class Game {
+  constructor(socket, ctx) {
     this.players = []; //Players other than local player
     this.bullets = [];
-    this.width = w;
-    this.height = h;
     this.socket = socket;
+    this.ctx = ctx;
 
-    let g = this;
     setInterval( () => {
-      g.mainLoop();
+      this.mainLoop();
     }, INTERVAL);
   } //Game.constructor()
 
-  addPlayer(ID, isLocal, x, y, HP) {
-    let p = new Player(ID, this, isLocal, x, y, HP);
+  addPlayer(ID, name, isLocal, x, y, HP, img) {
+    let p = new Player(ID, this, name, isLocal, x, y, HP, img);
     if( isLocal === true ) {
       this.localPlayer = p;
     } else {
@@ -43,8 +103,6 @@ export class Game {
   mainLoop() {
     if( this.localPlayer !== undefined ) {
       this.sendData(); //Send local data
-    }
-    if( this.localPlayer !== undefined ) {
       this.localPlayer.move(); //Move local player
     }
   } //Game.mainLoop()
@@ -65,10 +123,15 @@ export class Game {
   } //Game.sendData()
 
   receiveData(serverData) {
+    this.ctx.canvas.width = this.ctx.canvas.clientWidth;
+    this.ctx.canvas.height = this.ctx.canvas.clientHeight;
+    this.ctx.fillStyle = 'black';
+    this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     serverData.players.forEach( (serverPlayer) => {
       //Update local player status
       if( this.localPlayer !== undefined && serverPlayer.ID === this.localPlayer.ID ) {
         this.localPlayer.HP = serverPlayer.HP;
+        this.localPlayer.drawSelf();
         if( this.localPlayer.HP <= 0 ) {
           this.killPlayer(this.localPlayer);
         }
@@ -82,6 +145,7 @@ export class Game {
           clientPlayer.y = serverPlayer.y;
           clientPlayer.gunAngle = serverPlayer.gunAngle;
           clientPlayer.HP = serverPlayer.HP;
+          clientPlayer.drawSelf();
           if( clientPlayer.HP <= 0 ) {
             this.killPlayer(clientPlayer);
           }
@@ -120,13 +184,15 @@ class Bullet {
 } //class Bullet
 
 class Player {
-  constructor(ID, game, isLocal, x, y, HP) {
+  constructor(ID, game, name, isLocal, x, y, HP, img) {
     this.ID = ID;
     this.game = game;
+    this.name = name;
     this.isLocal = isLocal;
     this.x = x;
     this.y = y;
     this.HP = HP;
+    this.img = img;
     this.w = 60;
     this.h = 80;
     this.gunAngle = 0;
@@ -134,15 +200,19 @@ class Player {
     this.dir = [0, 0, 0, 0];
     this.dead = false;
 
-    this.materialize();
+    this.drawSelf();
   } //Player.constructor()
 
-  materialize() {
+  drawSelf() {
     //Draw Player
+    this.game.ctx.fillStyle = 'white';
+    this.game.ctx.font = '30px Arial';
+    this.game.ctx.fillText(this.name, this.x, this.y);
+
     if( this.isLocal === true ) {
       this.setControls();
     }
-  } //Player.materialize()
+  } //Player.drawSelf()
 
   isMoving() {
     if( this.dir[0] != 0 || this.dir[1] != 0 ) {
@@ -244,7 +314,7 @@ class Player {
   } //Player.shoot()
 } //class Player
 
-/*
+
 function debug(msg) {
   if( DEBUG === true ) {
     console.info(msg);
