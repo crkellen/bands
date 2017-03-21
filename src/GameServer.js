@@ -1,7 +1,7 @@
 export class GameServer {
   constructor() {
-    this.players = [];
-    this.bullets = [];
+    this.players = {};
+    this.bullets = {};
     this.initPack = {player: [], bullet: []};
     this.removePack = {player: [], bullet: []};
   } //GameServer constructor()
@@ -84,6 +84,7 @@ export class GameServer {
       player: this.getAllInitPacksForPlayer(),
       bullet: this.getAllInitPacksForPlayer()
     });
+    console.info(`${player.name} has joined the game.`)
   } //GameServer.addPlayer()
 /*
   addBullet(bullet) {
@@ -279,7 +280,7 @@ class Player extends Entity {
       case 'mouseAngle':
         this.mouseAngle = data.state;
         break;
-      default: console.info('ERROR: keyPress event - Invalid input'); break;
+      default: break;
       }
     }); //'keyPress'
   } //Player.onConnect()

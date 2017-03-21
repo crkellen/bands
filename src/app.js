@@ -36,6 +36,7 @@ io.on('connection', (socket) => {
   //#TODO: Usage of Math.random() in place of a database USER ID
   socket.ID = Math.random();
   //Add the connected socket to the list of sockets
+  //CHeck for exists before adding
   SOCKET_LIST[socket.ID] = socket;
   console.info('Player Connection: ' + socket.ID);
 
@@ -43,7 +44,7 @@ io.on('connection', (socket) => {
   socket.on('joinGame', (playerData) => {
     isValidUsername(playerData, (res) => {
       if( res === true ) {
-        ServerGame.addPlayer(socket, playerData.name, getRandomInt(0, 100), getRandomInt(0, 100));
+        ServerGame.addPlayer(socket, playerData.name, getRandomInt(0, 1), getRandomInt(0, 1));
       } else {
         //Username was Invalid
       }

@@ -13,8 +13,8 @@ export class Game {
     this.ctx = ctx;
     this.ctxUI = ctxUI;
 
-    this.cPlayers = [];
-    this.cBullets = [];
+    this.cPlayers = {};
+    this.cBullets = {};
     this.selfID = null;
     this.prevScore = 0;
   } //Game.constructor()
