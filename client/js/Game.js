@@ -3,8 +3,10 @@ Imgs.player = new Image();
 Imgs.player.src = './../img/player.png';
 Imgs.bullet = new Image();
 Imgs.bullet.src = './../img/bullet.png';
+Imgs.gun = new Image();
+Imgs.gun.src = './../img/gun.png';
 //Imgs.background = new Image();
-//Imgs.background.src = '/client/img/map1.png';
+//Imgs.background.src = '/client/img/background.png';
 Imgs.grid = new Image();
 Imgs.grid.src = './../img/map1.png';
 
@@ -27,6 +29,8 @@ export class cPlayer {
     this.x = initPack.x;
     this.y = initPack.y;
     this.HP = initPack.HP;
+    this.mX = initPack.mX;
+    this.mY = initPack.mY;
     this.maxHP = initPack.maxHP;
     this.score = initPack.score;
   } //cPlayer.constructor
@@ -35,13 +39,36 @@ export class cPlayer {
     let x = this.x - cGame.cPlayers[cGame.selfID].x + cGame.ctx.canvas.width/2;
     let y = this.y - cGame.cPlayers[cGame.selfID].y + cGame.ctx.canvas.height/2;
 
+    //Health bar
     let HPWidth = 30 * this.HP / this.maxHP;
     cGame.ctx.fillStyle = 'red';
     cGame.ctx.fillRect(x - HPWidth/2, y + 20, HPWidth, 4);
 
+    //Gun
+    let targetX = this.mX - this.x;
+    let targetY = this.mY - this.y;
+    let rot = Math.atan2(targetY, targetX);
+    console.info(this.mX - this.x);
+
+    cGame.ctx.save();
+    cGame.ctx.translate(x - Imgs.gun.width/2,  y - Imgs.gun.height/2);
+    cGame.ctx.rotate(rot);
+    cGame.ctx.translate(-x - Imgs.gun.width/2,  -y - Imgs.gun.height/2);
+    cGame.ctx.drawImage(Imgs.gun, x - Imgs.gun.width/2, y - Imgs.gun.height/2);
+    cGame.ctx.restore();
+    /*
+    this.rotation = -(Math.atan2(this.x - mouseState.x, this.y - mouseState.y) * 180 / Math.PI);
+    cGame.ctx.save();
+    cGame.ctx.translate(this.x + Imgs.gun.width / 2, this.y + Imgs.gun.height / 2);
+    cGame.ctx.rotate(this.rotation);
+    cGame.ctx.translate(-this.x + Imgs.gun.width / 2, -this.y + Imgs.gun.height / 2);
+    cGame.ctx.drawImage(Imgs.gun, this.x, this.y);
+    cGame.ctx.restore();
+    */
+
     let width = Imgs.player.width;
     let height = Imgs.player.height;
-
+    //Player
     cGame.ctx.drawImage(Imgs.player, 0, 0, Imgs.player.width, Imgs.player.height, x - width/2, y - height/2, width, height);
   } //cPlayer.drawSelf()
 

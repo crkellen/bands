@@ -10,7 +10,7 @@ export class GameServer {
     var pack = [];
     for( let p in this.players ) {
       let player = this.players[p];
-      player.update();
+      player.update(this);
       pack.push(player.getUpdatePack());
     }
     return pack;
@@ -83,7 +83,7 @@ export class GameServer {
     socket.emit('init', {
       selfID: socket.ID,
       player: this.getAllInitPacksForPlayer(),
-      bullet: this.getAllInitPacksForPlayer()
+      bullet: this.getAllInitPacksForBullet()
     });
     console.info(`${player.name} has joined the game.`);
   } //GameServer.addPlayer()
@@ -123,18 +123,20 @@ class Player extends Entity {
     this.pressingDown = false;
     this.pressingAttack = false;
     this.mouseAngle = 0;
+    this.mouseX = 0;
+    this.mouseY = 0;
     this.maxSpd = 10;
     this.HP = 10;
     this.maxHP = 10;
     this.score = 0;
   } //Player.constructor()
 
-  update() {
+  update(server) {
     this.updateSpd();
     super.update();
 
-    if( this.presingAttack === true ) {
-      this.shoot();
+    if( this.pressingAttack === true ) {
+      this.shoot(server);
     }
   } //Player.update()
 
@@ -156,14 +158,16 @@ class Player extends Entity {
     }
   } //Player.updateSpd()
 
-  shoot() {
-    let b = Bullet({
+  shoot(server) {
+    let b = new Bullet({
       parent: this.ID,
-      angle: this.angle,
+      angle: this.mouseAngle,
       x: this.x,
       y: this.y
     });
-    //Game.addBullet(b);
+    let bulletID = Math.random();
+    server.bullets[bulletID] = b;
+    server.initPack.bullet.push(server.bullets[bulletID].getInitPack());
   } //Player.shoot()
 
   getInitPack() {
@@ -173,6 +177,8 @@ class Player extends Entity {
       x: this.x,
       y: this.y,
       HP: this.HP,
+      mX: this.mouseX,
+      mY: this.mouseY,
       maxHP: this.maxHP,
       score: this.score
     };
@@ -184,6 +190,8 @@ class Player extends Entity {
       x: this.x,
       y: this.y,
       HP: this.HP,
+      mX: this.mouseX,
+      mY: this.mouseY,
       score: this.score
     };
   } //Player.getUpdatePack()
@@ -208,6 +216,8 @@ class Player extends Entity {
         break;
       case 'mouseAngle':
         this.mouseAngle = data.state;
+        this.mouseX = data.mousePos.x;
+        this.mouseY = data.mousePos.y;
         break;
       default: break;
       }
@@ -229,8 +239,8 @@ class Bullet extends Entity {
   } //Bullet.constructor()
 
   update() {
-    if( ++this.timer > 100 ) {
-      self.toRemove = true;
+    if( ++this.timer > 50 ) {
+      this.toRemove = true;
     }
     super.update();
 
