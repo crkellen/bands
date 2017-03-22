@@ -45,16 +45,15 @@ export class cPlayer {
     cGame.ctx.fillRect(x - HPWidth/2, y + 20, HPWidth, 4);
 
     //Gun
-    let targetX = this.mX - this.x;
-    let targetY = this.mY - this.y;
+    let targetX = (this.mX - x)/cGame.ctx.canvas.clientWidth;
+    let targetY = (this.mY - y)/cGame.ctx.canvas.clientHeight;
     let rot = Math.atan2(targetY, targetX);
     console.info(this.mX - this.x);
 
     cGame.ctx.save();
-    cGame.ctx.translate(x - Imgs.gun.width/2,  y - Imgs.gun.height/2);
+    cGame.ctx.translate(x,  y);
     cGame.ctx.rotate(rot);
-    cGame.ctx.translate(-x - Imgs.gun.width/2,  -y - Imgs.gun.height/2);
-    cGame.ctx.drawImage(Imgs.gun, x - Imgs.gun.width/2, y - Imgs.gun.height/2);
+    cGame.ctx.drawImage(Imgs.gun, 0, 0);
     cGame.ctx.restore();
     /*
     this.rotation = -(Math.atan2(this.x - mouseState.x, this.y - mouseState.y) * 180 / Math.PI);
