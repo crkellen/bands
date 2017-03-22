@@ -8,24 +8,6 @@ var socket = io();
 var cGame = new Game(ctx, ctxUI);
 var playerName = '';
 
-/*
-socket.on('addPlayer', (player) => {
-  game.addPlayer(player.ID, player.name, player.isLocal, player.x, player.y);
-}); //'addPlayer'
-
-socket.on('sync', (serverData) => {
-  game.receiveData(serverData);
-}); //'sync'
-
-socket.on('killPlayer', (playerData) => {
-  game.killPlayer(playerData);
-}); //'killPlayer'
-
-socket.on('removePlayer', (playerID) => {
-  game.removePlayer(playerID);
-}); //'removePlayer'
-*/
-
 $(document).ready( () => {
   $('#play').click( () => {
     playerName = $('#player-name').val();
@@ -48,16 +30,16 @@ $(document).ready( () => {
     let k = e.keyCode || e.which;
     switch(k) {
     case 87: //W
-      socket.emit('keyPress', {inputId: 'up', state: true});
+      socket.emit('keyPress', {inputID: 'up', state: true});
       break;
     case 65: //A
-      socket.emit('keyPress', {inputId: 'left', state: true});
+      socket.emit('keyPress', {inputID: 'left', state: true});
       break;
     case 83: //S
-      socket.emit('keyPress', {inputId: 'down', state: true});
+      socket.emit('keyPress', {inputID: 'down', state: true});
       break;
     case 68: //D
-      socket.emit('keyPress', {inputId: 'right', state: true});
+      socket.emit('keyPress', {inputID: 'right', state: true});
       break;
     default: break;
     }
@@ -65,16 +47,16 @@ $(document).ready( () => {
     let k = e.keyCode || e.which;
     switch(k) {
     case 87: //W
-      socket.emit('keyPress', {inputId: 'up', state: false});
+      socket.emit('keyPress', {inputID: 'up', state: false});
       break;
     case 65: //A
-      socket.emit('keyPress', {inputId: 'left', state: false});
+      socket.emit('keyPress', {inputID: 'left', state: false});
       break;
     case 83: //S
-      socket.emit('keyPress', {inputId: 'down', state: false});
+      socket.emit('keyPress', {inputID: 'down', state: false});
       break;
     case 68: //D
-      socket.emit('keyPress', {inputId: 'right', state: false});
+      socket.emit('keyPress', {inputID: 'right', state: false});
       break;
     default: break;
     }
@@ -108,9 +90,7 @@ socket.on('init', (data) => {
     cGame.selfID = data.selfID;
   }
   for( let i = 0; i < data.player.length; i++ ) {
-    console.info(cGame.cPlayers);
     cGame.cPlayers[data.player[i].ID] = new cPlayer(data.player[i]);
-    console.info(cGame.cPlayers);
   }
   for( let j = 0; j < data.bullet.length; j++ ) {
     cGame.cBullets[data.bullet[j].ID] = new cBullet(data.bullet[j]);
@@ -174,8 +154,8 @@ setInterval( () => {
 }, 40);
 
 var drawGrid = () => {
-  //console.info(cGame.cPlayers[cGame.selfID]);
-  let player = cGame.cPlayers[cGame.selfID]; //#FIXME: player is undefined
+  cGame.ctx.clearRect(0, 0, cGame.ctx.canvas.width, cGame.ctx.canvas.height);
+  let player = cGame.cPlayers[cGame.selfID];
   let x = cGame.ctx.canvas.width/2 - player.x;
   let y = cGame.ctx.canvas.height/2 - player.y;
   cGame.ctx.drawImage(Imgs.grid, x, y);
@@ -184,7 +164,6 @@ var drawGrid = () => {
 var drawEntities = () => {
   //Each player object draws itself
   for( let p in cGame.cPlayers ) {
-    //console.info(cGame.cPlayers[p]);
     cGame.cPlayers[p].drawSelf(cGame);
   }
   //Each bullet object draws itself
@@ -194,16 +173,16 @@ var drawEntities = () => {
 };
 
 var drawUI = () => {
-  console.info(cGame.cPlayers[cGame.selfID].x);
-/*
+  cGame.ctxUI.fillStyle = 'white';
+  for( let p in cGame.cPlayers ) {
+    cGame.cPlayers[p].drawName(cGame);
+  }
   if( cGame.prevScore === cGame.cPlayers[cGame.selfID].score ) { //#FIXME: cGame.cPlayers[cGame.selfID] undef
     return;
   }
 
   cGame.prevScore = cGame.cPlayers[cGame.selfID].score;
-  cGame.ctxUI.fillStyle = 'white';
   cGame.ctxUI.fillText(cGame.cPlayers[cGame.selfID].score, 0, 30);
-*/
 };
 
 

@@ -75,90 +75,18 @@ export class GameServer {
       ID: socket.ID,
       name: playerName,
       x: x,
-      y: y
+      y: y,
     });
     this.players[socket.ID] = player;
-    player.onConnect(socket);
+    this.initPack.player.push(player.getInitPack());
+    this.players[socket.ID].onConnect(socket);
     socket.emit('init', {
       selfID: socket.ID,
       player: this.getAllInitPacksForPlayer(),
       bullet: this.getAllInitPacksForPlayer()
     });
-    console.info(`${player.name} has joined the game.`)
+    console.info(`${player.name} has joined the game.`);
   } //GameServer.addPlayer()
-/*
-  addBullet(bullet) {
-    this.bullets.push(bullet);
-  } //GameServer.addBullet()
-
-  removePlayer(playerID) {
-    this.players = this.players.filter( (p) => { return p.ID != playerID; } );
-  } //GameServer.removePlayer()
-
-  syncPlayers(newPlayerData) {
-    this.players.forEach( (player) => {
-      player.x = newPlayerData.x;
-      player.y = newPlayerData.y;
-      player.gunAngle = newPlayerData.gunAngle;
-    }); //forEach
-  } //GameServer.syncPlayers()
-
-  syncBullets() {
-    this.bullets.forEach( (bullet) => {
-      this.detectCollision(bullet);
-
-      if( bullet.x < 0 || bullet.x > WIDTH
-        || bullet.y < 0 || bullet.y > HEIGHT ) {
-        bullet.dead = true;
-      } else  {
-        bullet.move();
-      }
-    }); //forEach
-  } //GameServer.syncBullets()
-
-  detectCollision(bullet) {
-    this.players.forEach( (player) => {
-      if( player.ID != bullet.ownerID
-        && Math.abs(player.x - bullet.x) < 10
-        && Math.abs(player.y - bullet.y) < 10 ) {
-        //Player was Hit
-        this.hurtPlayer(player);
-        bullet.dead = true;
-      }
-    }); //forEach
-  } //GameServer.detectCollision()
-
-  hurtPlayer(player) {
-    player.HP -= 1;
-  } //GameServer.hurtPlayer()
-
-  getData() {
-    let gameData = {};
-    gameData.players = this.players;
-    gameData.bullets = this.bullets;
-
-    return gameData;
-  } //GameServer.getData()
-
-  removeDeadPlayers() {
-    this.players = this.players.filter( (p) => {
-      return p.HP > 0;
-    });
-  } //GameServer.removeDeadPlayers()
-
-  removeDeadBullets() {
-    this.bullets = this.bullets.filter( (bullet) => {
-      return !bullet.dead;
-    });
-  } //GameServer.removeDeadPlayers()
-
-  increaseLastBulletID() {
-    this.lastBulletID++;
-    if( this.lastBulletID > 1000 ) {
-      this.lastBulletID = 0;
-    }
-  } //GameServer.increaseLastBulletID()
-*/
 } //class GameServer
 
 class Entity {
@@ -166,8 +94,8 @@ class Entity {
     this.ID = params.ID;
     this.x = params.x;
     this.y = params.y;
-    this.spdX = params.spdX;
-    this.spdY = params.spdY;
+    this.spdX = 0;
+    this.spdY = 0;
   } //Entity.constructor()
 
   update() {
@@ -241,6 +169,7 @@ class Player extends Entity {
   getInitPack() {
     return {
       ID: this.ID,
+      name: this.name,
       x: this.x,
       y: this.y,
       HP: this.HP,

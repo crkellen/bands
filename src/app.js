@@ -48,99 +48,19 @@ io.on('connection', (socket) => {
       } else {
         //Username was Invalid
       }
-
-    /*
-      if( res === true ) {
-        console.info(`${playerData.name} joined the game.`);
-        let initX = getRandomInt(40, 900);
-        let initY = getRandomInt(40, 500);
-        socket.emit('addPlayer', {
-          ID: playerData.ID,
-          name: playerData.name,
-          isLocal: true,
-          x: initX,
-          y: initY,
-          HP: PLAYER_INIT_HP,
-          img: PLAYER_IMAGE
-        });
-        socket.broadcast.emit('addPlayer', {
-          ID: playerData.ID,
-          name: playerData.name,
-          isLocal: false,
-          x: initX,
-          y: initY,
-          HP: PLAYER_INIT_HP,
-          img: PLAYER_IMAGE
-        });
-        ServerGame.addPlayer({
-          ID: playerData.ID,
-          HP: PLAYER_INIT_HP
-        });
-      } else {
-        //Username is invalid
-      }
-    */
     }); //isValidUsername()
   }); //'joinGame'
-
-/*
-  socket.on('sync', (data) => {
-    //Recieve Data from Clients
-    if( data.player !== undefined ) {
-      ServerGame.syncPlayers(data.player);
-    }
-
-    //Update Bullets
-    ServerGame.syncBullets();
-
-    //Broadcast new data to Clients
-    socket.emit('sync', ServerGame.getData());
-    socket.broadcast.emit('sync', ServerGame.getData());
-
-    //Cleanup
-    ServerGame.removeDeadPlayers();
-    ServerGame.removeDeadBullets();
-  }); //'sync'
-
-  socket.on('shoot', (data) => {
-    let bullet = new Bullet(data.ownerID, data.alpha, data.x, data.y);
-    ServerGame.addBullet(bullet);
-  }); //'shoot'
-*/
 
   //This function is called whenever a socket disconnects
   //This is currently whenever the client leaves the webpage
   //Removes the socket from the list of connected sockets
   socket.on('disconnect', () => {
     console.info(`${socket.ID} has left the game.`);
-    //ServerGame.removePlayer(playerID);
-    //socket.broadcast.emit('removePlayer', playerID);
     delete SOCKET_LIST[socket.ID];
     ServerGame.removePack.player.push(socket.ID);
     delete ServerGame.players[socket.ID];
   }); //'disconnect'
 }); //'connection'
-
-/*
-class Bullet {
-  constructor(ownerID, alpha, x, y) {
-    this.ID = ServerGame.lastBulletID;
-    ServerGame.increaseLastBulletID();
-    this.ownerID = ownerID;
-    this.alpha = alpha;
-    this.x = x;
-    this.y = y;
-    this.dead = false;
-  } //Bullet.constructor()
-
-  move() {
-    let speedX = BULLET_SPEED * Math.sin(this.alpha);
-    let speedY = -BULLET_SPEED * Math.cos(this.alpha);
-    this.x += speedX;
-    this.y += speedY;
-  } //Bullet.move()
-} //class Bullet
-*/
 
 //SERVER GAME LOOP
 setInterval( () => {
@@ -153,10 +73,8 @@ setInterval( () => {
     socket.emit('remove', packs.removePack);
     socket.emit('update', packs.updatePack);
   }
-}, 1000/25); //END ServerGame LOOP
+}, 1000/25); //END SERVER GAME LOOP
 
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
-
-//export default app;
