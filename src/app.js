@@ -1,13 +1,6 @@
-//#TODO: Replace all instances of ID with an actual ID rather than their name
-//#TODO: Setup the gameloop/draw images to the canvas
-//#TODO: Setup fullscreen canvas, make camera follow player in center
-
-const PLAYER_INIT_HP = 100;
-const BULLET_SPEED = 10;
-
 //########## BEGIN INIT SERVER
 import { GameServer } from './GameServer';
-var Game = new GameServer;
+var ServerGame = new GameServer;
 //APP: Make an express server instance
 import express from 'express';
 var app = express();
@@ -40,97 +33,48 @@ var isValidUsername = (data, cb) => {
 //This function is called whenever a socket connects
 //This currently happens the moment they successfully connect to the webpage
 io.on('connection', (socket) => {
-  //#TEMP: Usage of Math.random() in place of a database USER ID
+  //#TODO: Usage of Math.random() in place of a database USER ID
   socket.ID = Math.random();
   //Add the connected socket to the list of sockets
+  //CHeck for exists before adding
   SOCKET_LIST[socket.ID] = socket;
   console.info('Player Connection: ' + socket.ID);
 
+  //PlayerData is currently only playerName
   socket.on('joinGame', (playerData) => {
     isValidUsername(playerData, (res) => {
       if( res === true ) {
-        console.info(`${playerData.ID} joined the game.`);
-        let initX = getRandomInt(40, 900);
-        let initY = getRandomInt(40, 500);
-        socket.emit('addPlayer', {
-          ID: playerData.ID,
-          isLocal: true,
-          x: initX,
-          y: initY,
-          HP: PLAYER_INIT_HP
-        });
-        socket.broadcast.emit('addPlayer', {
-          ID: playerData.ID,
-          isLocal: false,
-          x: initX,
-          y: initY,
-          HP: PLAYER_INIT_HP
-        });
-        Game.addPlayer({
-          ID: playerData.ID,
-          HP: PLAYER_INIT_HP
-        });
+        ServerGame.addPlayer(socket, playerData.name, getRandomInt(0, 1), getRandomInt(0, 1));
       } else {
-        //Username is invalid
+        //Username was Invalid
       }
     }); //isValidUsername()
   }); //'joinGame'
 
-  socket.on('sync', (data) => {
-    //Recieve Data from Clients
-    if( data.player !== undefined ) {
-      Game.syncPlayers(data.player);
-    }
-
-    //Update Bullets
-    Game.syncBullets();
-
-    //Broadcast new data to Clients
-    socket.emit('sync', Game.getData());
-    socket.broadcast.emit('sync', Game.getData());
-
-    //Cleanup
-    Game.removeDeadPlayers();
-    Game.removeDeadBullets();
-  }); //'sync'
-
-  socket.on('shoot', (data) => {
-    let bullet = new Bullet(data.ownerID, data.alpha, data.x, data.y);
-    Game.addBullet(bullet);
-  }); //'shoot'
-
   //This function is called whenever a socket disconnects
   //This is currently whenever the client leaves the webpage
   //Removes the socket from the list of connected sockets
-  socket.on('disconnect', (playerID) => {
-    console.info(`${playerID} has left the game.`);
-    Game.removePlayer(playerID);
-    socket.broadcast.emit('removePlayer', playerID);
+  socket.on('disconnect', () => {
+    console.info(`${socket.ID} has left the game.`);
     delete SOCKET_LIST[socket.ID];
+    ServerGame.removePack.player.push(socket.ID);
+    delete ServerGame.players[socket.ID];
   }); //'disconnect'
 }); //'connection'
 
-class Bullet {
-  constructor(ownerID, alpha, x, y) {
-    this.ID = Game.lastBulletID;
-    Game.increaseLastBulletID();
-    this.ownerID = ownerID;
-    this.alpha = alpha;
-    this.x = x;
-    this.y = y;
-    this.dead = false;
-  } //Bullet.constructor()
-
-  move() {
-    let speedX = BULLET_SPEED * Math.sin(this.alpha);
-    let speedY = -BULLET_SPEED * Math.cos(this.alpha);
-    this.x += speedX;
-    this.y += speedY;
-  } //Bullet.move()
-} //class Bullet
+//SERVER GAME LOOP
+setInterval( () => {
+  //Gather all of the server's instance data packs
+  let packs = ServerGame.getFrameUpdateData();
+  //For every connected socket, emit the data packs
+  for( let s in SOCKET_LIST ) {
+    let socket = SOCKET_LIST[s];
+    socket.emit('init', packs.initPack);
+    socket.emit('remove', packs.removePack);
+    socket.emit('update', packs.updatePack);
+  }
+}, 1000/25); //END SERVER GAME LOOP
 
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
-
-//export default app;
