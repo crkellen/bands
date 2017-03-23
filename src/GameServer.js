@@ -216,6 +216,8 @@ class Player extends Entity {
         break;
       case 'mouseAngle':
         this.mouseAngle = data.state;
+        break;
+      case 'mousePos':
         this.mouseX = data.mousePos.x;
         this.mouseY = data.mousePos.y;
         break;

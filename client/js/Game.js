@@ -44,17 +44,12 @@ export class cPlayer {
     cGame.ctx.fillStyle = 'red';
     cGame.ctx.fillRect(x - HPWidth/2, y + 20, HPWidth, 4);
 
-    //Gun
-    let targetX = (this.mX - x)/cGame.ctx.canvas.clientWidth;
-    let targetY = (this.mY - y)/cGame.ctx.canvas.clientHeight;
-    let rot = Math.atan2(targetY, targetX);
-    console.info(this.mX - this.x);
-
+    /*
     cGame.ctx.save();
     cGame.ctx.translate(x,  y);
     cGame.ctx.rotate(rot);
     cGame.ctx.drawImage(Imgs.gun, 0, 0);
-    cGame.ctx.restore();
+    cGame.ctx.restore();*/
     /*
     this.rotation = -(Math.atan2(this.x - mouseState.x, this.y - mouseState.y) * 180 / Math.PI);
     cGame.ctx.save();
@@ -69,6 +64,19 @@ export class cPlayer {
     let height = Imgs.player.height;
     //Player
     cGame.ctx.drawImage(Imgs.player, 0, 0, Imgs.player.width, Imgs.player.height, x - width/2, y - height/2, width, height);
+
+    //Gun
+    let targetX = this.mX - x;
+    let targetY = this.mY - y;
+    console.info(`mX = ${this.mX} and targetX = ${targetX}`);
+    let rot = Math.atan2(targetY, targetX);
+
+    cGame.ctx.save();
+    cGame.ctx.translate(x + 19/2, y + 7/2);
+    cGame.ctx.rotate(rot);
+    cGame.ctx.fillStyle = '#008BCC';
+    cGame.ctx.fillRect(19/2 * -1, 7/2 * -1, 19, 7);
+    cGame.ctx.restore();
   } //cPlayer.drawSelf()
 
   drawName(cGame) {

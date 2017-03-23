@@ -14,6 +14,16 @@ $(document).ready( () => {
     joinGame(playerName, socket);
   }); //#play.click()
 
+  /*
+  $('#play').mousemove( (e) => {
+    console.info(e.clientX + 'JFKLAJGFKLAJGKLAJ');
+  }); //#play.click()*/
+
+  $('#canvas-ui').mousemove( (event) => {
+    let mousePos = getMousePos(cGame.ctx, event);
+    socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos});
+  });
+
   $('#player-name').keyup( (e) => {
     playerName = $('#player-name').val();
     let k = e.keyCode || e.which;
@@ -64,14 +74,31 @@ $(document).ready( () => {
     let x = -cGame.ctx.canvas.clientWidth/2 + e.clientX - 8;
     let y = -cGame.ctx.canvas.clientHeight/2 + e.clientY - 8;
     let angle = Math.atan2(y, x) / Math.PI * 180;
-    let mousePos = getMousePos(cGame.ctx, e);
-    socket.emit('keyPress', {inputID: 'mouseAngle', state: angle, mousePos: mousePos});
+    socket.emit('keyPress', {inputID: 'mouseAngle', state: angle});
   }).mousedown( () => {
     socket.emit('keyPress', {inputID: 'attack', state: true});
   }).mouseup( () => {
     socket.emit('keyPress', {inputID: 'attack', state: false});
   }); //$(document).keydown().keyup().mousemove().mousedown().mouseup()
+
+  /*
+  cGame.ctx.canvas.addEventListener('mousemove', function(e) {
+    let mousePos = getMousePos(cGame.ctx, e);
+    console.info(mousePos.x);
+    socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos});
+  }, false);*/
+
+
 }); //$(document).ready()
+
+/*
+window.addEventListener('load', function() {
+  document.getElementById('canvas-game').addEventListener('mousemove', function(e) {
+    let mousePos = getMousePos(cGame.ctx, e);
+    console.info(mousePos.x);
+    socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos});
+  }, false);
+}, false);*/
 
 $(window).on('beforeunload', () => {
   socket.emit('disconnect');
@@ -86,9 +113,11 @@ function joinGame(playerName, socket) {
 
 function getMousePos(ctx, e) {
   let rect = ctx.canvas.getBoundingClientRect();
+  let mouseX = e.clientX - rect.top;
+  let mouseY = e.clientY - rect.left;
   return {
-    x: e.clientX - rect.top,
-    y: e.clientY - rect.left
+    x: mouseX,
+    y: mouseY
   };
 } //getMousePos()
 
