@@ -233,8 +233,8 @@ class Bullet extends Entity {
     this.parent = params.parent;
     this.angle = params.angle;
 
-    this.spdX = Math.cos(params.angle/180*Math.PI) * 10;
-    this.spdY = Math.sin(params.angle/180*Math.PI) * 10;
+    this.spdX = Math.cos(params.angle/180*Math.PI) * 12;
+    this.spdY = Math.sin(params.angle/180*Math.PI) * 12;
     this.ID = Math.random();
     this.timer = 0;
     this.toRemove = false;

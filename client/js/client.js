@@ -113,8 +113,8 @@ function joinGame(playerName, socket) {
 
 function getMousePos(ctx, e) {
   let rect = ctx.canvas.getBoundingClientRect();
-  let mouseX = e.clientX - rect.top;
-  let mouseY = e.clientY - rect.left;
+  let mouseX = e.clientX - rect.left;
+  let mouseY = e.clientY - rect.top;
   return {
     x: mouseX,
     y: mouseY
