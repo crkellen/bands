@@ -1,4 +1,5 @@
 const ctx = document.getElementById('canvas-game').getContext('2d');
+ctx.translate(0.5, 0.5);
 const ctxUI = document.getElementById('canvas-ui').getContext('2d');
 
 import { Game, Imgs, cPlayer, cBullet } from './Game';

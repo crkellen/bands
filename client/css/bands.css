@@ -8,8 +8,8 @@ body{
 }
 canvas {
 	display:block;
-	width:800px;
-	height:500px;
+	/*width:800px;
+	height:500px;*/
 	position:absolute;
 	top:0px;
 	left:0px;
