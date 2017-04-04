@@ -70,28 +70,28 @@ export class cPlayer {
     //cGame.ctx.fillStyle = '#008BCC';
     //cGame.ctx.fillRect(this.x, this.y, width, height);
     //Gun
-    let targetX = this.mX - 300;
-    let targetY = this.mY - 300;
+    let targetX = this.mX - cGame.ctx.canvas.width/2; //Set cGame.ctx.canvas.width/2
+    let targetY = this.mY - cGame.ctx.canvas.height/2; //Set to cGame.ctx.canvas.height/2
     let theta = Math.atan2(targetY, targetX);
-    console.info(theta);
-    let quad = 1;
-
-    if( targetX > theta && targetY > theta ) {      //Quad 1
+    //console.info(theta);
+    //let quad = 1;
+    /*
+    if( targetX > theta && targetY > theta ) {      //Quad 4
       quad = 1;
-      theta = 270 - Math.atan2(targetY, targetX);
-    } else if( targetX < theta && targetY > theta ) { //Quad 2
+      theta =  Math.atan2(targetY, targetX);
+    } else if( targetX < theta && targetY > theta ) { //Quad 3
       quad = 2;
-      theta = 180 + Math.atan2(targetY, targetX);
-    } else if( targetX < theta && targetY < theta ) { //Quad 3
+      theta = Math.atan2(targetY, targetX);
+    } else if( targetX < theta && targetY < theta ) { //Quad 2
       quad = 3;
-      theta = 90 - Math.atan2(targetY, targetX);
-    } else if( targetX > theta && targetY < theta ) { //Quad 4
+      theta = Math.atan2(targetY, targetX);
+    } else if( targetX > theta && targetY < theta ) { //Quad 1
       quad = 4;
       theta = Math.atan2(targetY, targetX);
-    }
+    }*/
     //console.info(20*Math.PI/180)
-    console.info(`mX = ${this.mX} and targetX = ${targetX} and theta = ${theta}
-      x = ${x}, y = ${y} quad = ${quad}`);
+    //console.info(`mX = ${this.mX} and targetX = ${targetX} and theta = ${theta}
+    //  x = ${x}, y = ${y} quad = ${quad}`);
 /*
     cGame.ctx.save();
     cGame.ctx.translate(x,  y);
