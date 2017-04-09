@@ -2,16 +2,20 @@
 <html lang="en">
 <%- include('header', {pageTitle: 'bands.io'}) %>
 <body>
-  <div id="prompt" class="name-prompt">
-     <input autofocus id="player-name" type="text" class="form-control" placeholder="Enter your Name" autocomplete="off">
-     <span class="input-group-btn">
-       <input id="play" class="btn btn-primary" type="submit" value="Join the battle">
-     </span>
-   </div>
+  <div>
+    <canvas id="canvas-game" width="800px" height="500px">Your browser does not support HTML 5 Canvas Tag</canvas>
+    <canvas id="canvas-ui" width="800px" height="500px">Your browser does not support HTML 5 Canvas Tag</canvas>
+    <div id="prompt" class="name-prompt">
+       <input autofocus id="player-name" type="text" class="form-control" placeholder="Enter your Name" autocomplete="off">
+       <span class="input-group-btn">
+         <input id="play" class="btn btn-primary" type="submit" value="Join the battle">
+       </span>
+     </div>
+  </div>
+
 
   <div id="arena" class="arena">
-    <canvas id="canvas-game">Your browser does not support HTML 5 Canvas Tag</canvas>
-    <canvas id="canvas-ui">Your browser does not support HTML 5 Canvas Tag</canvas>
+
   </div>
 
   <%- include('footer') %>

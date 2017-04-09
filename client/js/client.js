@@ -1,4 +1,5 @@
 const ctx = document.getElementById('canvas-game').getContext('2d');
+ctx.translate(0.5, 0.5);
 const ctxUI = document.getElementById('canvas-ui').getContext('2d');
 
 import { Game, Imgs, cPlayer, cBullet } from './Game';
@@ -13,6 +14,11 @@ $(document).ready( () => {
     playerName = $('#player-name').val();
     joinGame(playerName, socket);
   }); //#play.click()
+
+  $('#canvas-ui').mousemove( (event) => {
+    let mousePos = getMousePos(cGame.ctx, event);
+    socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos});
+  });
 
   $('#player-name').keyup( (e) => {
     playerName = $('#player-name').val();
@@ -61,14 +67,14 @@ $(document).ready( () => {
     default: break;
     }
   }).mousemove( (e) => {
-    let x = -250 + e.clientX - 8;
-    let y = -250 + e.clientY - 8;
+    let x = -cGame.ctx.canvas.clientWidth/2 + e.clientX - 8;
+    let y = -cGame.ctx.canvas.clientHeight/2 + e.clientY - 8;
     let angle = Math.atan2(y, x) / Math.PI * 180;
-    socket.emit('keyPress', {inputId: 'mouseAngle', state: angle});
+    socket.emit('keyPress', {inputID: 'mouseAngle', state: angle});
   }).mousedown( () => {
-    socket.emit('keyPress', {inputId: 'attack', state: true});
+    socket.emit('keyPress', {inputID: 'attack', state: true});
   }).mouseup( () => {
-    socket.emit('keyPress', {inputId: 'attack', state: false});
+    socket.emit('keyPress', {inputID: 'attack', state: false});
   }); //$(document).keydown().keyup().mousemove().mousedown().mouseup()
 }); //$(document).ready()
 
@@ -82,6 +88,16 @@ function joinGame(playerName, socket) {
     socket.emit('joinGame', {name: playerName});
   }
 } //joingame()
+
+function getMousePos(ctx, e) {
+  let rect = ctx.canvas.getBoundingClientRect();
+  let mouseX = e.clientX - rect.left;
+  let mouseY = e.clientY - rect.top;
+  return {
+    x: mouseX,
+    y: mouseY
+  };
+} //getMousePos()
 
 //##############################################################
 
@@ -112,6 +128,12 @@ socket.on('update', (data) => {
       if( p.HP !== undefined ) {
         p.HP = pack.HP;
       }
+      if( p.mX !== undefined ) {
+        p.mX = pack.mX;
+      }
+      if( p.mY !== undefined ) {
+        p.mY = pack.mY;
+      }
       if( p.score !== undefined ) {
         p.score = pack.score;
       }
@@ -138,7 +160,7 @@ socket.on('remove', (data) => {
     delete cGame.cPlayers[data.player[i]];
   }
   for( let j = 0; j < data.bullet.length; j++ ) {
-    delete cGame.cBullet[data.bullet[j]];
+    delete cGame.cBullets[data.bullet[j]];
   }
 }); //'remove'
 
@@ -177,7 +199,7 @@ var drawUI = () => {
   for( let p in cGame.cPlayers ) {
     cGame.cPlayers[p].drawName(cGame);
   }
-  if( cGame.prevScore === cGame.cPlayers[cGame.selfID].score ) { //#FIXME: cGame.cPlayers[cGame.selfID] undef
+  if( cGame.prevScore === cGame.cPlayers[cGame.selfID].score ) {
     return;
   }
 

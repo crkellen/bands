@@ -10,7 +10,7 @@ export class GameServer {
     var pack = [];
     for( let p in this.players ) {
       let player = this.players[p];
-      player.update();
+      player.update(this);
       pack.push(player.getUpdatePack());
     }
     return pack;
@@ -20,7 +20,7 @@ export class GameServer {
     var pack = [];
     for( let b in this.bullets ) {
       let bullet = this.bullets[b];
-      bullet.update();
+      bullet.update(this);
       if( bullet.toRemove === true ) {
         delete this.bullets[b];
         this.removePack.bullet.push(bullet.ID);
@@ -83,7 +83,7 @@ export class GameServer {
     socket.emit('init', {
       selfID: socket.ID,
       player: this.getAllInitPacksForPlayer(),
-      bullet: this.getAllInitPacksForPlayer()
+      bullet: this.getAllInitPacksForBullet()
     });
     console.info(`${player.name} has joined the game.`);
   } //GameServer.addPlayer()
@@ -106,10 +106,6 @@ class Entity {
     this.x += this.spdX;
     this.y += this.spdY;
   } //Entity.updatePosition()
-
-  getDistance(pt) {
-    return Math.sqrt(Math.pow(this.x - pt.x, 2) + Math.pow(this.y - pt.y));
-  } //Entity.getDistance()
 } //class Entity
 
 class Player extends Entity {
@@ -123,18 +119,20 @@ class Player extends Entity {
     this.pressingDown = false;
     this.pressingAttack = false;
     this.mouseAngle = 0;
+    this.mouseX = 0;
+    this.mouseY = 0;
     this.maxSpd = 10;
     this.HP = 10;
     this.maxHP = 10;
     this.score = 0;
   } //Player.constructor()
 
-  update() {
+  update(server) {
     this.updateSpd();
     super.update();
 
-    if( this.presingAttack === true ) {
-      this.shoot();
+    if( this.pressingAttack === true ) {
+      this.shoot(server);
     }
   } //Player.update()
 
@@ -156,14 +154,16 @@ class Player extends Entity {
     }
   } //Player.updateSpd()
 
-  shoot() {
-    let b = Bullet({
+  shoot(server) {
+    let b = new Bullet({
       parent: this.ID,
-      angle: this.angle,
+      angle: this.mouseAngle,
       x: this.x,
       y: this.y
     });
-    //Game.addBullet(b);
+    let bulletID = Math.random();
+    server.bullets[bulletID] = b;
+    server.initPack.bullet.push(server.bullets[bulletID].getInitPack());
   } //Player.shoot()
 
   getInitPack() {
@@ -173,6 +173,8 @@ class Player extends Entity {
       x: this.x,
       y: this.y,
       HP: this.HP,
+      mX: this.mouseX,
+      mY: this.mouseY,
       maxHP: this.maxHP,
       score: this.score
     };
@@ -184,6 +186,8 @@ class Player extends Entity {
       x: this.x,
       y: this.y,
       HP: this.HP,
+      mX: this.mouseX,
+      mY: this.mouseY,
       score: this.score
     };
   } //Player.getUpdatePack()
@@ -209,6 +213,10 @@ class Player extends Entity {
       case 'mouseAngle':
         this.mouseAngle = data.state;
         break;
+      case 'mousePos':
+        this.mouseX = data.mousePos.x;
+        this.mouseY = data.mousePos.y;
+        break;
       default: break;
       }
     }); //'keyPress'
@@ -221,22 +229,43 @@ class Bullet extends Entity {
     this.parent = params.parent;
     this.angle = params.angle;
 
-    this.spdX = Math.cos(params.angle/180*Math.PI) * 10;
-    this.spdY = Math.sin(params.angle/180*Math.PI) * 10;
+    this.spdX = Math.cos(params.angle/180*Math.PI) * 12;
+    this.spdY = Math.sin(params.angle/180*Math.PI) * 12;
     this.ID = Math.random();
     this.timer = 0;
     this.toRemove = false;
   } //Bullet.constructor()
 
-  update() {
-    if( ++this.timer > 100 ) {
-      self.toRemove = true;
+  update(server) {
+    if( ++this.timer > 50 ) {
+      this.toRemove = true;
     }
     super.update();
 
-    //#TODO COLLISION CHECK
-
+    //COLLISION CHECK
+    for( var i in server.players ) {
+      var p = server.players[i];
+      if( this.getDistance(p) < 24 && this.parent !== p.ID ) {
+        p.HP -= 1;
+        if( p.HP <= 0 ) {
+          var shooter = server.players[this.parent];
+          if( shooter ) {
+            shooter.score += 1;
+          }
+          //#TODO: This is the dead player respawning
+          //Make it so they respawn after a short time, and at their team base
+          p.HP = p.maxHP;
+          p.x = Math.random() * 500;
+          p.y = Math.random() * 500;
+        }
+        this.toRemove = true;
+      }
+    } //for(var i in Player.list) --- Collision check
   } //Bullet.update()
+
+  getDistance(pt) {
+    return Math.sqrt(Math.pow(this.x - pt.x, 2) + Math.pow(this.y - pt.y, 2));
+  } //Bullet.getDistance()
 
   getInitPack() {
     return {
