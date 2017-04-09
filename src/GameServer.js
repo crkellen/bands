@@ -20,7 +20,7 @@ export class GameServer {
     var pack = [];
     for( let b in this.bullets ) {
       let bullet = this.bullets[b];
-      bullet.update();
+      bullet.update(this);
       if( bullet.toRemove === true ) {
         delete this.bullets[b];
         this.removePack.bullet.push(bullet.ID);
@@ -106,10 +106,6 @@ class Entity {
     this.x += this.spdX;
     this.y += this.spdY;
   } //Entity.updatePosition()
-
-  getDistance(pt) {
-    return Math.sqrt(Math.pow(this.x - pt.x, 2) + Math.pow(this.y - pt.y));
-  } //Entity.getDistance()
 } //class Entity
 
 class Player extends Entity {
@@ -240,15 +236,36 @@ class Bullet extends Entity {
     this.toRemove = false;
   } //Bullet.constructor()
 
-  update() {
+  update(server) {
     if( ++this.timer > 50 ) {
       this.toRemove = true;
     }
     super.update();
 
-    //#TODO COLLISION CHECK
-
+    //COLLISION CHECK
+    for( var i in server.players ) {
+      var p = server.players[i];
+      if( this.getDistance(p) < 24 && this.parent !== p.ID ) {
+        p.HP -= 1;
+        if( p.HP <= 0 ) {
+          var shooter = server.players[this.parent];
+          if( shooter ) {
+            shooter.score += 1;
+          }
+          //#TODO: This is the dead player respawning
+          //Make it so they respawn after a short time, and at their team base
+          p.HP = p.maxHP;
+          p.x = Math.random() * 500;
+          p.y = Math.random() * 500;
+        }
+        this.toRemove = true;
+      }
+    } //for(var i in Player.list) --- Collision check
   } //Bullet.update()
+
+  getDistance(pt) {
+    return Math.sqrt(Math.pow(this.x - pt.x, 2) + Math.pow(this.y - pt.y, 2));
+  } //Bullet.getDistance()
 
   getInitPack() {
     return {

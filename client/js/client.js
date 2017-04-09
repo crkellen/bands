@@ -15,11 +15,6 @@ $(document).ready( () => {
     joinGame(playerName, socket);
   }); //#play.click()
 
-  /*
-  $('#play').mousemove( (e) => {
-    console.info(e.clientX + 'JFKLAJGFKLAJGKLAJ');
-  }); //#play.click()*/
-
   $('#canvas-ui').mousemove( (event) => {
     let mousePos = getMousePos(cGame.ctx, event);
     socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos});
@@ -81,25 +76,7 @@ $(document).ready( () => {
   }).mouseup( () => {
     socket.emit('keyPress', {inputID: 'attack', state: false});
   }); //$(document).keydown().keyup().mousemove().mousedown().mouseup()
-
-  /*
-  cGame.ctx.canvas.addEventListener('mousemove', function(e) {
-    let mousePos = getMousePos(cGame.ctx, e);
-    console.info(mousePos.x);
-    socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos});
-  }, false);*/
-
-
 }); //$(document).ready()
-
-/*
-window.addEventListener('load', function() {
-  document.getElementById('canvas-game').addEventListener('mousemove', function(e) {
-    let mousePos = getMousePos(cGame.ctx, e);
-    console.info(mousePos.x);
-    socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos});
-  }, false);
-}, false);*/
 
 $(window).on('beforeunload', () => {
   socket.emit('disconnect');
@@ -222,7 +199,7 @@ var drawUI = () => {
   for( let p in cGame.cPlayers ) {
     cGame.cPlayers[p].drawName(cGame);
   }
-  if( cGame.prevScore === cGame.cPlayers[cGame.selfID].score ) { //#FIXME: cGame.cPlayers[cGame.selfID] undef
+  if( cGame.prevScore === cGame.cPlayers[cGame.selfID].score ) {
     return;
   }
 
