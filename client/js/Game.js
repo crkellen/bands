@@ -96,3 +96,125 @@ export class cBullet {
     //cGame.ctx.drawImage(Imgs.bullet, 0, 0, Imgs.bullet.width, Imgs.bullet.height, x - width/2, y - height/2, width, height);
   } //cBullet.drawSelf()
 } //class cBullet
+
+export class Rectangle {
+  constructor(params) {
+    this.left = params.left;
+    this.top = params.top;
+    this.width = params.width;
+    this.height = params.height;
+    this.right = this.left + this.width;
+    this.bottom = this.top + this.height;
+  } //Rectangle.constructor()
+
+  set(params) {
+    this.left = params.left;
+    this.top = params.top;
+    if( params.width !== undefined ) {
+      this.width = params.width;
+    }
+    if( params.height !== undefined ) {
+      this.height = params.height;
+    }
+    this.right = this.left + this.width;
+    this.bottom = this.top + this.height;
+  } //Rectangle.set()
+
+  within(rect) {
+    return (rect.left <= this.left &&
+      rect.right >= this.right &&
+      rect.top <= this.top &&
+      rect.bottom >= this.bottom);
+  } //Rectangle.within()
+
+  overlaps(rect) {
+    return (this.left < rect.right &&
+      rect.left < this.right &&
+      this.top < rect.bottom &&
+      rect.top < this.bottom);
+  } //Rectangle.overlaps()
+} //class Rectangle
+
+export class Camera {
+  constructor(params) {
+    //Viewport (Camera) location, top left corner
+    this.xView = params.xView;
+    this.yView = params.yView;
+
+    //Viewport Dimensions
+    this.wView = params.canvasWidth;
+    this.hView = params.canvasHeight;
+
+    //Distance from followed object to border, before camera starts to move
+    this.xDeadZone = 0;
+    this.yDeadZone = 0;
+
+    //Object to be followed (player)
+    this.followed = null;
+
+    let viewport = {
+      left: this.xView,
+      top: this.yView,
+      width: this.wView,
+      height: this.hView
+    };
+    this.viewportRect = new Rectangle(viewport);
+
+    let world = {
+      left: 0,
+      top: 0,
+      width: params.worldWidth,
+      height: params.worldHeight
+    };
+    this.worldRect = new Rectangle(world);
+  } //Camera.constructor()
+
+  follow(gameObject, xDeadZone, yDeadZone) {
+    this.followed = gameObject;
+    this.xDeadZone = xDeadZone;
+    this.yDeadZone = yDeadZone;
+  } //Camera.follow()
+
+  update() {
+    if( this.followed === null ) {
+      return;
+    }
+
+    //Move Camera Horizontally
+    if( this.followed.x - this.xView + this.xDeadZone > this.wView ) {
+      this.xView = this.followed.x - (this.wView - this.xDeadZone);
+    } else if( this.followed.x - this.xDeadZone < this.wView ) {
+      this.xView = this.followed.x - this.xDeadZone;
+    }
+
+    //Move Camera Vertically
+    if( this.followed.y - this.yView + this.yDeadZone > this.hView ) {
+      this.yView = this.followed.y - (this.hView - this.yDeadZone);
+    } else if( this.followed.y - this.yDeadZone < this.hView ) {
+      this.yView = this.followed.y - this.yDeadZone;
+    }
+
+    //Update Viewport Rect
+    let updateViewport = {
+      left: this.xView,
+      top: this.yView
+    };
+    this.viewportRect.set(updateViewport);
+
+    //Don't let camera leave world boundry
+    if( !this.viewportRect.within(this.worldRect) ) {
+      if( this.viewPortRect.left < this.worldRect.left ) {
+        this.xView = this.worldRect.left;
+      }
+      if( this.viewPortRect.top < this.worldRect.right ) {
+        this.yView = this.worldRect.right;
+      }
+      if( this.viewPortRect.right < this.worldRect.right ) {
+        this.xView = this.worldRect.right;
+      }
+      if( this.viewPortRect.bottom < this.worldRect.bottom ) {
+        this.yView = this.worldRect.bottom;
+      }
+    }
+  } //Camera.update()
+} //class Camera
