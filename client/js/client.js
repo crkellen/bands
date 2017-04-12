@@ -189,7 +189,7 @@ setInterval( () => {
   if( !cGame.selfID ) {
     return;
   }
-
+  cGame.ctx.clearRect(0, 0, cGame.ctx.canvas.width, cGame.ctx.canvas.height);
   GameCamera.update();
   GameMap.draw(cGame.ctx, GameCamera.xView, GameCamera.yView);
   //drawGrid();     //Draws only the grid when it updates
@@ -198,7 +198,6 @@ setInterval( () => {
 }, 40);
 
 var drawGrid = () => {
-  cGame.ctx.clearRect(0, 0, cGame.ctx.canvas.width, cGame.ctx.canvas.height);
   let player = cGame.cPlayers[cGame.selfID];
   let x = cGame.ctx.canvas.width/2 - player.x;
   let y = cGame.ctx.canvas.height/2 - player.y;
@@ -208,18 +207,18 @@ var drawGrid = () => {
 var drawEntities = () => {
   //Each player object draws itself
   for( let p in cGame.cPlayers ) {
-    cGame.cPlayers[p].drawSelf(cGame);
+    cGame.cPlayers[p].drawSelf(cGame, GameCamera.xView, GameCamera.yView);
   }
   //Each bullet object draws itself
   for( let b in cGame.cBullets ) {
-    cGame.cBullets[b].drawSelf(cGame);
+    cGame.cBullets[b].drawSelf(cGame, GameCamera.xView, GameCamera.yView);
   }
 };
 
 var drawUI = () => {
   cGame.ctxUI.fillStyle = 'white';
   for( let p in cGame.cPlayers ) {
-    cGame.cPlayers[p].drawName(cGame);
+    cGame.cPlayers[p].drawName(cGame, GameCamera.xView, GameCamera.yView);
   }
   if( cGame.prevScore === cGame.cPlayers[cGame.selfID].score ) {
     return;

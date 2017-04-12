@@ -44,7 +44,7 @@ io.on('connection', (socket) => {
   socket.on('joinGame', (playerData) => {
     isValidUsername(playerData, (res) => {
       if( res === true ) {
-        ServerGame.addPlayer(socket, playerData.name, 50, 50);
+        ServerGame.addPlayer(socket, playerData.name, 50, 70);
       } else {
         //Username was Invalid
       }

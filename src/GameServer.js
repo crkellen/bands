@@ -105,6 +105,20 @@ class Entity {
   updatePosition() {
     this.x += this.spdX;
     this.y += this.spdY;
+
+    //Boundries check
+    if( this.x < 20 ) {
+      this.x = 20;
+    }
+    if( this.y < 60 ) {
+      this.y = 60;
+    }
+    if( this.x > 5000 ) {
+      this.x = 5000;
+    }
+    if( this.y > 3000 ) {
+      this.y = 3000;
+    }
   } //Entity.updatePosition()
 } //class Entity
 

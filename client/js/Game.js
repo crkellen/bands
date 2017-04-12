@@ -35,9 +35,12 @@ export class cPlayer {
     this.score = initPack.score;
   } //cPlayer.constructor
 
-  drawSelf(cGame) {
-    let x = this.x - cGame.cPlayers[cGame.selfID].x + cGame.ctx.canvas.width/2;
-    let y = this.y - cGame.cPlayers[cGame.selfID].y + cGame.ctx.canvas.height/2;
+  drawSelf(cGame, xView, yView) {
+    //let x = this.x - cGame.cPlayers[cGame.selfID].x + cGame.ctx.canvas.width/2;
+    //let y = this.y - cGame.cPlayers[cGame.selfID].y + cGame.ctx.canvas.height/2;
+
+    let x = this.x - xView;
+    let y = this.y - yView;
 
     //Health bar
     let HPWidth = 30 * this.HP / this.maxHP;
@@ -68,9 +71,12 @@ export class cPlayer {
 
   } //cPlayer.drawSelf()
 
-  drawName(cGame) {
-    let x = this.x - cGame.cPlayers[cGame.selfID].x + cGame.ctx.canvas.width/2;
-    let y = this.y - cGame.cPlayers[cGame.selfID].y + cGame.ctx.canvas.height/2;
+  drawName(cGame, xView, yView) {
+    //let x = this.x - cGame.cPlayers[cGame.selfID].x + cGame.ctx.canvas.width/2;
+    //let y = this.y - cGame.cPlayers[cGame.selfID].y + cGame.ctx.canvas.height/2;
+
+    let x = this.x - xView;
+    let y = this.y - yView;
 
     cGame.ctx.fillText(this.name, x - this.name.length*2.5, y - 25);
     //cGame.ctx.fillText(this.name, x - Imgs.player.width/2, y - 20);
@@ -84,11 +90,14 @@ export class cBullet {
     this.y = initPack.y;
   } //cBullet.constructor()
 
-  drawSelf(cGame) {
+  drawSelf(cGame, xView, yView) {
     //let width = Imgs.bullet.width/2;
     //let height = Imgs.bullet.height/2;
-    let x = this.x - cGame.cPlayers[cGame.selfID].x + cGame.ctx.canvas.width/2;
-    let y = this.y - cGame.cPlayers[cGame.selfID].y + cGame.ctx.canvas.height/2;
+    //let x = this.x - cGame.cPlayers[cGame.selfID].x + cGame.ctx.canvas.width/2;
+    //let y = this.y - cGame.cPlayers[cGame.selfID].y + cGame.ctx.canvas.height/2;
+    let x = this.x - xView;
+    let y = this.y - yView;
+
 
     cGame.ctx.beginPath();
     cGame.ctx.arc(x, y, 5, 0, 2*Math.PI);
@@ -179,7 +188,6 @@ export class Camera {
   update() {
     if( this.followed != null ) {
       //Move Camera Horizontally
-      console.info(`xView ${this.xView}, xDeadZone ${this.xDeadZone}, wView ${this.wView}`);
       if( this.followed.x - this.xView + this.xDeadZone > this.wView ) {
         this.xView = this.followed.x - (this.wView - this.xDeadZone);
       } else if( this.followed.x - this.xDeadZone < this.xView ) {
@@ -233,6 +241,7 @@ export class Map {
     ctx.canvas.width = this.width;
     ctx.canvas.height = this.height;
 
+    /*
     let rows = ~~(this.width/44) + 1;
     let cols = ~~(this.height/44) + 1;
 
@@ -250,9 +259,11 @@ export class Map {
       ctx.closePath();
     }
     ctx.restore();
+    */
 
     this.image = new Image();
-    this.image.src = ctx.canvas.toDataURL('image/png');
+    this.image.src = Imgs.grid.src;
+    //this.image.src = ctx.canvas.toDataURL('image/png');
 
     ctx = null;
   } //Map.generate()
@@ -284,8 +295,7 @@ export class Map {
     //Match destination with source to not scale the image
     dWidth = sWidth;
     dHeight = sHeight;
-    //console.info('sx ' + sx + 'sy ' + sy + 'sWidth ' + sWidth + 'sHeight ' + sHeight + 'dWidth ' + dWidth + 'dHeight ' + dHeight);
-    console.info(`sx ${sx}, sy ${sy}, sWidth ${sWidth}, sHeight ${sHeight}, dWidth ${dWidth}, dHeight ${dHeight}`);
+
     ctx.drawImage(this.image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
   } //Map.draw()
 } //class Map
