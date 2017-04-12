@@ -2,12 +2,27 @@ const ctx = document.getElementById('canvas-game').getContext('2d');
 ctx.translate(0.5, 0.5);
 const ctxUI = document.getElementById('canvas-ui').getContext('2d');
 
-import { Game, Imgs, cPlayer, cBullet } from './Game';
+import { Game, Imgs, cPlayer, cBullet, Camera, Map } from './Game';
 var io = require('socket.io-client');
 //Replace with hosting IP (144.13.22.62) 'http://localhost'
 var socket = io();
 var cGame = new Game(ctx, ctxUI);
 var playerName = '';
+
+var GameMap = new Map(5000, 3000);
+GameMap.generate(cGame.ctx);
+
+let cam = {
+  xView: 0,
+  yView: 0,
+  canvasWidth: cGame.ctx.canvas.width,
+  canvasHeight: cGame.ctx.canvas.height,
+  worldWidth: 5000,
+  worldHeight: 3000
+};
+var GameCamera = new Camera(cam);
+
+
 
 $(document).ready( () => {
   $('#play').click( () => {
@@ -107,6 +122,9 @@ socket.on('init', (data) => {
   }
   for( let i = 0; i < data.player.length; i++ ) {
     cGame.cPlayers[data.player[i].ID] = new cPlayer(data.player[i]);
+    if( data.selfID !== undefined ) {
+      GameCamera.follow(cGame.cPlayers[data.selfID], cGame.ctx.canvas.width/2, cGame.ctx.canvas.height/2);
+    }
   }
   for( let j = 0; j < data.bullet.length; j++ ) {
     cGame.cBullets[data.bullet[j].ID] = new cBullet(data.bullet[j]);
@@ -121,9 +139,11 @@ socket.on('update', (data) => {
     if( p !== undefined ) {
       if( p.x !== undefined ) {
         p.x = pack.x;
+        GameCamera.followed.x = pack.x;
       }
       if( p.y !== undefined ) {
         p.y = pack.y;
+        GameCamera.followed.y = pack.y;
       }
       if( p.HP !== undefined ) {
         p.HP = pack.HP;
@@ -170,7 +190,9 @@ setInterval( () => {
     return;
   }
 
-  drawGrid();     //Draws only the grid when it updates
+  GameCamera.update();
+  GameMap.draw(cGame.ctx, GameCamera.xView, GameCamera.yView);
+  //drawGrid();     //Draws only the grid when it updates
   drawEntities(); //Draws only the Entities
   drawUI();       //Draws only the UI when it updates
 }, 40);

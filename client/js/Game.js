@@ -97,7 +97,7 @@ export class cBullet {
   } //cBullet.drawSelf()
 } //class cBullet
 
-export class Rectangle {
+class Rectangle {
   constructor(params) {
     this.left = params.left;
     this.top = params.top;
@@ -158,6 +158,7 @@ export class Camera {
       width: this.wView,
       height: this.hView
     };
+
     this.viewportRect = new Rectangle(viewport);
 
     let world = {
@@ -176,24 +177,22 @@ export class Camera {
   } //Camera.follow()
 
   update() {
-    if( this.followed === null ) {
-      return;
-    }
+    if( this.followed != null ) {
+      //Move Camera Horizontally
+      console.info(`xView ${this.xView}, xDeadZone ${this.xDeadZone}, wView ${this.wView}`);
+      if( this.followed.x - this.xView + this.xDeadZone > this.wView ) {
+        this.xView = this.followed.x - (this.wView - this.xDeadZone);
+      } else if( this.followed.x - this.xDeadZone < this.xView ) {
+        this.xView = this.followed.x - this.xDeadZone;
+      }
 
-    //Move Camera Horizontally
-    if( this.followed.x - this.xView + this.xDeadZone > this.wView ) {
-      this.xView = this.followed.x - (this.wView - this.xDeadZone);
-    } else if( this.followed.x - this.xDeadZone < this.wView ) {
-      this.xView = this.followed.x - this.xDeadZone;
+      //Move Camera Vertically
+      if( this.followed.y - this.yView + this.yDeadZone > this.hView ) {
+        this.yView = this.followed.y - (this.hView - this.yDeadZone);
+      } else if( this.followed.y - this.yDeadZone < this.yView ) {
+        this.yView = this.followed.y - this.yDeadZone;
+      }
     }
-
-    //Move Camera Vertically
-    if( this.followed.y - this.yView + this.yDeadZone > this.hView ) {
-      this.yView = this.followed.y - (this.hView - this.yDeadZone);
-    } else if( this.followed.y - this.yDeadZone < this.hView ) {
-      this.yView = this.followed.y - this.yDeadZone;
-    }
-
     //Update Viewport Rect
     let updateViewport = {
       left: this.xView,
@@ -203,18 +202,90 @@ export class Camera {
 
     //Don't let camera leave world boundry
     if( !this.viewportRect.within(this.worldRect) ) {
-      if( this.viewPortRect.left < this.worldRect.left ) {
+      if( this.viewportRect.left < this.worldRect.left ) {
         this.xView = this.worldRect.left;
       }
-      if( this.viewPortRect.top < this.worldRect.right ) {
-        this.yView = this.worldRect.right;
+      if( this.viewportRect.top < this.worldRect.top ) {
+        this.yView = this.worldRect.top;
       }
-      if( this.viewPortRect.right < this.worldRect.right ) {
-        this.xView = this.worldRect.right;
+      if( this.viewportRect.right > this.worldRect.right ) {
+        this.xView = this.worldRect.right - this.wView;
       }
-      if( this.viewPortRect.bottom < this.worldRect.bottom ) {
-        this.yView = this.worldRect.bottom;
+      if( this.viewportRect.bottom > this.worldRect.bottom ) {
+        this.yView = this.worldRect.bottom - this.hView;
       }
     }
+    //alert('STOP');
   } //Camera.update()
 } //class Camera
+
+export class Map {
+  constructor(width, height) {
+    this.width = width;
+    this.height = height;
+
+    //Map Texture
+    this.image = null;
+  } //Map.constructor()
+
+  generate() {
+    let ctx = document.createElement('canvas').getContext('2d');
+    ctx.canvas.width = this.width;
+    ctx.canvas.height = this.height;
+
+    let rows = ~~(this.width/44) + 1;
+    let cols = ~~(this.height/44) + 1;
+
+    let color = 'red';
+    ctx.save();
+    ctx.fillStyle = 'red';
+    for( let x = 0, i = 0; i < rows; x += 44, i++ ) {
+      ctx.beginPath();
+      for( let y = 0, j = 0; j < cols; y += 44, j++ ) {
+        ctx.rect(x, y, 40, 40);
+      }
+      color = (color === 'red' ? 'blue' : 'red');
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.closePath();
+    }
+    ctx.restore();
+
+    this.image = new Image();
+    this.image.src = ctx.canvas.toDataURL('image/png');
+
+    ctx = null;
+  } //Map.generate()
+
+  draw(ctx, xView, yView) {
+    let sx, sy, dx, dy;
+    let sWidth, sHeight, dWidth, dHeight;
+
+    //Offset point to crop the image
+    sx = xView;
+    sy = yView;
+
+    //Dimensions of the cropped image
+    sWidth = ctx.canvas.width;
+    sHeight = ctx.canvas.height;
+
+    //If cropped image is smaller than canvas we need to change the source dimensions
+    if( this.image.width - sx < sWidth ) {
+      sWidth = this.image.width - sx;
+    }
+    if( this.image.height - sy < sHeight ) {
+      sHeight = this.image.height - sy;
+    }
+
+    //Location on canvas to draw the cropped image
+    dx = 0;
+    dy = 0;
+
+    //Match destination with source to not scale the image
+    dWidth = sWidth;
+    dHeight = sHeight;
+    //console.info('sx ' + sx + 'sy ' + sy + 'sWidth ' + sWidth + 'sHeight ' + sHeight + 'dWidth ' + dWidth + 'dHeight ' + dHeight);
+    console.info(`sx ${sx}, sy ${sy}, sWidth ${sWidth}, sHeight ${sHeight}, dWidth ${dWidth}, dHeight ${dHeight}`);
+    ctx.drawImage(this.image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+  } //Map.draw()
+} //class Map
