@@ -86,11 +86,13 @@ $(document).ready( () => {
     let y = -cGame.ctx.canvas.clientHeight/2 + e.clientY - 8;
     //Check if within the deadzones
     let mouse = getMousePos(cGame.ctx, e);
-    if( GameCamera.xView === 0 ) {
-      x = mouse.x - cGame.cPlayers[cGame.selfID].x - GameCamera.xView;
-    }
-    if( GameCamera.yView === 0 ) {
-      y = mouse.y - cGame.cPlayers[cGame.selfID].y - GameCamera.yView;
+    if( cGame.selfID !== null ) {
+      if( GameCamera.xView === 0 ) {
+        x = mouse.x - cGame.cPlayers[cGame.selfID].x - GameCamera.xView;
+      }
+      if( GameCamera.yView === 0 ) {
+        y = mouse.y - cGame.cPlayers[cGame.selfID].y - GameCamera.yView;
+      }
     }
     let angle = Math.atan2(y, x) / Math.PI * 180;
     socket.emit('keyPress', {inputID: 'mouseAngle', state: angle});
@@ -125,15 +127,21 @@ function getMousePos(ctx, e) {
 //##############################################################
 
 socket.on('init', (data) => {
-  if( data.selfID !== undefined ) {
+  let makeCamera = false;
+  if( cGame.selfID === null && data.selfID !== undefined ) {
+    console.info('ONCE');
     cGame.selfID = data.selfID;
+    makeCamera = true;
   }
   for( let i = 0; i < data.player.length; i++ ) {
     cGame.cPlayers[data.player[i].ID] = new cPlayer(data.player[i]);
-    if( data.selfID !== undefined ) {
-      GameCamera.follow(cGame.cPlayers[data.selfID], cGame.ctx.canvas.width/2, cGame.ctx.canvas.height/2);
-    }
   }
+
+  if( makeCamera ) {
+    console.info(cGame.selfID);
+    GameCamera.follow(cGame.cPlayers[cGame.selfID], cGame.ctx.canvas.width/2, cGame.ctx.canvas.height/2);
+  }
+
   for( let j = 0; j < data.bullet.length; j++ ) {
     cGame.cBullets[data.bullet[j].ID] = new cBullet(data.bullet[j]);
   }
@@ -199,6 +207,7 @@ setInterval( () => {
   }
   cGame.ctx.clearRect(0, 0, cGame.ctx.canvas.width, cGame.ctx.canvas.height);
   GameCamera.update();
+  console.info(GameCamera.followed);
   GameMap.draw(cGame.ctx, GameCamera.xView, GameCamera.yView);
   //drawGrid();     //Draws only the grid when it updates
   drawEntities(); //Draws only the Entities
