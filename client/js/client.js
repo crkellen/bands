@@ -2,12 +2,27 @@ const ctx = document.getElementById('canvas-game').getContext('2d');
 ctx.translate(0.5, 0.5);
 const ctxUI = document.getElementById('canvas-ui').getContext('2d');
 
-import { Game, Imgs, cPlayer, cBullet } from './Game';
+import { Game, Imgs, cPlayer, cBullet, Camera, Map } from './Game';
 var io = require('socket.io-client');
 //Replace with hosting IP (144.13.22.62) 'http://localhost'
 var socket = io();
 var cGame = new Game(ctx, ctxUI);
 var playerName = '';
+
+var GameMap = new Map(5000, 3000);
+GameMap.generate(cGame.ctx);
+
+let cam = {
+  xView: 0,
+  yView: 0,
+  canvasWidth: cGame.ctx.canvas.width,
+  canvasHeight: cGame.ctx.canvas.height,
+  worldWidth: 5000,
+  worldHeight: 3000
+};
+var GameCamera = new Camera(cam);
+
+
 
 $(document).ready( () => {
   $('#play').click( () => {
@@ -69,6 +84,14 @@ $(document).ready( () => {
   }).mousemove( (e) => {
     let x = -cGame.ctx.canvas.clientWidth/2 + e.clientX - 8;
     let y = -cGame.ctx.canvas.clientHeight/2 + e.clientY - 8;
+    //Check if within the deadzones
+    let mouse = getMousePos(cGame.ctx, e);
+    if( GameCamera.xView === 0 ) {
+      x = mouse.x - cGame.cPlayers[cGame.selfID].x - GameCamera.xView;
+    }
+    if( GameCamera.yView === 0 ) {
+      y = mouse.y - cGame.cPlayers[cGame.selfID].y - GameCamera.yView;
+    }
     let angle = Math.atan2(y, x) / Math.PI * 180;
     socket.emit('keyPress', {inputID: 'mouseAngle', state: angle});
   }).mousedown( () => {
@@ -107,6 +130,9 @@ socket.on('init', (data) => {
   }
   for( let i = 0; i < data.player.length; i++ ) {
     cGame.cPlayers[data.player[i].ID] = new cPlayer(data.player[i]);
+    if( data.selfID !== undefined ) {
+      GameCamera.follow(cGame.cPlayers[data.selfID], cGame.ctx.canvas.width/2, cGame.ctx.canvas.height/2);
+    }
   }
   for( let j = 0; j < data.bullet.length; j++ ) {
     cGame.cBullets[data.bullet[j].ID] = new cBullet(data.bullet[j]);
@@ -121,9 +147,11 @@ socket.on('update', (data) => {
     if( p !== undefined ) {
       if( p.x !== undefined ) {
         p.x = pack.x;
+        GameCamera.followed.x = pack.x;
       }
       if( p.y !== undefined ) {
         p.y = pack.y;
+        GameCamera.followed.y = pack.y;
       }
       if( p.HP !== undefined ) {
         p.HP = pack.HP;
@@ -169,35 +197,38 @@ setInterval( () => {
   if( !cGame.selfID ) {
     return;
   }
-
-  drawGrid();     //Draws only the grid when it updates
+  cGame.ctx.clearRect(0, 0, cGame.ctx.canvas.width, cGame.ctx.canvas.height);
+  GameCamera.update();
+  GameMap.draw(cGame.ctx, GameCamera.xView, GameCamera.yView);
+  //drawGrid();     //Draws only the grid when it updates
   drawEntities(); //Draws only the Entities
   drawUI();       //Draws only the UI when it updates
 }, 40);
 
+/*
 var drawGrid = () => {
-  cGame.ctx.clearRect(0, 0, cGame.ctx.canvas.width, cGame.ctx.canvas.height);
   let player = cGame.cPlayers[cGame.selfID];
   let x = cGame.ctx.canvas.width/2 - player.x;
   let y = cGame.ctx.canvas.height/2 - player.y;
   cGame.ctx.drawImage(Imgs.grid, x, y);
 };
+*/
 
 var drawEntities = () => {
   //Each player object draws itself
   for( let p in cGame.cPlayers ) {
-    cGame.cPlayers[p].drawSelf(cGame);
+    cGame.cPlayers[p].drawSelf(cGame, GameCamera.xView, GameCamera.yView);
   }
   //Each bullet object draws itself
   for( let b in cGame.cBullets ) {
-    cGame.cBullets[b].drawSelf(cGame);
+    cGame.cBullets[b].drawSelf(cGame, GameCamera.xView, GameCamera.yView);
   }
 };
 
 var drawUI = () => {
   cGame.ctxUI.fillStyle = 'white';
   for( let p in cGame.cPlayers ) {
-    cGame.cPlayers[p].drawName(cGame);
+    cGame.cPlayers[p].drawName(cGame, GameCamera.xView, GameCamera.yView);
   }
   if( cGame.prevScore === cGame.cPlayers[cGame.selfID].score ) {
     return;
