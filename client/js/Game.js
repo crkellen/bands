@@ -56,9 +56,18 @@ export class cPlayer {
     //cGame.ctx.drawImage(Imgs.player, 0, 0, Imgs.player.width, Imgs.player.height, x - width/2, y - height/2, width, height);
     //cGame.ctx.fillStyle = '#008BCC';
     //cGame.ctx.fillRect(this.x, this.y, width, height);
+
     //Gun
     let targetX = this.mX - cGame.ctx.canvas.width/2;
     let targetY = this.mY - cGame.ctx.canvas.height/2;
+    //Check if within the deadzones
+    if( xView === 0 ) {
+      targetX = this.mX - x;
+    }
+    if( yView === 0 ) {
+      targetY = this.mY - y;
+    }
+
     let theta = Math.atan2(targetY, targetX);
 
     cGame.ctx.save();

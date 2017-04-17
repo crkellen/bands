@@ -84,6 +84,14 @@ $(document).ready( () => {
   }).mousemove( (e) => {
     let x = -cGame.ctx.canvas.clientWidth/2 + e.clientX - 8;
     let y = -cGame.ctx.canvas.clientHeight/2 + e.clientY - 8;
+    //Check if within the deadzones
+    let mouse = getMousePos(cGame.ctx, e);
+    if( GameCamera.xView === 0 ) {
+      x = mouse.x - cGame.cPlayers[cGame.selfID].x - GameCamera.xView;
+    }
+    if( GameCamera.yView === 0 ) {
+      y = mouse.y - cGame.cPlayers[cGame.selfID].y - GameCamera.yView;
+    }
     let angle = Math.atan2(y, x) / Math.PI * 180;
     socket.emit('keyPress', {inputID: 'mouseAngle', state: angle});
   }).mousedown( () => {
@@ -197,12 +205,14 @@ setInterval( () => {
   drawUI();       //Draws only the UI when it updates
 }, 40);
 
+/*
 var drawGrid = () => {
   let player = cGame.cPlayers[cGame.selfID];
   let x = cGame.ctx.canvas.width/2 - player.x;
   let y = cGame.ctx.canvas.height/2 - player.y;
   cGame.ctx.drawImage(Imgs.grid, x, y);
 };
+*/
 
 var drawEntities = () => {
   //Each player object draws itself
