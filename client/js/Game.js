@@ -15,10 +15,13 @@ export class Game {
     this.ctx = ctx;
     this.ctxUI = ctxUI;
 
+    this.gameStarted = false;
+
     this.cPlayers = {};
     this.cBullets = {};
     this.selfID = null;
     this.prevScore = 0;
+    this.canShoot = true;
   } //Game.constructor()
 } //class Game
 

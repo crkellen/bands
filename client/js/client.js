@@ -48,6 +48,9 @@ $(document).ready( () => {
   }); //$(document).contextmenu()
 
   $(document).keydown( (e) => {
+    if( cGame.gameStarted !== true ) {
+      return;
+    }
     let k = e.keyCode || e.which;
     switch(k) {
     case 87: //W
@@ -65,6 +68,9 @@ $(document).ready( () => {
     default: break;
     }
   }).keyup( (e) => {
+    if( cGame.gameStarted !== true ) {
+      return;
+    }
     let k = e.keyCode || e.which;
     switch(k) {
     case 87: //W
@@ -82,6 +88,9 @@ $(document).ready( () => {
     default: break;
     }
   }).mousemove( (e) => {
+    if( cGame.gameStarted !== true ) {
+      return;
+    }
     let x = -cGame.ctx.canvas.clientWidth/2 + e.clientX - 8;
     let y = -cGame.ctx.canvas.clientHeight/2 + e.clientY - 8;
     //Check if within the deadzones
@@ -96,11 +105,18 @@ $(document).ready( () => {
     }
     let angle = Math.atan2(y, x) / Math.PI * 180;
     socket.emit('keyPress', {inputID: 'mouseAngle', state: angle});
-  }).mousedown( () => {
-    socket.emit('keyPress', {inputID: 'attack', state: true});
-  }).mouseup( () => {
-    socket.emit('keyPress', {inputID: 'attack', state: false});
-  }); //$(document).keydown().keyup().mousemove().mousedown().mouseup()
+  }).click( () => {
+    if( cGame.gameStarted !== true ) {
+      return;
+    }
+    if(cGame.canShoot === true) {
+      cGame.canShoot = false;
+      socket.emit('keyPress', {inputID: 'attack', state: true});
+      setTimeout( () => {
+        cGame.canShoot = true;
+      }, 750);
+    }
+  }); //$(document).keydown().keyup().mousemove().click()
 }); //$(document).ready()
 
 $(window).on('beforeunload', () => {
@@ -111,6 +127,7 @@ function joinGame(playerName, socket) {
   if( playerName !== '' ) {
     $('#prompt').hide();
     socket.emit('joinGame', {name: playerName});
+    cGame.gameStarted = true;
   }
 } //joingame()
 
@@ -129,7 +146,6 @@ function getMousePos(ctx, e) {
 socket.on('init', (data) => {
   let makeCamera = false;
   if( cGame.selfID === null && data.selfID !== undefined ) {
-    console.info('ONCE');
     cGame.selfID = data.selfID;
     makeCamera = true;
   }
@@ -138,7 +154,6 @@ socket.on('init', (data) => {
   }
 
   if( makeCamera ) {
-    console.info(cGame.selfID);
     GameCamera.follow(cGame.cPlayers[cGame.selfID], cGame.ctx.canvas.width/2, cGame.ctx.canvas.height/2);
   }
 
@@ -211,8 +226,6 @@ setInterval( () => {
   }
   cGame.ctx.clearRect(0, 0, cGame.ctx.canvas.width, cGame.ctx.canvas.height);
   GameCamera.update();
-  console.info(GameCamera.followed);
-  console.info(cGame.selfID);
   GameMap.draw(cGame.ctx, GameCamera.xView, GameCamera.yView);
   //drawGrid();     //Draws only the grid when it updates
   drawEntities(); //Draws only the Entities

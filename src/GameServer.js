@@ -147,6 +147,7 @@ class Player extends Entity {
 
     if( this.pressingAttack === true ) {
       this.shoot(server);
+      this.pressingAttack = false;
     }
   } //Player.update()
 
@@ -243,8 +244,8 @@ class Bullet extends Entity {
     this.parent = params.parent;
     this.angle = params.angle;
 
-    this.spdX = Math.cos(params.angle/180*Math.PI) * 12;
-    this.spdY = Math.sin(params.angle/180*Math.PI) * 12;
+    this.spdX = Math.cos(params.angle/180*Math.PI) * 20;
+    this.spdY = Math.sin(params.angle/180*Math.PI) * 20;
     this.ID = Math.random();
     this.timer = 0;
     this.toRemove = false;
