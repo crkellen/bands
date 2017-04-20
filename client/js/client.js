@@ -155,11 +155,15 @@ socket.on('update', (data) => {
     if( p !== undefined ) {
       if( p.x !== undefined ) {
         p.x = pack.x;
-        GameCamera.followed.x = pack.x;
+        if( p.ID === cGame.selfID ) {
+          GameCamera.followed.x = pack.x;
+        }
       }
       if( p.y !== undefined ) {
         p.y = pack.y;
-        GameCamera.followed.y = pack.y;
+        if( p.ID === cGame.selfID ) {
+          GameCamera.followed.y = pack.y;
+        }
       }
       if( p.HP !== undefined ) {
         p.HP = pack.HP;
@@ -208,6 +212,7 @@ setInterval( () => {
   cGame.ctx.clearRect(0, 0, cGame.ctx.canvas.width, cGame.ctx.canvas.height);
   GameCamera.update();
   console.info(GameCamera.followed);
+  console.info(cGame.selfID);
   GameMap.draw(cGame.ctx, GameCamera.xView, GameCamera.yView);
   //drawGrid();     //Draws only the grid when it updates
   drawEntities(); //Draws only the Entities
