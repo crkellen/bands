@@ -105,20 +105,6 @@ class Entity {
   updatePosition() {
     this.x += this.spdX;
     this.y += this.spdY;
-
-    //Boundries check
-    if( this.x < 20 ) {
-      this.x = 20;
-    }
-    if( this.y < 60 ) {
-      this.y = 60;
-    }
-    if( this.x > 5000 ) {
-      this.x = 5000;
-    }
-    if( this.y > 3000 ) {
-      this.y = 3000;
-    }
   } //Entity.updatePosition()
 } //class Entity
 
@@ -135,19 +121,45 @@ class Player extends Entity {
     this.mouseAngle = 0;
     this.mouseX = 0;
     this.mouseY = 0;
-    this.maxSpd = 10;
+    this.maxSpd = 5;
     this.HP = 10;
     this.maxHP = 10;
     this.score = 0;
+    this.ammo = 6;
+    this.maxAmmo = 6;
+    this.clips = 3;
+    this.maxClips = 3;
   } //Player.constructor()
 
   update(server) {
     this.updateSpd();
     super.update();
 
-    if( this.pressingAttack === true ) {
-      this.shoot(server);
+    //Boundries check
+    if( this.x < 20 ) {
+      this.x = 20;
+    }
+    if( this.y < 60 ) {
+      this.y = 60;
+    }
+    if( this.x > 5000 ) {
+      this.x = 5000;
+    }
+    if( this.y > 3000 ) {
+      this.y = 3000;
+    }
+
+    //Shoot
+    if( this.pressingAttack === true && this.ammo > 0 ) {
       this.pressingAttack = false;
+      this.shoot(server);
+      this.ammo--;
+      if( this.ammo <= 0 ) {
+        this.ammo = 0;
+        if( this.clips > 0 ) {
+          this.reload();
+        }
+      }
     }
   } //Player.update()
 
@@ -181,6 +193,27 @@ class Player extends Entity {
     server.initPack.bullet.push(server.bullets[bulletID].getInitPack());
   } //Player.shoot()
 
+  reload() {
+    setTimeout(() => {
+      this.ammo = this.maxAmmo;
+      this.clips--;
+      this.reloading = false;
+    }, 3000);
+  } //Player.reload()
+
+  respawn() {
+    //#TODO: Make it so they respawn after a short time, and at their team base
+    this.HP = this.maxHP;
+    this.x = Math.random() * 500;
+    this.y = Math.random() * 500;
+    this.ammo = this.maxAmmo;
+    this.clips = this.maxClips;
+    this.invincible = true;
+    setTimeout(() => {
+      this.invincible = false;
+    }, 3000);
+  } //Player.respawn()
+
   getInitPack() {
     return {
       ID: this.ID,
@@ -191,7 +224,11 @@ class Player extends Entity {
       mX: this.mouseX,
       mY: this.mouseY,
       maxHP: this.maxHP,
-      score: this.score
+      score: this.score,
+      ammo: this.ammo,
+      maxAmmo: this.maxAmmo,
+      clips: this.clips,
+      maxClips: this.maxClips
     };
   } //Player.getInitPack()
 
@@ -203,7 +240,9 @@ class Player extends Entity {
       HP: this.HP,
       mX: this.mouseX,
       mY: this.mouseY,
-      score: this.score
+      score: this.score,
+      ammo: this.ammo,
+      clips: this.clips
     };
   } //Player.getUpdatePack()
 
@@ -244,34 +283,45 @@ class Bullet extends Entity {
     this.parent = params.parent;
     this.angle = params.angle;
 
-    this.spdX = Math.cos(params.angle/180*Math.PI) * 20;
-    this.spdY = Math.sin(params.angle/180*Math.PI) * 20;
+    this.spdX = Math.cos(params.angle/180*Math.PI) * 40;
+    this.spdY = Math.sin(params.angle/180*Math.PI) * 40;
     this.ID = Math.random();
     this.timer = 0;
     this.toRemove = false;
   } //Bullet.constructor()
 
   update(server) {
-    if( ++this.timer > 50 ) {
+    if( ++this.timer > 38 ) {
       this.toRemove = true;
     }
     super.update();
 
+    //Boundries check
+    if( this.x < 5 ) {
+      this.toRemove = true;
+    }
+    if( this.y < 5 ) {
+      this.toRemove = true;
+    }
+    if( this.x > 5000 ) {
+      this.toRemove = true;
+    }
+    if( this.y > 3000 ) {
+      this.toRemove = true;
+    }
+
     //COLLISION CHECK
     for( var i in server.players ) {
       var p = server.players[i];
-      if( this.getDistance(p) < 24 && this.parent !== p.ID ) {
-        p.HP -= 1;
+      if( this.getDistance(p) < 24 && this.parent !== p.ID && p.invincible !== true ) {
+        p.HP -= 5;
         if( p.HP <= 0 ) {
           var shooter = server.players[this.parent];
           if( shooter ) {
             shooter.score += 1;
           }
-          //#TODO: This is the dead player respawning
-          //Make it so they respawn after a short time, and at their team base
-          p.HP = p.maxHP;
-          p.x = Math.random() * 500;
-          p.y = Math.random() * 500;
+          //Respawn the dead player
+          p.respawn();
         }
         this.toRemove = true;
       }

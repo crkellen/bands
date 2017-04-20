@@ -2,7 +2,7 @@ const ctx = document.getElementById('canvas-game').getContext('2d');
 ctx.translate(0.5, 0.5);
 const ctxUI = document.getElementById('canvas-ui').getContext('2d');
 
-import { Game, Imgs, cPlayer, cBullet, Camera, Map } from './Game';
+import { Game, cPlayer, cBullet, Camera, Map } from './Game';
 var io = require('socket.io-client');
 //Replace with hosting IP (144.13.22.62) 'http://localhost'
 var socket = io();
@@ -30,11 +30,6 @@ $(document).ready( () => {
     joinGame(playerName, socket);
   }); //#play.click()
 
-  $('#canvas-ui').mousemove( (event) => {
-    let mousePos = getMousePos(cGame.ctx, event);
-    socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos});
-  });
-
   $('#player-name').keyup( (e) => {
     playerName = $('#player-name').val();
     let k = e.keyCode || e.which;
@@ -42,6 +37,16 @@ $(document).ready( () => {
       joinGame(playerName, socket);
     }
   }); //#player-name.keyup()
+
+  //canvas-ui is above canvas-game so check that for movement
+  $('#canvas-ui').mousemove( (event) => {
+    if( cGame.gameStarted !== true ) {
+      return;
+    }
+
+    let mousePos = getMousePos(cGame.ctx, event);
+    socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos});
+  });
 
   $(document).contextmenu( (e) => {
     e.preventDefault();
@@ -52,6 +57,7 @@ $(document).ready( () => {
       return;
     }
     let k = e.keyCode || e.which;
+
     switch(k) {
     case 87: //W
       socket.emit('keyPress', {inputID: 'up', state: true});
@@ -87,12 +93,14 @@ $(document).ready( () => {
       break;
     default: break;
     }
-  }).mousemove( (e) => {
+  }).click( (e) => {
     if( cGame.gameStarted !== true ) {
       return;
     }
-    let x = -cGame.ctx.canvas.clientWidth/2 + e.clientX - 8;
-    let y = -cGame.ctx.canvas.clientHeight/2 + e.clientY - 8;
+
+    //Calculate the angle from player to mouse
+    let x = -cGame.ctx.canvas.clientWidth/2 + e.clientX;
+    let y = -cGame.ctx.canvas.clientHeight/2 + e.clientY;
     //Check if within the deadzones
     let mouse = getMousePos(cGame.ctx, e);
     if( cGame.selfID !== null ) {
@@ -105,16 +113,13 @@ $(document).ready( () => {
     }
     let angle = Math.atan2(y, x) / Math.PI * 180;
     socket.emit('keyPress', {inputID: 'mouseAngle', state: angle});
-  }).click( () => {
-    if( cGame.gameStarted !== true ) {
-      return;
-    }
+
     if(cGame.canShoot === true) {
       cGame.canShoot = false;
       socket.emit('keyPress', {inputID: 'attack', state: true});
       setTimeout( () => {
         cGame.canShoot = true;
-      }, 750);
+      }, 500);
     }
   }); //$(document).keydown().keyup().mousemove().click()
 }); //$(document).ready()
@@ -167,6 +172,8 @@ socket.on('update', (data) => {
   for( let i = 0; i < data.player.length; i++ ) {
     let pack = data.player[i];
     let p = cGame.cPlayers[pack.ID];
+    //#FIXME: THIS MAY BE REDUNDANT CHECKS all the p.x !== undefined etc.
+    //#TODO: REMOVE IF REDUDANT
     if( p !== undefined ) {
       if( p.x !== undefined ) {
         p.x = pack.x;
@@ -191,6 +198,12 @@ socket.on('update', (data) => {
       }
       if( p.score !== undefined ) {
         p.score = pack.score;
+      }
+      if( p.ammo !== undefined ) {
+        p.ammo = pack.ammo;
+      }
+      if( p.clips !== undefined ) {
+        p.clips = pack.clips;
       }
     }
   } //for( i in data.player.length)
@@ -227,19 +240,9 @@ setInterval( () => {
   cGame.ctx.clearRect(0, 0, cGame.ctx.canvas.width, cGame.ctx.canvas.height);
   GameCamera.update();
   GameMap.draw(cGame.ctx, GameCamera.xView, GameCamera.yView);
-  //drawGrid();     //Draws only the grid when it updates
   drawEntities(); //Draws only the Entities
   drawUI();       //Draws only the UI when it updates
 }, 40);
-
-/*
-var drawGrid = () => {
-  let player = cGame.cPlayers[cGame.selfID];
-  let x = cGame.ctx.canvas.width/2 - player.x;
-  let y = cGame.ctx.canvas.height/2 - player.y;
-  cGame.ctx.drawImage(Imgs.grid, x, y);
-};
-*/
 
 var drawEntities = () => {
   //Each player object draws itself
@@ -253,23 +256,45 @@ var drawEntities = () => {
 };
 
 var drawUI = () => {
-  cGame.ctxUI.fillStyle = 'white';
+  //All players names and ammo
+  //Note: To prevent excessive drawing for unchanged values, name and ammo
+  //are drawn on the main canvas, and the UI canvas only updates when needed
   for( let p in cGame.cPlayers ) {
-    cGame.cPlayers[p].drawName(cGame, GameCamera.xView, GameCamera.yView);
-  }
-  if( cGame.prevScore === cGame.cPlayers[cGame.selfID].score ) {
-    return;
+    cGame.cPlayers[p].drawName(cGame.ctx, GameCamera.xView, GameCamera.yView);
+    cGame.cPlayers[p].drawAmmo(cGame.ctx, GameCamera.xView, GameCamera.yView);
   }
 
-  cGame.prevScore = cGame.cPlayers[cGame.selfID].score;
-  cGame.ctxUI.fillText(cGame.cPlayers[cGame.selfID].score, 0, 30);
+  //Low-changing Values
+  //Player Score
+  if( cGame.prevScore !== cGame.cPlayers[cGame.selfID].score ) {
+    cGame.UIUpdate = true;
+  }
+
+  //Player Clips
+  if( cGame.prevClipCount !== cGame.cPlayers[cGame.selfID].clips ) {
+    cGame.UIUpdate = true;
+  }
+
+  if( cGame.UIUpdate === true ) {
+    cGame.UIUpdate = false;
+
+    //Clear the screen
+    cGame.ctxUI.clearRect(0, 0, cGame.ctxUI.canvas.width, cGame.ctxUI.canvas.height);
+
+    //Background
+    cGame.ctxUI.fillStyle = 'white';
+    cGame.ctxUI.fillRect(0, 0, 200, 40);
+
+    cGame.ctxUI.fillStyle = 'red';
+
+    //Player Score
+    cGame.prevScore = cGame.cPlayers[cGame.selfID].score;
+    let scoreString = `Score: ${cGame.prevScore}`;
+    cGame.ctxUI.fillText(scoreString, 15, 30);
+
+    //Player Clips
+    cGame.prevClipCount = cGame.cPlayers[cGame.selfID].clips;
+    let clipString = `Clips: ${cGame.prevClipCount}/${cGame.cPlayers[cGame.selfID].maxClips}`;
+    cGame.ctxUI.fillText(clipString, 100, 30);
+  }
 };
-
-
-
-/*
-this.ctx.canvas.width = this.ctx.canvas.clientWidth;
-this.ctx.canvas.height = this.ctx.canvas.clientHeight;
-this.ctx.fillStyle = 'black';
-this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-*/

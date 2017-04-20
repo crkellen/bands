@@ -13,7 +13,11 @@ Imgs.grid.src = './../img/grid.png';
 export class Game {
   constructor(ctx, ctxUI) {
     this.ctx = ctx;
+    this.ctx.font = '12px Callibri';
     this.ctxUI = ctxUI;
+    //#TODO: Only need to update this once, unless I decide to change font
+    this.ctxUI.font = '20px Callibri';
+    this.UIUpdate = true; //Flag to update low-changing UI
 
     this.gameStarted = false;
 
@@ -36,6 +40,10 @@ export class cPlayer {
     this.mY = initPack.mY;
     this.maxHP = initPack.maxHP;
     this.score = initPack.score;
+    this.ammo = initPack.ammo;
+    this.maxAmmo = initPack.maxAmmo;
+    this.clips = initPack.clips;
+    this.maxClips = initPack.clips;
   } //cPlayer.constructor
 
   drawSelf(cGame, xView, yView) {
@@ -83,16 +91,30 @@ export class cPlayer {
 
   } //cPlayer.drawSelf()
 
-  drawName(cGame, xView, yView) {
-    //let x = this.x - cGame.cPlayers[cGame.selfID].x + cGame.ctx.canvas.width/2;
-    //let y = this.y - cGame.cPlayers[cGame.selfID].y + cGame.ctx.canvas.height/2;
-
+  drawName(ctxUI, xView, yView) {
     let x = this.x - xView;
     let y = this.y - yView;
 
-    cGame.ctx.fillText(this.name, x - this.name.length*2.5, y - 25);
-    //cGame.ctx.fillText(this.name, x - Imgs.player.width/2, y - 20);
+    //Background
+    ctxUI.fillStyle = 'white';
+    ctxUI.fillRect(x - 20, y - 35, 40, 12);
+
+    ctxUI.fillStyle = 'red';
+    ctxUI.fillText(this.name, x - this.name.length * 2.5, y - 25);
   } //cPlayer.drawName()
+
+  drawAmmo(ctxUI, xView, yView) {
+    let x = this.x - xView;
+    let y = this.y - yView;
+
+    //Background
+    ctxUI.fillStyle = 'white';
+    ctxUI.fillRect(x - 10, y + 8, 20, 12);
+
+    let ammoString = `${this.ammo}/${this.maxAmmo}`;
+    ctxUI.fillStyle = 'red';
+    ctxUI.fillText(ammoString, x - 8, y + 17);
+  }
 } //class cPlayer
 
 export class cBullet {
@@ -253,29 +275,8 @@ export class Map {
     ctx.canvas.width = this.width;
     ctx.canvas.height = this.height;
 
-    /*
-    let rows = ~~(this.width/44) + 1;
-    let cols = ~~(this.height/44) + 1;
-
-    let color = 'red';
-    ctx.save();
-    ctx.fillStyle = 'red';
-    for( let x = 0, i = 0; i < rows; x += 44, i++ ) {
-      ctx.beginPath();
-      for( let y = 0, j = 0; j < cols; y += 44, j++ ) {
-        ctx.rect(x, y, 40, 40);
-      }
-      color = (color === 'red' ? 'blue' : 'red');
-      ctx.fillStyle = color;
-      ctx.fill();
-      ctx.closePath();
-    }
-    ctx.restore();
-    */
-
     this.image = new Image();
     this.image.src = Imgs.grid.src;
-    //this.image.src = ctx.canvas.toDataURL('image/png');
 
     ctx = null;
   } //Map.generate()
