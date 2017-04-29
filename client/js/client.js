@@ -162,7 +162,7 @@ $(document).ready( () => {
       }
       break;
     } //switch( e.which )
-  }).onmousedown( (e) => {
+  }).mousedown( (e) => {
     //This exists to fix issue #42 (RMB does not work outside of firefox)
     if( cGame.gameStarted !== true ) {
       return;
@@ -173,7 +173,7 @@ $(document).ready( () => {
       socket.emit('keyPress', {inputID: 'switchMode'});
       break;
     } //switch( e.which )
-  }); //$(document).keydown().keyup().mousemove().click().onmousedown
+  }); //$(document).keydown().keyup().mousemove().click().onmousedown()
 }); //$(document).ready()
 
 $(window).on('beforeunload', () => {
