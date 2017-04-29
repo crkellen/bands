@@ -44,6 +44,11 @@ $(document).ready( () => {
       return;
     }
 
+    //If there is a significant lag, this can be undefined
+    if( cGame.cPlayers[cGame.selfID] === undefined ) {
+      return;
+    }
+
     //If player is in build mode
     if( cGame.cPlayers[cGame.selfID].mode === 1 ) {
       //Calculate grid square
@@ -109,6 +114,12 @@ $(document).ready( () => {
     if( cGame.gameStarted !== true ) {
       return;
     }
+
+    //If there is a significant lag, this can be undefined
+    if( cGame.cPlayers[cGame.selfID] === undefined ) {
+      return;
+    }
+
     let currentMode = cGame.cPlayers[cGame.selfID].mode;
     //Check for left or right mouse button
     switch( e.which ) {
