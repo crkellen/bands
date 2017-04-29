@@ -23,9 +23,11 @@ export class Game {
 
     this.cPlayers = {};
     this.cBullets = {};
+    this.cBlocks = {};
     this.selfID = null;
     this.prevScore = 0;
     this.canShoot = true;
+    this.canBuild = true;
   } //Game.constructor()
 } //class Game
 
@@ -44,9 +46,13 @@ export class cPlayer {
     this.maxAmmo = initPack.maxAmmo;
     this.clips = initPack.clips;
     this.maxClips = initPack.clips;
+    this.invincible = initPack.invincible;
+    this.mode = initPack.mode;
+    this.blocks = initPack.blocks;
+    this.maxBlocks = initPack.maxBlocks;
   } //cPlayer.constructor
 
-  drawSelf(cGame, xView, yView) {
+  drawSelf(ctx, xView, yView) {
     //let x = this.x - cGame.cPlayers[cGame.selfID].x + cGame.ctx.canvas.width/2;
     //let y = this.y - cGame.cPlayers[cGame.selfID].y + cGame.ctx.canvas.height/2;
 
@@ -55,22 +61,30 @@ export class cPlayer {
 
     //Health bar
     let HPWidth = 30 * this.HP / this.maxHP;
-    cGame.ctx.fillStyle = 'red';
-    cGame.ctx.fillRect(x - HPWidth/2, y + 25, HPWidth, 4);
+    ctx.fillStyle = 'red';
+    ctx.fillRect(x - HPWidth/2, y + 25, HPWidth, 4);
 
     //Player
     //let width = Imgs.player.width;
     //let height = Imgs.player.height;
-    cGame.ctx.beginPath();
-    cGame.ctx.arc(x, y, 20, 0, 2*Math.PI);
-    cGame.ctx.stroke();
-    //cGame.ctx.drawImage(Imgs.player, 0, 0, Imgs.player.width, Imgs.player.height, x - width/2, y - height/2, width, height);
-    //cGame.ctx.fillStyle = '#008BCC';
-    //cGame.ctx.fillRect(this.x, this.y, width, height);
+
+    //User feedback for respawn invincibility
+    if( this.invincible === true ) {
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+    } else {
+      ctx.strokeStyle = 'black'; //#TODO: This will change to team color later
+    }
+
+    ctx.beginPath();
+    ctx.arc(x, y, 20, 0, 2*Math.PI);
+    ctx.stroke();
+    //ctx.drawImage(Imgs.player, 0, 0, Imgs.player.width, Imgs.player.height, x - width/2, y - height/2, width, height);
+    //ctx.fillStyle = '#008BCC';
+    //ctx.fillRect(this.x, this.y, width, height);
 
     //Gun
-    let targetX = this.mX - cGame.ctx.canvas.width/2;
-    let targetY = this.mY - cGame.ctx.canvas.height/2;
+    let targetX = this.mX - ctx.canvas.width/2;
+    let targetY = this.mY - ctx.canvas.height/2;
     //Check if within the deadzones
     if( xView === 0 ) {
       targetX = this.mX - x;
@@ -81,39 +95,31 @@ export class cPlayer {
 
     let theta = Math.atan2(targetY, targetX);
 
-    cGame.ctx.save();
-    cGame.ctx.translate(x, y);
-    cGame.ctx.rotate(theta);
-    cGame.ctx.fillStyle = '#008BCC';
-    //cGame.ctx.drawImage(Imgs.gun, 0, 0);
-    cGame.ctx.fillRect(19/2 * -1, 8/2 * -1, 19, 8);
-    cGame.ctx.restore();
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(theta);
+    ctx.fillStyle = '#008BCC';
+    //ctx.drawImage(Imgs.gun, 0, 0);
+    ctx.fillRect(19/2 * -1, 8/2 * -1, 19, 8);
+    ctx.restore();
 
   } //cPlayer.drawSelf()
 
-  drawName(ctxUI, xView, yView) {
+  drawName(ctx, xView, yView) {
     let x = this.x - xView;
     let y = this.y - yView;
 
-    //Background
-    ctxUI.fillStyle = 'white';
-    ctxUI.fillRect(x - 20, y - 35, 40, 12);
-
-    ctxUI.fillStyle = 'red';
-    ctxUI.fillText(this.name, x - this.name.length * 2.5, y - 25);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.fillText(this.name, x - this.name.length * 2.5, y - 25);
   } //cPlayer.drawName()
 
-  drawAmmo(ctxUI, xView, yView) {
+  drawAmmo(ctx, xView, yView) {
     let x = this.x - xView;
     let y = this.y - yView;
 
-    //Background
-    ctxUI.fillStyle = 'white';
-    ctxUI.fillRect(x - 10, y + 8, 20, 12);
-
     let ammoString = `${this.ammo}/${this.maxAmmo}`;
-    ctxUI.fillStyle = 'red';
-    ctxUI.fillText(ammoString, x - 8, y + 17);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.fillText(ammoString, x - 8, y + 17);
   }
 } //class cPlayer
 
@@ -124,7 +130,7 @@ export class cBullet {
     this.y = initPack.y;
   } //cBullet.constructor()
 
-  drawSelf(cGame, xView, yView) {
+  drawSelf(ctx, xView, yView) {
     //let width = Imgs.bullet.width/2;
     //let height = Imgs.bullet.height/2;
     //let x = this.x - cGame.cPlayers[cGame.selfID].x + cGame.ctx.canvas.width/2;
@@ -133,12 +139,29 @@ export class cBullet {
     let y = this.y - yView;
 
 
-    cGame.ctx.beginPath();
-    cGame.ctx.arc(x, y, 5, 0, 2*Math.PI);
-    cGame.ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, 2*Math.PI);
+    ctx.stroke();
     //cGame.ctx.drawImage(Imgs.bullet, 0, 0, Imgs.bullet.width, Imgs.bullet.height, x - width/2, y - height/2, width, height);
   } //cBullet.drawSelf()
 } //class cBullet
+
+export class cBlock {
+  constructor(initPack) {
+    this.ID = initPack.ID;
+    this.x = initPack.x;
+    this.y = initPack.y;
+    this.HP = initPack.HP;
+  } //cBlock.constructor()
+
+  drawSelf(ctx, xView, yView) {
+    let x = this.x - xView;
+    let y = this.y - yView;
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.fillRect(x, y, 80, 80);
+  } //cBlock.drawSelf()
+} //class cBlock
 
 class Rectangle {
   constructor(params) {

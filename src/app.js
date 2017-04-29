@@ -75,6 +75,7 @@ setInterval( () => {
   }
 }, 1000/25); //END SERVER GAME LOOP
 
+/* #TODO random int generator for placement not currently used, not deprecated
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
-}
+}*/

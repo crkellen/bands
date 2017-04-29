@@ -2,7 +2,7 @@ const ctx = document.getElementById('canvas-game').getContext('2d');
 ctx.translate(0.5, 0.5);
 const ctxUI = document.getElementById('canvas-ui').getContext('2d');
 
-import { Game, cPlayer, cBullet, Camera, Map } from './Game';
+import { Game, cPlayer, cBullet, cBlock, Camera, Map } from './Game';
 var io = require('socket.io-client');
 //Replace with hosting IP (144.13.22.62) 'http://localhost'
 var socket = io();
@@ -97,30 +97,51 @@ $(document).ready( () => {
     if( cGame.gameStarted !== true ) {
       return;
     }
+    let currentMode = cGame.cPlayers[cGame.selfID].mode;
+    //Check for left or right mouse button
+    switch( e.which ) {
+    case 1: //Left mouse button
+      if( currentMode === 0 ) {         //Weapon mode
+        //Calculate the angle from player to mouse
+        let x = -cGame.ctx.canvas.clientWidth/2 + e.clientX;
+        let y = -cGame.ctx.canvas.clientHeight/2 + e.clientY;
+        //Check if within the deadzones
+        let mouse = getMousePos(cGame.ctx, e);
+        if( cGame.selfID !== null ) {
+          if( GameCamera.xView === 0 ) {
+            x = mouse.x - cGame.cPlayers[cGame.selfID].x - GameCamera.xView;
+          }
+          if( GameCamera.yView === 0 ) {
+            y = mouse.y - cGame.cPlayers[cGame.selfID].y - GameCamera.yView;
+          }
+        }
+        //Update mouse angle
+        let angle = Math.atan2(y, x) / Math.PI * 180;
+        socket.emit('keyPress', {inputID: 'mouseAngle', state: angle});
 
-    //Calculate the angle from player to mouse
-    let x = -cGame.ctx.canvas.clientWidth/2 + e.clientX;
-    let y = -cGame.ctx.canvas.clientHeight/2 + e.clientY;
-    //Check if within the deadzones
-    let mouse = getMousePos(cGame.ctx, e);
-    if( cGame.selfID !== null ) {
-      if( GameCamera.xView === 0 ) {
-        x = mouse.x - cGame.cPlayers[cGame.selfID].x - GameCamera.xView;
+        //Shoot
+        if(cGame.canShoot === true) {
+          cGame.canShoot = false;
+          socket.emit('keyPress', {inputID: 'attack', state: true});
+          setTimeout( () => {
+            cGame.canShoot = true;
+          }, 500);
+        }
+      } else if( currentMode === 1 ) {  //Building mode
+        //Place block
+        if(cGame.canBuild === true) {
+          cGame.canBuild = false;
+          socket.emit('keyPress', {inputID: 'attack', state: true});
+          setTimeout( () => {
+            cGame.canBuild = true;
+          }, 300);
+        }
       }
-      if( GameCamera.yView === 0 ) {
-        y = mouse.y - cGame.cPlayers[cGame.selfID].y - GameCamera.yView;
-      }
-    }
-    let angle = Math.atan2(y, x) / Math.PI * 180;
-    socket.emit('keyPress', {inputID: 'mouseAngle', state: angle});
-
-    if(cGame.canShoot === true) {
-      cGame.canShoot = false;
-      socket.emit('keyPress', {inputID: 'attack', state: true});
-      setTimeout( () => {
-        cGame.canShoot = true;
-      }, 500);
-    }
+      break;
+    case 3: //Right mouse button
+      socket.emit('keyPress', {inputID: 'switchMode'});
+      break;
+    } //switch( e.which )
   }); //$(document).keydown().keyup().mousemove().click()
 }); //$(document).ready()
 
@@ -154,16 +175,23 @@ socket.on('init', (data) => {
     cGame.selfID = data.selfID;
     makeCamera = true;
   }
+
+  //Players
   for( let i = 0; i < data.player.length; i++ ) {
     cGame.cPlayers[data.player[i].ID] = new cPlayer(data.player[i]);
   }
-
   if( makeCamera ) {
     GameCamera.follow(cGame.cPlayers[cGame.selfID], cGame.ctx.canvas.width/2, cGame.ctx.canvas.height/2);
   }
 
+  //Bullets
   for( let j = 0; j < data.bullet.length; j++ ) {
     cGame.cBullets[data.bullet[j].ID] = new cBullet(data.bullet[j]);
+  }
+
+  //Blocks
+  for( let k = 0; k < data.block.length; k++ ) {
+    cGame.cBlocks[data.block[k].ID] = new cBlock(data.block[k]);
   }
 }); //'init'
 
@@ -205,6 +233,15 @@ socket.on('update', (data) => {
       if( p.clips !== undefined ) {
         p.clips = pack.clips;
       }
+      if( p.invincible !== undefined ) {
+        p.invincible = pack.invincible;
+      }
+      if( p.mode !== undefined ) {
+        p.mode = pack.mode;
+      }
+      if( p.blocks !== undefined ) {
+        p.blocks = pack.blocks;
+      }
     }
   } //for( i in data.player.length)
 
@@ -221,14 +258,31 @@ socket.on('update', (data) => {
       }
     }
   } //for( j in data.bullet.length)
+
+  //For all blocks, if there is data, update it
+  for( let k = 0; k < data.block.length; k++ ) {
+    let pack = data.block[k];
+    let bl = cGame.cBlocks[data.block[k].ID];
+    if( bl !== undefined ) {
+      if( bl.HP !== undefined ) {
+        bl.HP = pack.HP;
+      }
+    }
+  } //for( k in data.block.length)
 }); //'update'
 
 socket.on('remove', (data) => {
+  //Players
   for( let i = 0; i < data.player.length; i++ ) {
     delete cGame.cPlayers[data.player[i]];
   }
+  //Bullets
   for( let j = 0; j < data.bullet.length; j++ ) {
     delete cGame.cBullets[data.bullet[j]];
+  }
+  //Blocks
+  for( let k = 0; k < data.block.length; k++ ) {
+    delete cGame.cBlocks[data.block[k]];
   }
 }); //'remove'
 
@@ -247,11 +301,15 @@ setInterval( () => {
 var drawEntities = () => {
   //Each player object draws itself
   for( let p in cGame.cPlayers ) {
-    cGame.cPlayers[p].drawSelf(cGame, GameCamera.xView, GameCamera.yView);
+    cGame.cPlayers[p].drawSelf(cGame.ctx, GameCamera.xView, GameCamera.yView);
   }
   //Each bullet object draws itself
   for( let b in cGame.cBullets ) {
-    cGame.cBullets[b].drawSelf(cGame, GameCamera.xView, GameCamera.yView);
+    cGame.cBullets[b].drawSelf(cGame.ctx, GameCamera.xView, GameCamera.yView);
+  }
+  //Each block object draws itself
+  for( let bl in cGame.cBlocks ) {
+    cGame.cBlocks[bl].drawSelf(cGame.ctx, GameCamera.xView, GameCamera.yView);
   }
 };
 
@@ -282,10 +340,10 @@ var drawUI = () => {
     cGame.ctxUI.clearRect(0, 0, cGame.ctxUI.canvas.width, cGame.ctxUI.canvas.height);
 
     //Background
-    cGame.ctxUI.fillStyle = 'white';
+    cGame.ctxUI.fillStyle = 'rgba(200, 200, 200, 0.3)';
     cGame.ctxUI.fillRect(0, 0, 200, 40);
 
-    cGame.ctxUI.fillStyle = 'red';
+    cGame.ctxUI.fillStyle = 'rgba(255, 255, 255, 0.5)';
 
     //Player Score
     cGame.prevScore = cGame.cPlayers[cGame.selfID].score;
