@@ -19,13 +19,20 @@ export class Game {
     this.ctxUI.font = '20px Callibri';
     this.UIUpdate = true; //Flag to update low-changing UI
 
+    //Game is started after player enters name
     this.gameStarted = false;
 
     this.cPlayers = {};
     this.cBullets = {};
     this.cBlocks = {};
     this.selfID = null;
+
+    //UI Updaters
     this.prevScore = 0;
+    this.prevClipCount = 0;
+    this.prevBlockCount = 0;
+
+    //Mouseclick flags
     this.canShoot = true;
     this.canBuild = true;
   } //Game.constructor()
@@ -102,7 +109,6 @@ export class cPlayer {
     //ctx.drawImage(Imgs.gun, 0, 0);
     ctx.fillRect(19/2 * -1, 8/2 * -1, 19, 8);
     ctx.restore();
-
   } //cPlayer.drawSelf()
 
   drawName(ctx, xView, yView) {
@@ -120,7 +126,7 @@ export class cPlayer {
     let ammoString = `${this.ammo}/${this.maxAmmo}`;
     ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
     ctx.fillText(ammoString, x - 8, y + 17);
-  }
+  } //cPlayer.drawAmmo()
 } //class cPlayer
 
 export class cBullet {

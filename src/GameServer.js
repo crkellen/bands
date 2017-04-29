@@ -164,6 +164,7 @@ class Player extends Entity {
     this.blocks = 10; //# of blocks held
     this.maxBlocks = 10;
 
+    //Collision checks
     this.width = 15;
     this.height = 15;
   } //Player.constructor()
@@ -292,6 +293,7 @@ class Player extends Entity {
     this.y = Math.random() * 500;
     this.ammo = this.maxAmmo;
     this.clips = this.maxClips;
+    this.blocks = this.maxBlocks;
     this.invincible = true;
     setTimeout(() => {
       this.invincible = false;
@@ -393,6 +395,10 @@ class Bullet extends Entity {
     this.ID = Math.random(); //#TODO replace with real ID system
     this.timer = 0;
     this.toRemove = false;
+
+    //Collision checks
+    this.width = 5;
+    this.height = 5;
   } //Bullet.constructor()
 
   update(server) {
@@ -435,7 +441,13 @@ class Bullet extends Entity {
     //COLLISION CHECK - Blocks
     for( var j in server.blocks ) {
       var bl = server.blocks[j];
-      if( this.getDistance(bl) < 24 ) {
+      let other = {
+        x: bl.x,
+        y: bl.y,
+        width: bl.width,
+        height: bl.height
+      };
+      if( this.isColliding(other) ) {
         bl.HP -= 1;
         this.toRemove = true;
       }
@@ -445,6 +457,13 @@ class Bullet extends Entity {
   getDistance(pt) {
     return Math.sqrt(Math.pow(this.x - pt.x, 2) + Math.pow(this.y - pt.y, 2));
   } //Bullet.getDistance()
+
+  isColliding(other) {
+    return !( other.x + other.width < this.x
+      || this.x + this.width < other.x
+      || other.y + other.height < this.y
+      || this.y + this.height < other.y );
+  } //Bullet.isColliding()
 
   getInitPack() {
     return {
@@ -469,9 +488,11 @@ class Block {
     this.y = params.y;
     this.ID = Math.random(); //#TODO replace with real ID system
     this.HP = 3;
+    this.toRemove = false;
+
+    //Collision checks
     this.width = 80;
     this.height = 80;
-    this.toRemove = false;
   } //Block.constructor()
 
   update() {

@@ -333,6 +333,11 @@ var drawUI = () => {
     cGame.UIUpdate = true;
   }
 
+  //Player Clips
+  if( cGame.prevBlockCount !== cGame.cPlayers[cGame.selfID].blocks ) {
+    cGame.UIUpdate = true;
+  }
+
   if( cGame.UIUpdate === true ) {
     cGame.UIUpdate = false;
 
@@ -341,7 +346,7 @@ var drawUI = () => {
 
     //Background
     cGame.ctxUI.fillStyle = 'rgba(200, 200, 200, 0.3)';
-    cGame.ctxUI.fillRect(0, 0, 200, 40);
+    cGame.ctxUI.fillRect(0, 0, 330, 40);
 
     cGame.ctxUI.fillStyle = 'rgba(255, 255, 255, 0.5)';
 
@@ -354,5 +359,10 @@ var drawUI = () => {
     cGame.prevClipCount = cGame.cPlayers[cGame.selfID].clips;
     let clipString = `Clips: ${cGame.prevClipCount}/${cGame.cPlayers[cGame.selfID].maxClips}`;
     cGame.ctxUI.fillText(clipString, 100, 30);
+
+    //Player Blocks
+    cGame.prevBlockCount = cGame.cPlayers[cGame.selfID].blocks;
+    let blockString = `Blocks: ${cGame.prevBlockCount}/${cGame.cPlayers[cGame.selfID].maxBlocks}`;
+    cGame.ctxUI.fillText(blockString, 200, 30);
   }
 };
