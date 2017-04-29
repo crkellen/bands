@@ -36,7 +36,7 @@ export class GameServer {
     var pack = [];
     for( let bl in this.blocks ) {
       let block = this.blocks[bl];
-      block.update(this);
+      block.update();
       if( block.toRemove === true ) {
         delete this.blocks[bl];
         this.removePack.block.push(block.ID);
@@ -163,6 +163,9 @@ class Player extends Entity {
     this.mode = 0; //0 for weapon, 1 for block
     this.blocks = 10; //# of blocks held
     this.maxBlocks = 10;
+
+    this.width = 15;
+    this.height = 15;
   } //Player.constructor()
 
   update(server) {
@@ -182,6 +185,32 @@ class Player extends Entity {
     if( this.y > 3000 ) {
       this.y = 3000;
     }
+
+    //COLLISION CHECK - Blocks
+    for( var i in server.blocks ) {
+      var bl = server.blocks[i];
+      let other = {
+        x: bl.x,
+        y: bl.y,
+        width: 95,
+        height: 95
+      };
+
+      if( this.isColliding(other) ) {
+        if( this.pressingRight === true ) {
+          this.x -= this.spdX;
+        }
+        if( this.pressingLeft === true ) {
+          this.x -= this.spdX;
+        }
+        if( this.pressingDown === true ) {
+          this.y -= this.spdY;
+        }
+        if( this.pressingUp === true ) {
+          this.y -= this.spdY;
+        }
+      }
+    } //for(var i in Player.list) --- Collision check
 
 
     //If player is in Weapon Mode
@@ -228,6 +257,13 @@ class Player extends Entity {
       this.spdY = 0;
     }
   } //Player.updateSpd()
+
+  isColliding(other) {
+    return !( other.x + other.width < this.x
+      || this.x + this.width < other.x
+      || other.y + other.height < this.y
+      || this.y + this.height < other.y );
+  } //Player.isColliding()
 
   shoot(server) {
     let b = new Bullet({
@@ -438,75 +474,11 @@ class Block {
     this.toRemove = false;
   } //Block.constructor()
 
-  update(server) {
+  update() {
     if( this.HP <= 0 ) {
       this.toRemove = true;
     }
-
-    //COLLISION CHECK - Players
-    for( var i in server.players ) {
-      var p = server.players[i];
-      let other = {
-        x: p.x - 20, //x - player width
-        y: p.y - 20, //y - player height
-        width: 40,
-        height: 40
-      };
-
-      let result = this.isColliding(other);
-      if( result.outcome === true ) {
-        console.info(result.direction);
-        switch( result.direction ) {
-        case 0: //Collided with left side
-          p.x = this.x - 20;
-          break;
-        case 1: //Collided with right side
-          p.x = this.x + 100;
-          break;
-        case 2: //Collided with top side
-          p.y = this.y - 20;
-          break;
-        case 3: //Collided with bottom side
-          p.y = this.y + 100;
-          break;
-        }
-      }
-    } //for(var i in Player.list) --- Collision check
   } //Block.update()
-
-  isColliding(other) {
-    let result = {
-      outcome: false,
-      direction: -1
-    };
-
-    //If there is an actual collision, figure out which side it came from
-    if( this.AABBCheck(other) ) {
-      if( !other.x + other.width < this.x ) {
-        result.outcome = true;
-        result.direction = 0;
-      } else if( !this.x + this.width < other.x ) {
-        result.outcome = true;
-        result.direction = 1;
-      } else if( !other.y + other.height < this.y ) {
-        result.outcome = true;
-        result.direction = 2;
-      } else if( !this.y + this.height < other.y ) {
-        result.outcome = true;
-        result.direction = 3;
-      }
-    }
-
-    return result;
-  } //Block.isColliding()
-
-  AABBCheck(other) {
-    return !( other.x + other.width < this.x || this.x + this.width < other.x || other.y + other.height < this.y || this.y + this.height < other.y );
-  } //Block.AABBCheck()
-
-  getDistance(pt) {
-    return Math.sqrt(Math.pow(this.x - pt.x, 2) + Math.pow(this.y - pt.y, 2));
-  } //Block.getDistance()
 
   getInitPack() {
     return {
