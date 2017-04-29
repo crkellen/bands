@@ -44,6 +44,18 @@ $(document).ready( () => {
       return;
     }
 
+    //If player is in build mode
+    if( cGame.cPlayers[cGame.selfID].mode === 1 ) {
+      //Calculate grid square
+      let localPlayer = cGame.cPlayers[cGame.selfID];
+      let x = localPlayer.x - GameCamera.xView;
+      let y = localPlayer.y - GameCamera.yView;
+      let gridLocX = localPlayer.mX - x;
+      let gridLocY = localPlayer.mY - y;
+
+      cGame.selectedGrid = findSelectedGrid(gridLocX, gridLocY);
+    }
+
     let mousePos = getMousePos(cGame.ctx, event);
     socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos});
   });
@@ -167,6 +179,32 @@ function getMousePos(ctx, e) {
   };
 } //getMousePos()
 
+function findSelectedGrid(gX, gY) {
+  let gridSelected = -1; //Grid selected follows the numpad layout
+  if( (gX > -140 && gX < -40) && (gY > -140 && gY < -40) ) {      //Top Left
+    gridSelected = 7;
+  } else if( (gX > -40 && gX < 40) && (gY > -140 && gY < -40) ) { //Top Middle
+    gridSelected = 8;
+  } else if( (gX > 40 && gX < 140) && (gY > -140 && gY < -40) ) { //Top Right
+    gridSelected = 9;
+  } else if( (gX > -140 && gX < -40) && (gY > -40 && gY < 40) ) { //Middle Left
+    gridSelected = 4;
+  } else if( (gX > -40 && gX < 40) && (gY > -40 && gY < 40) ) {   //Middle Middle
+    gridSelected = -1; //Cannot place block where you are
+  } else if( (gX > 40 && gX < 140) && (gY > -40 && gY < 40) ) {   //Middle Right
+    gridSelected = 6;
+  } else if( (gX > -140 && gX < -40) && (gY > 40 && gY < 140) ) { //Bottom Left
+    gridSelected = 1;
+  } else if( (gX > -40 && gX < 40) && (gY > 40 && gY < 140) ) { //Bottom Middle
+    gridSelected = 2;
+  } else if( (gX > 40 && gX < 140) && (gY > 40 && gY < 140) ) { //Bottom Right
+    gridSelected = 3;
+  } else {
+    gridSelected = -1; //Out of bounds
+  }
+  return gridSelected;
+} //findSelectedGrid()
+
 //##############################################################
 
 socket.on('init', (data) => {
@@ -203,6 +241,12 @@ socket.on('update', (data) => {
     //#FIXME: THIS MAY BE REDUNDANT CHECKS all the p.x !== undefined etc.
     //#TODO: REMOVE IF REDUDANT
     if( p !== undefined ) {
+      if( p.gridX !== undefined ) {
+        p.gridX = pack.gridX;
+      }
+      if( p.gridY !== undefined ) {
+        p.gridY = pack.gridY;
+      }
       if( p.x !== undefined ) {
         p.x = pack.x;
         if( p.ID === cGame.selfID ) {
@@ -264,6 +308,12 @@ socket.on('update', (data) => {
     let pack = data.block[k];
     let bl = cGame.cBlocks[data.block[k].ID];
     if( bl !== undefined ) {
+      if( bl.gridX !== undefined ) {
+        bl.gridX = pack.gridX;
+      }
+      if( bl.gridY !== undefined ) {
+        bl.gridY = pack.gridY;
+      }
       if( bl.HP !== undefined ) {
         bl.HP = pack.HP;
       }
@@ -320,6 +370,40 @@ var drawUI = () => {
   for( let p in cGame.cPlayers ) {
     cGame.cPlayers[p].drawName(cGame.ctx, GameCamera.xView, GameCamera.yView);
     cGame.cPlayers[p].drawAmmo(cGame.ctx, GameCamera.xView, GameCamera.yView);
+  }
+
+  //If player is in build mode (check has already happened)
+  //And player is above a grid which is not invalid for placement
+  if( cGame.selectedGrid !== -1 ) {
+    //Show where the block will be placed
+    cGame.ctx.fillStyle = 'rgba(200, 200, 200, 0.3)';
+    //#TODO: Replace these hardcoded values with actual grid spaces
+    switch( cGame.selectedGrid ) {
+    case 1: //Bottom Left
+      cGame.ctx.fillRect(0, 160, 80, 80);
+      break;
+    case 2: //Bottom Middle
+      cGame.ctx.fillRect(80, 160, 80, 80);
+      break;
+    case 3: //Bottom Right
+      cGame.ctx.fillRect(160, 160, 80, 80);
+      break;
+    case 4: //Middle Left
+      cGame.ctx.fillRect(0, 80, 80, 80);
+      break;
+    case 6: //Middle Right
+      cGame.ctx.fillRect(160, 80, 80, 80);
+      break;
+    case 7: //Top Left
+      cGame.ctx.fillRect(0, 0, 80, 80);
+      break;
+    case 8: //Top Middle
+      cGame.ctx.fillRect(80, 0, 80, 80);
+      break;
+    case 9: //Top Right
+      cGame.ctx.fillRect(160, 0, 80, 80);
+      break;
+    }
   }
 
   //Low-changing Values

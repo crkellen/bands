@@ -31,6 +31,7 @@ export class Game {
     this.prevScore = 0;
     this.prevClipCount = 0;
     this.prevBlockCount = 0;
+    this.selectedGrid = -1;
 
     //Mouseclick flags
     this.canShoot = true;
@@ -42,6 +43,8 @@ export class cPlayer {
   constructor(initPack) {
     this.ID = initPack.ID;
     this.name = initPack.name;
+    this.gridX = initPack.gridX;
+    this.gridY = initPack.gridY;
     this.x = initPack.x;
     this.y = initPack.y;
     this.HP = initPack.HP;
@@ -155,6 +158,8 @@ export class cBullet {
 export class cBlock {
   constructor(initPack) {
     this.ID = initPack.ID;
+    this.gridX = initPack.gridX;
+    this.gridY = initPack.gridY;
     this.x = initPack.x;
     this.y = initPack.y;
     this.HP = initPack.HP;

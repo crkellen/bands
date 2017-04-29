@@ -5,13 +5,43 @@ export class GameServer {
     this.blocks = {};
     this.initPack = {player: [], bullet: [], block: []};
     this.removePack = {player: [], bullet: [], block: []};
-  } //GameServer constructor()
+    this.grid = []; //0, 1, 2 --- Empty, Player, Wall
+    this.worldWidth = 480; //#TODO: temp values
+    this.worldHeight = 480;
+    this.mapWidth = this.worldWidth / 80; //TEMP: 6
+    this.mapHeight = this.worldHeight / 80; //TEMP: 6
+
+    this.initializeGrid();
+  } //GameServer.constructor()
+
+  initializeGrid() {
+    //Create as many rows as the map's height
+    for( let i = 0; i < this.mapHeight; i++ ) {
+      this.grid.push([]);
+      //Inside each row, create as many empty grid tiles as map's width
+      for( let j = 0; j < this.mapWidth; j++ ) {
+        this.grid[i].push(0);
+      }
+    }
+    /*Example of what it looks like after init:
+    [
+			[0,0,0,0,0,0,...0],
+			[0,0,0,0,0,0,...0],
+			...,
+			[0,0,0,0,0,0,...0]
+		]
+    */
+  } //GameServer.initializeGrid()
 
   playerUpdate() {
     var pack = [];
     for( let p in this.players ) {
       let player = this.players[p];
       player.update(this);
+      player.gridX = Math.floor((player.x / this.worldWidth) * 6);
+      player.gridY = Math.floor((player.y / this.worldHeight) * 6);
+      this.grid[player.gridY][player.gridX] = 1;
+
       pack.push(player.getUpdatePack());
     }
     return pack;
@@ -142,6 +172,9 @@ class Player extends Entity {
   constructor(params) {
     super(params);
     this.name = params.name;
+
+    this.gridX = -1;
+    this.gridY = -1;
 
     this.pressingLeft = false;
     this.pressingRight = false;
@@ -314,6 +347,8 @@ class Player extends Entity {
     return {
       ID: this.ID,
       name: this.name,
+      gridX: this.gridX,
+      gridY: this.gridY,
       x: this.x,
       y: this.y,
       HP: this.HP,
@@ -335,6 +370,8 @@ class Player extends Entity {
   getUpdatePack() {
     return {
       ID: this.ID,
+      gridX: this.gridX,
+      gridY: this.gridY,
       x: this.x,
       y: this.y,
       HP: this.HP,
@@ -484,9 +521,12 @@ class Bullet extends Entity {
 
 class Block {
   constructor(params) {
+    this.ID = Math.random(); //#TODO replace with real ID system
+    this.gridX = -1;
+    this.gridY = -1;
+
     this.x = params.x;
     this.y = params.y;
-    this.ID = Math.random(); //#TODO replace with real ID system
     this.HP = 3;
     this.toRemove = false;
 
@@ -504,6 +544,8 @@ class Block {
   getInitPack() {
     return {
       ID: this.ID,
+      gridX: this.gridX,
+      gridY: this.gridY,
       x: this.x,
       y: this.y,
       HP: this.HP
@@ -513,6 +555,8 @@ class Block {
   getUpdatePack() {
     return {
       ID: this.ID,
+      gridX: this.gridX,
+      gridY: this.gridY,
       HP: this.HP
     };
   } //Block.getUpdatePack()
