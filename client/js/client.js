@@ -327,12 +327,6 @@ socket.on('update', (data) => {
     let pack = data.block[k];
     let bl = cGame.cBlocks[data.block[k].ID];
     if( bl !== undefined ) {
-      if( bl.gridX !== undefined ) {
-        bl.gridX = pack.gridX;
-      }
-      if( bl.gridY !== undefined ) {
-        bl.gridY = pack.gridY;
-      }
       if( bl.HP !== undefined ) {
         bl.HP = pack.HP;
       }
