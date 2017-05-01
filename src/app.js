@@ -73,6 +73,9 @@ setInterval( () => {
     socket.emit('remove', packs.removePack);
     socket.emit('update', packs.updatePack);
   }
+  if( ServerGame.mustUpdateGrid === true ) {
+    ServerGame.updateGrid();
+  }
 }, 1000/25); //END SERVER GAME LOOP
 
 /* #TODO random int generator for placement not currently used, not deprecated

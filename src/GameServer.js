@@ -16,6 +16,7 @@ export class GameServer {
     this.worldHeight = 480;
     this.mapWidth = this.worldWidth / TILE_WIDTH; //TEMP: 6
     this.mapHeight = this.worldHeight / TILE_HEIGHT; //TEMP: 6
+    this.mustUpdateGrid = false;
 
     this.initializeGrid();
   } //GameServer.constructor()
@@ -54,12 +55,6 @@ export class GameServer {
       }
     }
 
-    /* DEBUG #TODO: REMOVE
-    for( let i = 0; i < this.mapHeight; i++ ) {
-      for( let j = 0; j < this.mapWidth; j++ ) {
-        console.info(`[${this.grid[i][j].x},${this.grid[i][j].y}] `);
-      }
-    } */
     /*Example of what it looks like after init:
     [
 			[0,0,0,0,0,0,...0],
@@ -70,304 +65,109 @@ export class GameServer {
     */
   } //GameServer.initializeGrid()
 
-  gridUpdate(player) {
-    //The player has already been updated, now update the grid
-    let mustUpdateGrid = false;
+  updateGrid() {
 
+
+    console.info(`
+      [${this.grid[0][0].occupying}][${this.grid[0][1].occupying}]
+      [${this.grid[1][0].occupying}][${this.grid[1][1].occupying}]`);
+
+  } //GameServer.updateGrid()
+
+  checkPlayerGridPos(player) {
+    //Checks to see if the player has changed his grid position or overlaps.
+    //If the player has, this.mustUpdateGrid is set to true to rebuild the grid.
+    //This means that if ANY player has updated, the grid will be updated.
+    //However, the grid is only updated after all players are checked, so it is
+    //only ever updated once per server loop.
+
+    //Player world position (player.x, player.y) has been updated to current values already
+
+    //Player's current gridX and gridY
     let oldGridX = player.gridX;
     let oldGridY = player.gridY;
-    //Get the updated player gridX and gridY
+    //Get the (possibly) updated player gridX and gridY
     let newGridX = Math.floor((player.x / TILE_WIDTH));
     let newGridY = Math.floor((player.y / TILE_HEIGHT));
-
-    //Must recheck overlap status every time we update
-    //If it's still false after all overlap checks and player.isOverlapping
-    //Is true for the same overlap, then we need to update the grid
-    let overlaps = {
-      left: false,
-      right: false,
-      top: false,
-      bottom: false,
-      topLeft: false,
-      topRight: false,
-      bottomLeft: false,
-      bottomRight: false,
-      center: true
-    };
 
     //If the player has just been spawned his values have not been set
     if( player.gridX === -1 ) { //#TODO: replace this check with a variable (player.isInitialized)
       player.gridX = newGridX;
       player.gridY = newGridY;
-      //Set previous position to our current position for default values
-      player.prevPos.center = {x: player.gridX, y: player.gridY};
-      mustUpdateGrid = true;
+      this.mustUpdateGrid = true;
+      //Fresh spawns will always be exactly inside a grid tile, no need to check overlaps
+      return;
     }
 
-    //If the player has moved to a new grid tile
-    if( newGridX !== player.gridX ) {
-      //Replace the old position with empty space
-      this.grid[player.gridY][oldGridX].updateOccupying(this, 0);
+    //#TODO this could be possibly optimized to only check for overlaps.
+    //#TODO however, this covers respawning.
+    //If the player has moved to a new grid tile (whole new tile)
+    //THIS UPDATES THE PLAYER'S CURRENT GRID POSITION
+    if( newGridX !== oldGridX ) {
+      //Update player's current gridX to newGridX
       player.gridX = newGridX;
-      mustUpdateGrid = true;
+      //Player is in a new position, must update the grid
+      this.mustUpdateGrid = true;
     }
-    if( newGridY !== player.gridY ) {
-      //Replace the old position with empty space
-      this.grid[oldGridY][player.gridX].updateOccupying(this, 0);
+    if( newGridY !== oldGridY ) {
+      //Update player's current gridY to newGridY
       player.gridY = newGridY;
-      mustUpdateGrid = true;
+      //Player is in a new position, must update the grid
+      this.mustUpdateGrid = true;
     }
 
-    //If Player has moved to a new grid tile, update the grid to show that
-    if( mustUpdateGrid === true ) {
-      this.grid[player.gridY][player.gridX].updateOccupying(this, 2);
-      //Also update the previous position flag if not first pass
-      if( oldGridX !== -1 ) {
-        player.isOverlapping.center = true;
-      }
-    }
+    //Calculate any overlaps the player is currently on
+    //THIS IS STORED FOR UPDATING THE GRID, BUT DOES NOT AFFECT HIS GRID POSITION
 
     //Get the player's position inside the grid tile he is in
+    //Center of tile is 40,40. Top left is 0,0. Bottom left is 80,80.
     let innerGridX = player.x - player.gridX * TILE_WIDTH;
     let innerGridY = player.y - player.gridY * TILE_HEIGHT;
 
+
     //If the player's position inside of the tile is overlapping with another tile
-    //These values are currently hardcoded. They are based off the player radius
-    if( innerGridX < 20 ) {
-      //Player overlapping with left tile neighbor
-      overlaps.center = false; //True here means player is not overlapping at all
-      overlaps.left = true;
-      this.grid[player.gridY][player.gridX-1].updateOccupying(this, 2);
-      //If we updated the grid, update our previous position
-      if( player.isOverlapping.left !== true ) {
-        player.isOverlapping.left = true;
-        player.prevPos.left = {x: player.gridX-1, y: player.gridY};
-      }
+    //These values are currently hardcoded.
+    //They are based off the player radius (20) and speed (5)
+
+    //LEFT, RIGHT, TOP, BOTTOM
+    if( innerGridX < 20 ) {            //PLAYER OVERLAP LEFT OF CURRENT TILE
+      player.isOverlapping.left = true;
     }
-    if( innerGridX > 60 ) {
-      //Player overlapping with right tile neighbor
-      overlaps.center = false; //True here means player is not overlapping at all
-      overlaps.right = true;
-      this.grid[player.gridY][player.gridX+1].updateOccupying(this, 2);
-      //If we updated the grid, update our previous position
-      if( player.isOverlapping.right !== true ) {
-        player.isOverlapping.right = true;
-        player.prevPos.right = {x: player.gridX+1, y: player.gridY};
-      }
+    if( innerGridX > 60 ) {            //PLAYER OVERLAP RIGHT OF CURRENT TILE
+      player.isOverlapping.right = true;
     }
-    if( innerGridY < 20 ) {
-      //Player overlapping with top tile neighbor
-      overlaps.center = false; //True here means player is not overlapping at all
-      overlaps.top = true;
-      this.grid[player.gridY-1][player.gridX].updateOccupying(this, 2);
-      //If we updated the grid, update our previous position
-      if( player.isOverlapping.top !== true ) {
-        player.isOverlapping.top = true;
-        player.prevPos.top = {x: player.gridX, y: player.gridY-1};
-      }
+    if( innerGridY < 20 ) {            //PLAYER OVERLAP TOP OF CURRENT TILE
+      player.isOverlapping.top = true;
     }
-    if( innerGridY > 60 ) {
-      //Player overlapping with bottom tile neighbor
-      overlaps.center = false; //True here means player is not overlapping at all
-      overlaps.bottom = true;
-      this.grid[player.gridY+1][player.gridX].updateOccupying(this, 2);
-      //If we updated the grid, update our previous position
-      if( player.isOverlapping.bottom !== true ) {
-        player.isOverlapping.bottom = true;
-        player.prevPos.bottom = {x: player.gridX, y: player.gridY+1};
-      }
+    if( innerGridY > 60 ) {            //PLAYER OVERLAP BOTTOM OF CURRENT TILE
+      player.isOverlapping.bottom = true;
     }
 
     //If the player is at a corner, they can overlap 4 spaces at once
-    //These numbers are based off both player radius and speed
-    if( innerGridX < 15 && innerGridY < 15 ) {
-      //Player is overlapping with top left corner
-      overlaps.center = false; //True here means player is not overlapping at all
-      overlaps.topLeft = true;
-      this.grid[player.gridY-1][player.gridX-1].updateOccupying(this, 2);
-      //If we updated the grid, update our previous position
-      if( player.isOverlapping.topLeft !== true ) {
-        player.isOverlapping.topLeft = true;
-        player.prevPos.topLeft = {x: player.gridX-1, y: player.gridY-1};
-      }
+    //So these checks grab the fourth tile (corner tile)
+    //TOPLEFT, TOPRIGHT, BOTTOMLEFT, BOTTOMRIGHT
+    if( innerGridX < 15 && innerGridY < 15 ) { //PLAYER OVERLAP TOPLEFT OF CURRENT TILE
+      player.isOverlapping.topLeft = true;
     }
-    if( innerGridX > 65 && innerGridY < 15 ) {
-      //Player is overlapping with top right corner
-      overlaps.center = false; //True here means player is not overlapping at all
-      overlaps.topRight = true;
-      this.grid[player.gridY-1][player.gridX+1].updateOccupying(this, 2);
-      //If we updated the grid, update our previous position
-      if( player.isOverlapping.topRight !== true ) {
-        player.isOverlapping.topRight = true;
-        player.prevPos.topRight = {x: player.gridX+1, y: player.gridY-1};
-      }
+    if( innerGridX > 65 && innerGridY < 15 ) { //PLAYER OVERLAP TOPRIGHT OF CURRENT TILE
+      player.isOverlapping.topRight = true;
     }
-    if( innerGridX < 15 && innerGridY > 65 ) {
-      //Player is overlapping with bottom left corner
-      overlaps.center = false; //True here means player is not overlapping at all
-      overlaps.bottomLeft = true;
-      this.grid[player.gridY+1][player.gridX-1].updateOccupying(this, 2);
-      //If we updated the grid, update our previous position
-      if( player.isOverlapping.bottomLeft !== true ) {
-        player.isOverlapping.bottomLeft = true;
-        player.prevPos.bottomLeft = {x: player.gridX-1, y: player.gridY+1};
-      }
+    if( innerGridX < 15 && innerGridY > 65 ) { //PLAYER OVERLAP BOTTOMLEFT OF CURRENT TILE
+      player.isOverlapping.bottomLeft = true;
     }
-    if( innerGridX > 65 && innerGridY > 65 ) {
-      //Player is overlapping with bottom right corner
-      overlaps.center = false; //True here means player is not overlapping at all
-      overlaps.bottomRight = true;
-      this.grid[player.gridY+1][player.gridX+1].updateOccupying(this, 2);
-      //If we updated the grid, update our previous position
-      if( player.isOverlapping.bottomRight !== true ) {
-        player.isOverlapping.bottomRight = true;
-        player.prevPos.bottomRight ={x: player.gridX+1, y: player.gridY+1};
-      }
-    }
-
-    //Check to see if any the overlap status has changed, if so update the grid
-    //If an 'overlaps.X' is still false, AND 'player.isOverlapping.X' is true, then
-    //We need to update the grid, because we are no longer overlapping there
-    if( overlaps.left === false && player.isOverlapping.left === true ) {
-      this.grid[player.prevPos.left.x][player.prevPos.left.y].updateOccupying(this, 0);
-      player.isOverlapping.left = false;
-    }
-    if( overlaps.right === false && player.isOverlapping.right === true ) {
-      this.grid[player.prevPos.right.x][player.prevPos.right.y].updateOccupying(this, 0);
-      player.isOverlapping.right = false;
-    }
-    if( overlaps.top === false && player.isOverlapping.top === true ) {
-      this.grid[player.prevPos.top.x][player.prevPos.top.y].updateOccupying(this, 0);
-      player.isOverlapping.top = false;
-    }
-    if( overlaps.bottom === false && player.isOverlapping.bottom === true ) {
-      this.grid[player.prevPos.bottom.x][player.prevPos.bottom.y].updateOccupying(this, 0);
-      player.isOverlapping.bottom = false;
-    }
-    if( overlaps.topLeft === false && player.isOverlapping.topLeft === true ) {
-      this.grid[player.prevPos.topLeft.x][player.prevPos.topLeft.y].updateOccupying(this, 0);
-      player.isOverlapping.topLeft = false;
-    }
-    if( overlaps.topRight === false && player.isOverlapping.topRight === true ) {
-      this.grid[player.prevPos.topRight.x][player.prevPos.topRight.y].updateOccupying(this, 0);
-      player.isOverlapping.topRight = false;
-    }
-    if( overlaps.bottomLeft === false && player.isOverlapping.bottomLeft === true ) {
-      this.grid[player.prevPos.bottomLeft.x][player.prevPos.bottomLeft.y].updateOccupying(this, 0);
-      player.isOverlapping.bottomLeft = false;
-    }
-    if( overlaps.bottomRight === false && player.isOverlapping.bottomRight === true ) {
-      this.grid[player.prevPos.bottomRight.x][player.prevPos.bottomRight.y].updateOccupying(this, 0);
-      player.isOverlapping.bottomRight = false;
-    }
-
-    //If there are no overlaps at all and we have moved to a new tile, and not init step
-    if( overlaps.center === true && player.isOverlapping.center === true && oldGridX !== -1 ) {
-      console.info(`prevPos: ${player.prevPos.center.x}, ${player.prevPos.center.y}
-        [${this.grid[0][0].occupying}][${this.grid[0][1].occupying}]
-        [${this.grid[1][0].occupying}][${this.grid[1][1].occupying}]`);
-      //Then replace previous tile with empty space
-      this.grid[player.prevPos.center.y][player.prevPos.center.x].updateOccupying(this, 0);
-      //Update player.prevPos to current pos
-      player.prevPos.center = {x: player.gridX, y: player.gridY};
-      player.isOverlapping.center = false;
-    }
-
-    // //If we aren't overlapping at all, update previous grid position
-    // if( overlaps.center === true && player.isOverlapping.center !== true ) {
-    //   console.info('JKASLJFLKASJFKLASJFKLAJSKLFKLASJKLJFASLFAJSFKLJALKFJKLASFJ');
-    //   this.grid[player.prevPos.center.x][player.prevPos.center.y].updateOccupying(this, 0);
-    //   player.isOverlapping.center = false;
-    // }
-
-    //CURRENTLY ONLY CHECKS ONE HALF OF THE CASES :KFASJFKLJASFKLJAF
-    if( player.prevPos.center !== undefined ) {
-      console.info(`${innerGridX}, ${innerGridY}
-        O: ${overlaps.center}, P: ${player.isOverlapping.center}, X: ${player.prevPos.center.x}
-        [${this.grid[0][0].occupying}][${this.grid[0][1].occupying}]
-        [${this.grid[1][0].occupying}][${this.grid[1][1].occupying}]`);
+    if( innerGridX > 65 && innerGridY > 65 ) { //PLAYER OVERLAP BOTTOMRIGHT OF CURRENT TILE
+      player.isOverlapping.bottomRight = true;
     }
 
 
-
-    /* #TODO: KJASLDKJASLKDJKLASJDKLASJLDKJASLJDLAS
-    //After the player grid position has been updated, check detection points
-    //Can't check out of bounds
-    let canCheckX = false;
-    let canCheckY = false;
-    if( player.gridX > 0 ) {
-      if( player.gridX < this.mapWidth ) {
-        canCheckX = true;
-      }
-    }
-    if( player.gridY > 0 ) {
-      if( player.gridY < this.mapHeight ) {
-        canCheckY = true;
-      }
-    }
-
-    //Build the list of surrounding detection points
-    let surrounding = [];
-    surrounding.push(this.grid[player.gridY][player.gridX]); //Middle Middle
-    if( canCheckX === true ) {
-      if( player.pressingLeft === true ) {
-        surrounding.push(this.grid[player.gridY][player.gridX-1]); //Middle Left
-      }
-      if( player.pressingRight === true ) {
-        surrounding.push(this.grid[player.gridY][player.gridX+1]); //Middle Right
-      }
-    }
-    if( canCheckY === true ) {
-      if( player.pressingUp === true ) {
-        surrounding.push(this.grid[player.gridY-1][player.gridX]); //Top Middle
-      }
-      if( player.pressingDown === true ) {
-        surrounding.push(this.grid[player.gridY+1][player.gridX]); //Bottom Middle
-      }
-    }
-    if( canCheckX === true && canCheckY === true ) {
-      if( player.pressingUp === true && player.pressingLeft ) {
-        surrounding.push(this.grid[player.gridY-1][player.gridX-1]); //Top Left
-      }
-      if( player.pressingDown === true && player.pressingLeft ) {
-        surrounding.push(this.grid[player.gridY+1][player.gridX-1]); //Bottom Left
-      }
-      if( player.pressingUp === true && player.pressingRight ) {
-        surrounding.push(this.grid[player.gridY-1][player.gridX+1]); //Top Right
-      }
-      if( player.pressingDown === true && player.pressingRight ) {
-        surrounding.push(this.grid[player.gridY+1][player.gridX+1]); //Bottom Right
-      }
-    }
-
-    //Now that we know which detection points to check, check them for collision
-    for( let i = 0; i < surrounding.length; i++ ) {
-      //Check each of the tile's detection points
-      for( let j = 0; j < 4; j++ ) {
-        let curPoint = this.detectPoints[surrounding[i].dPoints[j].y][surrounding[i].dPoints[j].x];
-        if( curPoint.getDistance(player) < curPoint.radius ) {
-          //A detection point has collided with the player
-          surrounding[i].updateOccupying(this, 2);
-          //No need to keep checking this tile's detection points
-        } //if (collision)
-      } //for (j)
-    } //for (i)
-
-    if( mustUpdateGrid === true ) {
-      this.grid[oldGridY][oldGridX].updateOccupying(this, 0);
-    }
-    //console.info(`
-    //  [${this.grid[1][1].occupying}][${this.grid[1][2].occupying}]
-    //  [${this.grid[2][1].occupying}][${this.grid[2][2].occupying}]`);
-    */
-  } //GameServer.gridUpdate()
+  } //GameServer.checkPlayerGridPos()
 
   playerUpdate() {
     var pack = [];
     for( let p in this.players ) {
       let player = this.players[p];
       player.update(this);
-      this.gridUpdate(player);
+      this.checkPlayerGridPos(player);
       pack.push(player.getUpdatePack());
     }
     return pack;
@@ -985,3 +785,295 @@ class Bullet extends Entity {
     };
   } //Bullet.getUpdatePack()
 } //class Bullet
+
+
+//GRID UPDATE
+/* #TODO TRYING NEW THINGS 5-1-2017
+//The player has already been updated, now update the grid
+let mustUpdateGrid = false;
+
+let oldGridX = player.gridX;
+let oldGridY = player.gridY;
+//Get the updated player gridX and gridY
+let newGridX = Math.floor((player.x / TILE_WIDTH));
+let newGridY = Math.floor((player.y / TILE_HEIGHT));
+
+//Must recheck overlap status every time we update
+//If it's still false after all overlap checks and player.isOverlapping
+//Is true for the same overlap, then we need to update the grid
+let overlaps = {
+  left: false,
+  right: false,
+  top: false,
+  bottom: false,
+  topLeft: false,
+  topRight: false,
+  bottomLeft: false,
+  bottomRight: false,
+  center: true
+};
+
+//If the player has just been spawned his values have not been set
+if( player.gridX === -1 ) { //#TODO: replace this check with a variable (player.isInitialized)
+  player.gridX = newGridX;
+  player.gridY = newGridY;
+  //Set previous position to our current position for default values
+  player.prevPos.center = {x: player.gridX, y: player.gridY};
+  mustUpdateGrid = true;
+}
+
+//If the player has moved to a new grid tile
+if( newGridX !== player.gridX ) {
+  //Replace the old position with empty space
+  this.grid[player.gridY][oldGridX].updateOccupying(this, 0);
+  player.gridX = newGridX;
+  mustUpdateGrid = true;
+}
+if( newGridY !== player.gridY ) {
+  //Replace the old position with empty space
+  this.grid[oldGridY][player.gridX].updateOccupying(this, 0);
+  player.gridY = newGridY;
+  mustUpdateGrid = true;
+}
+
+//If Player has moved to a new grid tile, update the grid to show that
+if( mustUpdateGrid === true ) {
+  this.grid[player.gridY][player.gridX].updateOccupying(this, 2);
+  //Also update the previous position flag if not first pass
+  if( oldGridX !== -1 ) {
+    player.isOverlapping.center = true;
+  }
+}
+
+//Get the player's position inside the grid tile he is in
+let innerGridX = player.x - player.gridX * TILE_WIDTH;
+let innerGridY = player.y - player.gridY * TILE_HEIGHT;
+
+//If the player's position inside of the tile is overlapping with another tile
+//These values are currently hardcoded. They are based off the player radius
+if( innerGridX < 20 ) {
+  //Player overlapping with left tile neighbor
+  overlaps.center = false; //True here means player is not overlapping at all
+  overlaps.left = true;
+  this.grid[player.gridY][player.gridX-1].updateOccupying(this, 2);
+  //If we updated the grid, update our previous position
+  if( player.isOverlapping.left !== true ) {
+    player.isOverlapping.left = true;
+    player.prevPos.left = {x: player.gridX-1, y: player.gridY};
+  }
+}
+if( innerGridX > 60 ) {
+  //Player overlapping with right tile neighbor
+  overlaps.center = false; //True here means player is not overlapping at all
+  overlaps.right = true;
+  this.grid[player.gridY][player.gridX+1].updateOccupying(this, 2);
+  //If we updated the grid, update our previous position
+  if( player.isOverlapping.right !== true ) {
+    player.isOverlapping.right = true;
+    player.prevPos.right = {x: player.gridX+1, y: player.gridY};
+  }
+}
+if( innerGridY < 20 ) {
+  //Player overlapping with top tile neighbor
+  overlaps.center = false; //True here means player is not overlapping at all
+  overlaps.top = true;
+  this.grid[player.gridY-1][player.gridX].updateOccupying(this, 2);
+  //If we updated the grid, update our previous position
+  if( player.isOverlapping.top !== true ) {
+    player.isOverlapping.top = true;
+    player.prevPos.top = {x: player.gridX, y: player.gridY-1};
+  }
+}
+if( innerGridY > 60 ) {
+  //Player overlapping with bottom tile neighbor
+  overlaps.center = false; //True here means player is not overlapping at all
+  overlaps.bottom = true;
+  this.grid[player.gridY+1][player.gridX].updateOccupying(this, 2);
+  //If we updated the grid, update our previous position
+  if( player.isOverlapping.bottom !== true ) {
+    player.isOverlapping.bottom = true;
+    player.prevPos.bottom = {x: player.gridX, y: player.gridY+1};
+  }
+}
+
+//If the player is at a corner, they can overlap 4 spaces at once
+//These numbers are based off both player radius and speed
+if( innerGridX < 15 && innerGridY < 15 ) {
+  //Player is overlapping with top left corner
+  overlaps.center = false; //True here means player is not overlapping at all
+  overlaps.topLeft = true;
+  this.grid[player.gridY-1][player.gridX-1].updateOccupying(this, 2);
+  //If we updated the grid, update our previous position
+  if( player.isOverlapping.topLeft !== true ) {
+    player.isOverlapping.topLeft = true;
+    player.prevPos.topLeft = {x: player.gridX-1, y: player.gridY-1};
+  }
+}
+if( innerGridX > 65 && innerGridY < 15 ) {
+  //Player is overlapping with top right corner
+  overlaps.center = false; //True here means player is not overlapping at all
+  overlaps.topRight = true;
+  this.grid[player.gridY-1][player.gridX+1].updateOccupying(this, 2);
+  //If we updated the grid, update our previous position
+  if( player.isOverlapping.topRight !== true ) {
+    player.isOverlapping.topRight = true;
+    player.prevPos.topRight = {x: player.gridX+1, y: player.gridY-1};
+  }
+}
+if( innerGridX < 15 && innerGridY > 65 ) {
+  //Player is overlapping with bottom left corner
+  overlaps.center = false; //True here means player is not overlapping at all
+  overlaps.bottomLeft = true;
+  this.grid[player.gridY+1][player.gridX-1].updateOccupying(this, 2);
+  //If we updated the grid, update our previous position
+  if( player.isOverlapping.bottomLeft !== true ) {
+    player.isOverlapping.bottomLeft = true;
+    player.prevPos.bottomLeft = {x: player.gridX-1, y: player.gridY+1};
+  }
+}
+if( innerGridX > 65 && innerGridY > 65 ) {
+  //Player is overlapping with bottom right corner
+  overlaps.center = false; //True here means player is not overlapping at all
+  overlaps.bottomRight = true;
+  this.grid[player.gridY+1][player.gridX+1].updateOccupying(this, 2);
+  //If we updated the grid, update our previous position
+  if( player.isOverlapping.bottomRight !== true ) {
+    player.isOverlapping.bottomRight = true;
+    player.prevPos.bottomRight ={x: player.gridX+1, y: player.gridY+1};
+  }
+}
+
+//Check to see if any the overlap status has changed, if so update the grid
+//If an 'overlaps.X' is still false, AND 'player.isOverlapping.X' is true, then
+//We need to update the grid, because we are no longer overlapping there
+if( overlaps.left === false && player.isOverlapping.left === true ) {
+  this.grid[player.prevPos.left.x][player.prevPos.left.y].updateOccupying(this, 0);
+  player.isOverlapping.left = false;
+}
+if( overlaps.right === false && player.isOverlapping.right === true ) {
+  this.grid[player.prevPos.right.x][player.prevPos.right.y].updateOccupying(this, 0);
+  player.isOverlapping.right = false;
+}
+if( overlaps.top === false && player.isOverlapping.top === true ) {
+  this.grid[player.prevPos.top.x][player.prevPos.top.y].updateOccupying(this, 0);
+  player.isOverlapping.top = false;
+}
+if( overlaps.bottom === false && player.isOverlapping.bottom === true ) {
+  this.grid[player.prevPos.bottom.x][player.prevPos.bottom.y].updateOccupying(this, 0);
+  player.isOverlapping.bottom = false;
+}
+if( overlaps.topLeft === false && player.isOverlapping.topLeft === true ) {
+  this.grid[player.prevPos.topLeft.x][player.prevPos.topLeft.y].updateOccupying(this, 0);
+  player.isOverlapping.topLeft = false;
+}
+if( overlaps.topRight === false && player.isOverlapping.topRight === true ) {
+  this.grid[player.prevPos.topRight.x][player.prevPos.topRight.y].updateOccupying(this, 0);
+  player.isOverlapping.topRight = false;
+}
+if( overlaps.bottomLeft === false && player.isOverlapping.bottomLeft === true ) {
+  this.grid[player.prevPos.bottomLeft.x][player.prevPos.bottomLeft.y].updateOccupying(this, 0);
+  player.isOverlapping.bottomLeft = false;
+}
+if( overlaps.bottomRight === false && player.isOverlapping.bottomRight === true ) {
+  this.grid[player.prevPos.bottomRight.x][player.prevPos.bottomRight.y].updateOccupying(this, 0);
+  player.isOverlapping.bottomRight = false;
+}
+
+//If there are no overlaps at all and we have moved to a new tile, and not init step
+if( overlaps.center === true && player.isOverlapping.center === true && oldGridX !== -1 ) {
+  console.info(`prevPos: ${player.prevPos.center.x}, ${player.prevPos.center.y}
+    [${this.grid[0][0].occupying}][${this.grid[0][1].occupying}]
+    [${this.grid[1][0].occupying}][${this.grid[1][1].occupying}]`);
+  //Then replace previous tile with empty space
+  this.grid[player.prevPos.center.y][player.prevPos.center.x].updateOccupying(this, 0);
+  //Update player.prevPos to current pos
+  player.prevPos.center = {x: player.gridX, y: player.gridY};
+  player.isOverlapping.center = false;
+}
+
+// //If we aren't overlapping at all, update previous grid position
+// if( overlaps.center === true && player.isOverlapping.center !== true ) {
+//   console.info('JKASLJFLKASJFKLASJFKLAJSKLFKLASJKLJFASLFAJSFKLJALKFJKLASFJ');
+//   this.grid[player.prevPos.center.x][player.prevPos.center.y].updateOccupying(this, 0);
+//   player.isOverlapping.center = false;
+// }
+
+//CURRENTLY ONLY CHECKS ONE HALF OF THE CASES :KFASJFKLJASFKLJA
+if( player.prevPos.center !== undefined ) {
+  console.info(`${innerGridX}, ${innerGridY}
+    O: ${overlaps.center}, P: ${player.isOverlapping.center}, X: ${player.prevPos.center.x}
+    [${this.grid[0][0].occupying}][${this.grid[0][1].occupying}]
+    [${this.grid[1][0].occupying}][${this.grid[1][1].occupying}]`);
+}
+*/ //END 5-1-2017 TEST
+
+/* #TODO: KJASLDKJASLKDJKLASJDKLASJLDKJASLJDLAS
+//After the player grid position has been updated, check detection points
+//Can't check out of bounds
+let canCheckX = false;
+let canCheckY = false;
+if( player.gridX > 0 ) {
+  if( player.gridX < this.mapWidth ) {
+    canCheckX = true;
+  }
+}
+if( player.gridY > 0 ) {
+  if( player.gridY < this.mapHeight ) {
+    canCheckY = true;
+  }
+}
+
+//Build the list of surrounding detection points
+let surrounding = [];
+surrounding.push(this.grid[player.gridY][player.gridX]); //Middle Middle
+if( canCheckX === true ) {
+  if( player.pressingLeft === true ) {
+    surrounding.push(this.grid[player.gridY][player.gridX-1]); //Middle Left
+  }
+  if( player.pressingRight === true ) {
+    surrounding.push(this.grid[player.gridY][player.gridX+1]); //Middle Right
+  }
+}
+if( canCheckY === true ) {
+  if( player.pressingUp === true ) {
+    surrounding.push(this.grid[player.gridY-1][player.gridX]); //Top Middle
+  }
+  if( player.pressingDown === true ) {
+    surrounding.push(this.grid[player.gridY+1][player.gridX]); //Bottom Middle
+  }
+}
+if( canCheckX === true && canCheckY === true ) {
+  if( player.pressingUp === true && player.pressingLeft ) {
+    surrounding.push(this.grid[player.gridY-1][player.gridX-1]); //Top Left
+  }
+  if( player.pressingDown === true && player.pressingLeft ) {
+    surrounding.push(this.grid[player.gridY+1][player.gridX-1]); //Bottom Left
+  }
+  if( player.pressingUp === true && player.pressingRight ) {
+    surrounding.push(this.grid[player.gridY-1][player.gridX+1]); //Top Right
+  }
+  if( player.pressingDown === true && player.pressingRight ) {
+    surrounding.push(this.grid[player.gridY+1][player.gridX+1]); //Bottom Right
+  }
+}
+
+//Now that we know which detection points to check, check them for collision
+for( let i = 0; i < surrounding.length; i++ ) {
+  //Check each of the tile's detection points
+  for( let j = 0; j < 4; j++ ) {
+    let curPoint = this.detectPoints[surrounding[i].dPoints[j].y][surrounding[i].dPoints[j].x];
+    if( curPoint.getDistance(player) < curPoint.radius ) {
+      //A detection point has collided with the player
+      surrounding[i].updateOccupying(this, 2);
+      //No need to keep checking this tile's detection points
+    } //if (collision)
+  } //for (j)
+} //for (i)
+
+if( mustUpdateGrid === true ) {
+  this.grid[oldGridY][oldGridX].updateOccupying(this, 0);
+}
+//console.info(`
+//  [${this.grid[1][1].occupying}][${this.grid[1][2].occupying}]
+//  [${this.grid[2][1].occupying}][${this.grid[2][2].occupying}]`);
+*/
