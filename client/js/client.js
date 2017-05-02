@@ -53,8 +53,22 @@ $(document).ready( () => {
     if( cGame.cPlayers[cGame.selfID].mode === 1 ) {
       //Calculate grid square
       let localPlayer = cGame.cPlayers[cGame.selfID];
-      let selGridX = ~~(localPlayer.mX / 80);
-      let selGridY = ~~(localPlayer.mY / 80);
+      let selGridX = -1;
+      let selGridY = -1;
+
+      //If we are outside of a deadzone, need to offset the tile calculation
+      if( GameCamera.xView > 0 ) {
+        let xOffset = GameCamera.xView;
+        selGridX = ~~((localPlayer.mX + xOffset) / 80);
+      } else {
+        selGridX = ~~(localPlayer.mX / 80);
+      }
+      if( GameCamera.yView > 0 ) {
+        let yOffset = GameCamera.yView;
+        selGridY = ~~((localPlayer.mY + yOffset) / 80);
+      } else {
+        selGridY = ~~(localPlayer.mY / 80);
+      }
 
       //Check to see if selection is on top of player
       if( selGridX === localPlayer.gridX && selGridY === localPlayer.gridY ) {
@@ -86,12 +100,9 @@ $(document).ready( () => {
         selGridX: selGridX,
         selGridY: selGridY
       });
+    } //if( Player is in build mode )
 
-      //Give the player immediate feedback on which tile is selected
-      //#FIXME: work on this
-      //cGame.selectedGrid = findSelectedGrid(gridLocX, gridLocY);
-    }
-
+    //Update mouse position
     let mousePos = getMousePos(cGame.ctx, event);
     socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos});
   });
@@ -228,32 +239,6 @@ function getMousePos(ctx, e) {
     y: mouseY
   };
 } //getMousePos()
-
-function findSelectedGrid(gX, gY) {
-  let gridSelected = -1; //Grid selected follows the numpad layout
-  if( (gX > -140 && gX < -40) && (gY > -140 && gY < -40) ) {      //Top Left
-    gridSelected = 7;
-  } else if( (gX > -40 && gX < 40) && (gY > -140 && gY < -40) ) { //Top Middle
-    gridSelected = 8;
-  } else if( (gX > 40 && gX < 140) && (gY > -140 && gY < -40) ) { //Top Right
-    gridSelected = 9;
-  } else if( (gX > -140 && gX < -40) && (gY > -40 && gY < 40) ) { //Middle Left
-    gridSelected = 4;
-  } else if( (gX > -40 && gX < 40) && (gY > -40 && gY < 40) ) {   //Middle Middle
-    gridSelected = -1; //Cannot place block where you are
-  } else if( (gX > 40 && gX < 140) && (gY > -40 && gY < 40) ) {   //Middle Right
-    gridSelected = 6;
-  } else if( (gX > -140 && gX < -40) && (gY > 40 && gY < 140) ) { //Bottom Left
-    gridSelected = 1;
-  } else if( (gX > -40 && gX < 40) && (gY > 40 && gY < 140) ) { //Bottom Middle
-    gridSelected = 2;
-  } else if( (gX > 40 && gX < 140) && (gY > 40 && gY < 140) ) { //Bottom Right
-    gridSelected = 3;
-  } else {
-    gridSelected = -1; //Out of bounds
-  }
-  return gridSelected;
-} //findSelectedGrid()
 
 //##############################################################
 

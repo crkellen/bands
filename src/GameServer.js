@@ -14,8 +14,8 @@ export class GameServer {
 
     //Map variables
     this.grid = []; //0, 1, 2 --- Empty, Player, Wall
-    this.worldWidth = 480; //#TODO: temp values
-    this.worldHeight = 480;
+    this.worldWidth = 1600; //#TODO: temp values
+    this.worldHeight = 960;
     this.mapWidth = this.worldWidth / TILE_WIDTH; //TEMP: 6
     this.mapHeight = this.worldHeight / TILE_HEIGHT; //TEMP: 6
     this.mustUpdateGrid = false;
@@ -655,8 +655,8 @@ class Player extends Entity {
   respawn() {
     //#TODO: Make it so they respawn after a short time, and at their team base
     this.HP = this.maxHP;
-    this.x = Math.random() * 500;
-    this.y = Math.random() * 500;
+    this.x = 80;
+    this.y = 80;
     this.ammo = this.maxAmmo;
     this.clips = this.maxClips;
     this.blocks = this.maxBlocks;
