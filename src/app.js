@@ -44,7 +44,7 @@ io.on('connection', (socket) => {
   socket.on('joinGame', (playerData) => {
     isValidUsername(playerData, (res) => {
       if( res === true ) {
-        ServerGame.addPlayer(socket, playerData.name, 50, 70);
+        ServerGame.addPlayer(socket, playerData.name, 120, 120);
       } else {
         //Username was Invalid
       }
@@ -73,8 +73,12 @@ setInterval( () => {
     socket.emit('remove', packs.removePack);
     socket.emit('update', packs.updatePack);
   }
+  if( ServerGame.mustUpdateGrid === true ) {
+    ServerGame.updateGrid();
+  }
 }, 1000/25); //END SERVER GAME LOOP
 
+/* #TODO random int generator for placement not currently used, not deprecated
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
-}
+}*/

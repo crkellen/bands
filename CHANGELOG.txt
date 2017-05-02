@@ -1,0 +1,56 @@
+CHANGELOG FOR buildnshoot.io - Created by Lutz Kellen (http://lutzkellen.com)
+
+Known Bugs can be found at the issues page on GitHub here: https://github.com/crkellen/bands/issues
+
+####################################################################################################################
+
+v0.4.0 --- Released: 5-2-2017
+	Additions:
+		Gameplay:
+			- Added Rifle
+				- Can only shoot every 500ms
+				- Has 6 ammo per clip
+			- Player holds 3 clips (starts with full clip for total of 24 shots)
+			- Player cannot shoot if they are reloading, or if they run out of clips
+			- Player regains all ammo, clips, blocks after death
+			- Player is invincible for 3 seconds after respawning
+			- Player is transparent when invincible
+			- Added ability to place blocks onto the grid
+				- Blocks can be destroyed after 3 hits
+				- Blocks can only be placed in the 8 tiles surrounding the player
+				- Blocks cannot be placed if there is a block already there
+				- Blocks cannot be placed if there is a player in the tile (including overlaps)
+		UI:
+			- Added ammo to player
+			- Added player score to UI canvas
+			- Added player clips to UI canvas
+			- Added player blocks to UI canvas
+			- Added player build selection highlight
+				- If a block is already at the selection, highlight will be red
+			- UI canvas is only redrawn when updated info comes in
+			- UI uses transparent text
+	Changes:
+		- Changed bullet speed from 12 to 40
+		- Increased bullet damage from 1 to 5
+		- Lowered player max speed from 10 to 5
+		- Lowered bullet timer from 50 to 40
+		- Removed offset on mouse angle calculation
+	Fixes:
+		- mouseAngle only calculated on click() - prevents #32
+		- Name was drawn on main canvas not UI canvas
+		- Only send cGame.ctxUI to drawName/drawAmmo
+		- Bullets fly directly towards mouse, no offset - prevents #31
+		- Changed cPlayer.drawSelf() and cBullet.drawSelf() to only pass in ctx not cGame entirely
+	
+	Other:
+		- Began documenting changes in changelogs.
+		- Updated LICENSE.md
+		- Created a GitHub issues template
+		
+SPECIAL THANKS:
+Debuggers:
+	Reed Kendall, Alex Meyer, Tony Dols, Marko Vehmas
+Assistance:
+	Seth Berrier
+
+####################################################################################################################

@@ -2,14 +2,14 @@ const ctx = document.getElementById('canvas-game').getContext('2d');
 ctx.translate(0.5, 0.5);
 const ctxUI = document.getElementById('canvas-ui').getContext('2d');
 
-import { Game, cPlayer, cBullet, Camera, Map } from './Game';
+import { Game, cPlayer, cBullet, cBlock, Camera, Map } from './Game';
 var io = require('socket.io-client');
 //Replace with hosting IP (144.13.22.62) 'http://localhost'
 var socket = io();
 var cGame = new Game(ctx, ctxUI);
 var playerName = '';
 
-var GameMap = new Map(5000, 3000);
+var GameMap = new Map(6400, 3840);
 GameMap.generate(cGame.ctx);
 
 let cam = {
@@ -17,8 +17,8 @@ let cam = {
   yView: 0,
   canvasWidth: cGame.ctx.canvas.width,
   canvasHeight: cGame.ctx.canvas.height,
-  worldWidth: 5000,
-  worldHeight: 3000
+  worldWidth: 6400,
+  worldHeight: 3840
 };
 var GameCamera = new Camera(cam);
 
@@ -44,6 +44,65 @@ $(document).ready( () => {
       return;
     }
 
+    //If there is a significant lag, this can be undefined
+    if( cGame.cPlayers[cGame.selfID] === undefined ) {
+      return;
+    }
+
+    //If player is in build mode
+    if( cGame.cPlayers[cGame.selfID].mode === 1 ) {
+      //Calculate grid square
+      let localPlayer = cGame.cPlayers[cGame.selfID];
+      let selGridX = -1;
+      let selGridY = -1;
+
+      //If we are outside of a deadzone, need to offset the tile calculation
+      if( GameCamera.xView > 0 ) {
+        let xOffset = GameCamera.xView;
+        selGridX = ~~((localPlayer.mX + xOffset) / 80);
+      } else {
+        selGridX = ~~(localPlayer.mX / 80);
+      }
+      if( GameCamera.yView > 0 ) {
+        let yOffset = GameCamera.yView;
+        selGridY = ~~((localPlayer.mY + yOffset) / 80);
+      } else {
+        selGridY = ~~(localPlayer.mY / 80);
+      }
+
+      //Check to see if selection is on top of player
+      if( selGridX === localPlayer.gridX && selGridY === localPlayer.gridY ) {
+        selGridX = -1;
+        selGridY = -1;
+      }
+
+      //Check to see if selection is out of range (grid pos + 1)
+      if( selGridX > localPlayer.gridX + 1  ) { //Out of range on LEFT
+        selGridX = -1;
+      }
+      if( selGridX < localPlayer.gridX - 1  ) { //Out of range on RIGHT
+        selGridX = -1;
+      }
+      if( selGridY < localPlayer.gridY - 1  ) { //Out of range on TOP
+        selGridY = -1;
+      }
+      if( selGridY > localPlayer.gridY + 1  ) { //Out of range on BOTTOM
+        selGridY = -1;
+      }
+      //Corners don't need to be checked, are handled already by the above checks
+
+      cGame.selGridX = selGridX;
+      cGame.selGridY = selGridY;
+
+      //Update the server with which tile is selected
+      socket.emit('keyPress', {
+        inputID: 'selGrid',
+        selGridX: selGridX,
+        selGridY: selGridY
+      });
+    } //if( Player is in build mode )
+
+    //Update mouse position
     let mousePos = getMousePos(cGame.ctx, event);
     socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos});
   });
@@ -98,30 +157,65 @@ $(document).ready( () => {
       return;
     }
 
-    //Calculate the angle from player to mouse
-    let x = -cGame.ctx.canvas.clientWidth/2 + e.clientX;
-    let y = -cGame.ctx.canvas.clientHeight/2 + e.clientY;
-    //Check if within the deadzones
-    let mouse = getMousePos(cGame.ctx, e);
-    if( cGame.selfID !== null ) {
-      if( GameCamera.xView === 0 ) {
-        x = mouse.x - cGame.cPlayers[cGame.selfID].x - GameCamera.xView;
-      }
-      if( GameCamera.yView === 0 ) {
-        y = mouse.y - cGame.cPlayers[cGame.selfID].y - GameCamera.yView;
-      }
+    //If there is a significant lag, this can be undefined
+    if( cGame.cPlayers[cGame.selfID] === undefined ) {
+      return;
     }
-    let angle = Math.atan2(y, x) / Math.PI * 180;
-    socket.emit('keyPress', {inputID: 'mouseAngle', state: angle});
 
-    if(cGame.canShoot === true) {
-      cGame.canShoot = false;
-      socket.emit('keyPress', {inputID: 'attack', state: true});
-      setTimeout( () => {
-        cGame.canShoot = true;
-      }, 500);
+    let currentMode = cGame.cPlayers[cGame.selfID].mode;
+    //Check for left or right mouse button
+    switch( e.which ) {
+    case 1: //Left mouse button
+      if( currentMode === 0 ) {         //Weapon mode
+        //Calculate the angle from player to mouse
+        let x = -cGame.ctx.canvas.clientWidth/2 + e.clientX;
+        let y = -cGame.ctx.canvas.clientHeight/2 + e.clientY;
+        //Check if within the deadzones
+        let mouse = getMousePos(cGame.ctx, e);
+        if( cGame.selfID !== null ) {
+          if( GameCamera.xView === 0 ) {
+            x = mouse.x - cGame.cPlayers[cGame.selfID].x - GameCamera.xView;
+          }
+          if( GameCamera.yView === 0 ) {
+            y = mouse.y - cGame.cPlayers[cGame.selfID].y - GameCamera.yView;
+          }
+        }
+        //Update mouse angle
+        let angle = Math.atan2(y, x) / Math.PI * 180;
+        socket.emit('keyPress', {inputID: 'mouseAngle', state: angle});
+
+        //Shoot
+        if(cGame.canShoot === true) {
+          cGame.canShoot = false;
+          socket.emit('keyPress', {inputID: 'attack', state: true});
+          setTimeout( () => {
+            cGame.canShoot = true;
+          }, 500);
+        }
+      } else if( currentMode === 1 ) {  //Building mode
+        //Place block
+        if(cGame.canBuild === true) {
+          cGame.canBuild = false;
+          socket.emit('keyPress', {inputID: 'attack', state: true});
+          setTimeout( () => {
+            cGame.canBuild = true;
+          }, 300);
+        }
+      }
+      break;
+    } //switch( e.which )
+  }).mousedown( (e) => {
+    //This exists to fix issue #42 (RMB does not work outside of firefox)
+    if( cGame.gameStarted !== true ) {
+      return;
     }
-  }); //$(document).keydown().keyup().mousemove().click()
+
+    switch( e.which ) {
+    case 3: //Right mouse button
+      socket.emit('keyPress', {inputID: 'switchMode'});
+      break;
+    } //switch( e.which )
+  }); //$(document).keydown().keyup().mousemove().click().onmousedown()
 }); //$(document).ready()
 
 $(window).on('beforeunload', () => {
@@ -154,16 +248,23 @@ socket.on('init', (data) => {
     cGame.selfID = data.selfID;
     makeCamera = true;
   }
+
+  //Players
   for( let i = 0; i < data.player.length; i++ ) {
     cGame.cPlayers[data.player[i].ID] = new cPlayer(data.player[i]);
   }
-
   if( makeCamera ) {
     GameCamera.follow(cGame.cPlayers[cGame.selfID], cGame.ctx.canvas.width/2, cGame.ctx.canvas.height/2);
   }
 
+  //Bullets
   for( let j = 0; j < data.bullet.length; j++ ) {
     cGame.cBullets[data.bullet[j].ID] = new cBullet(data.bullet[j]);
+  }
+
+  //Blocks
+  for( let k = 0; k < data.block.length; k++ ) {
+    cGame.cBlocks[data.block[k].ID] = new cBlock(data.block[k]);
   }
 }); //'init'
 
@@ -175,6 +276,12 @@ socket.on('update', (data) => {
     //#FIXME: THIS MAY BE REDUNDANT CHECKS all the p.x !== undefined etc.
     //#TODO: REMOVE IF REDUDANT
     if( p !== undefined ) {
+      if( p.gridX !== undefined ) {
+        p.gridX = pack.gridX;
+      }
+      if( p.gridY !== undefined ) {
+        p.gridY = pack.gridY;
+      }
       if( p.x !== undefined ) {
         p.x = pack.x;
         if( p.ID === cGame.selfID ) {
@@ -205,6 +312,15 @@ socket.on('update', (data) => {
       if( p.clips !== undefined ) {
         p.clips = pack.clips;
       }
+      if( p.invincible !== undefined ) {
+        p.invincible = pack.invincible;
+      }
+      if( p.mode !== undefined ) {
+        p.mode = pack.mode;
+      }
+      if( p.blocks !== undefined ) {
+        p.blocks = pack.blocks;
+      }
     }
   } //for( i in data.player.length)
 
@@ -221,16 +337,41 @@ socket.on('update', (data) => {
       }
     }
   } //for( j in data.bullet.length)
+
+  //For all blocks, if there is data, update it
+  for( let k = 0; k < data.block.length; k++ ) {
+    let pack = data.block[k];
+    let bl = cGame.cBlocks[data.block[k].ID];
+    if( bl !== undefined ) {
+      if( bl.HP !== undefined ) {
+        bl.HP = pack.HP;
+      }
+      if( bl.isActive !== undefined ) {
+        bl.isActive = pack.isActive;
+      }
+    }
+  } //for( k in data.block.length)
 }); //'update'
 
 socket.on('remove', (data) => {
+  //Players
   for( let i = 0; i < data.player.length; i++ ) {
     delete cGame.cPlayers[data.player[i]];
   }
+  //Bullets
   for( let j = 0; j < data.bullet.length; j++ ) {
     delete cGame.cBullets[data.bullet[j]];
   }
+  //Blocks
+  for( let k = 0; k < data.block.length; k++ ) {
+    delete cGame.cBlocks[data.block[k]];
+  }
 }); //'remove'
+
+socket.on('selGridResponse', (data) => {
+  //Update the ID of the selected grid
+  cGame.selectedGrid = data.selBlockID;
+});
 
 //CLIENT GAME LOOP
 setInterval( () => {
@@ -247,11 +388,15 @@ setInterval( () => {
 var drawEntities = () => {
   //Each player object draws itself
   for( let p in cGame.cPlayers ) {
-    cGame.cPlayers[p].drawSelf(cGame, GameCamera.xView, GameCamera.yView);
+    cGame.cPlayers[p].drawSelf(cGame.ctx, GameCamera.xView, GameCamera.yView);
   }
   //Each bullet object draws itself
   for( let b in cGame.cBullets ) {
-    cGame.cBullets[b].drawSelf(cGame, GameCamera.xView, GameCamera.yView);
+    cGame.cBullets[b].drawSelf(cGame.ctx, GameCamera.xView, GameCamera.yView);
+  }
+  //Each block object draws itself
+  for( let bl in cGame.cBlocks ) {
+    cGame.cBlocks[bl].drawSelf(cGame.ctx, GameCamera.xView, GameCamera.yView);
   }
 };
 
@@ -262,6 +407,19 @@ var drawUI = () => {
   for( let p in cGame.cPlayers ) {
     cGame.cPlayers[p].drawName(cGame.ctx, GameCamera.xView, GameCamera.yView);
     cGame.cPlayers[p].drawAmmo(cGame.ctx, GameCamera.xView, GameCamera.yView);
+  }
+
+  //If player is in build mode (check has already happened)
+  //And player is above a grid which is not invalid for placement
+  let selectionOutOfBounds = false;
+  if( cGame.selGridX === -1 || cGame.selGridY === -1 ||
+    cGame.cPlayers[cGame.selfID].mode === 0 ) {
+    selectionOutOfBounds = true;
+    cGame.UIUpdate = true;
+  }
+  if( selectionOutOfBounds !== true ) {
+    //Update the UI
+    cGame.UIUpdate = true;
   }
 
   //Low-changing Values
@@ -275,6 +433,11 @@ var drawUI = () => {
     cGame.UIUpdate = true;
   }
 
+  //Player Clips
+  if( cGame.prevBlockCount !== cGame.cPlayers[cGame.selfID].blocks ) {
+    cGame.UIUpdate = true;
+  }
+
   if( cGame.UIUpdate === true ) {
     cGame.UIUpdate = false;
 
@@ -282,10 +445,10 @@ var drawUI = () => {
     cGame.ctxUI.clearRect(0, 0, cGame.ctxUI.canvas.width, cGame.ctxUI.canvas.height);
 
     //Background
-    cGame.ctxUI.fillStyle = 'white';
-    cGame.ctxUI.fillRect(0, 0, 200, 40);
+    cGame.ctxUI.fillStyle = 'rgba(200, 200, 200, 0.3)';
+    cGame.ctxUI.fillRect(0, 0, 330, 40);
 
-    cGame.ctxUI.fillStyle = 'red';
+    cGame.ctxUI.fillStyle = 'rgba(255, 255, 255, 0.5)';
 
     //Player Score
     cGame.prevScore = cGame.cPlayers[cGame.selfID].score;
@@ -296,5 +459,20 @@ var drawUI = () => {
     cGame.prevClipCount = cGame.cPlayers[cGame.selfID].clips;
     let clipString = `Clips: ${cGame.prevClipCount}/${cGame.cPlayers[cGame.selfID].maxClips}`;
     cGame.ctxUI.fillText(clipString, 100, 30);
+
+    //Player Blocks
+    cGame.prevBlockCount = cGame.cPlayers[cGame.selfID].blocks;
+    let blockString = `Blocks: ${cGame.prevBlockCount}/${cGame.cPlayers[cGame.selfID].maxBlocks}`;
+    cGame.ctxUI.fillText(blockString, 200, 30);
+
+    //Show where the block would be placed on the selected grid
+    //Show where the block will be placed
+    if( selectionOutOfBounds !== true && cGame.selectedGrid !== -1 ) {
+      if( cGame.cBlocks[cGame.selectedGrid].isActive === true ) {
+        cGame.cBlocks[cGame.selectedGrid].drawSelection(cGame.ctxUI, GameCamera.xView, GameCamera.yView, false);
+      } else {
+        cGame.cBlocks[cGame.selectedGrid].drawSelection(cGame.ctxUI, GameCamera.xView, GameCamera.yView, true);
+      }
+    }
   }
 };
