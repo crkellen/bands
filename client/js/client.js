@@ -9,7 +9,7 @@ var socket = io();
 var cGame = new Game(ctx, ctxUI);
 var playerName = '';
 
-var GameMap = new Map(5000, 3000);
+var GameMap = new Map(6400, 3840);
 GameMap.generate(cGame.ctx);
 
 let cam = {
@@ -17,8 +17,8 @@ let cam = {
   yView: 0,
   canvasWidth: cGame.ctx.canvas.width,
   canvasHeight: cGame.ctx.canvas.height,
-  worldWidth: 5000,
-  worldHeight: 3000
+  worldWidth: 6400,
+  worldHeight: 3840
 };
 var GameCamera = new Camera(cam);
 
@@ -467,7 +467,7 @@ var drawUI = () => {
 
     //Show where the block would be placed on the selected grid
     //Show where the block will be placed
-    if( selectionOutOfBounds !== true ) {
+    if( selectionOutOfBounds !== true && cGame.selectedGrid !== -1 ) {
       if( cGame.cBlocks[cGame.selectedGrid].isActive === true ) {
         cGame.cBlocks[cGame.selectedGrid].drawSelection(cGame.ctxUI, GameCamera.xView, GameCamera.yView, false);
       } else {

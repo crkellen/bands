@@ -326,12 +326,56 @@ export class Map {
   } //Map.constructor()
 
   generate() {
-    let ctx = document.createElement('canvas').getContext('2d');
+    /*
+    var ctx = document.createElement('canvas').getContext('2d');
     ctx.canvas.width = this.width;
     ctx.canvas.height = this.height;
 
+    var rows = ~~(this.width/44) + 1;
+    var columns = ~~(this.height/44) + 1;
+
+    var color = 'red';
+    ctx.save();
+    ctx.fillStyle = 'red';
+    for (var x = 0, i = 0; i < rows; x+=44, i++) {
+      ctx.beginPath();
+      for (var y = 0, j=0; j < columns; y+=44, j++) {
+        ctx.rect (x, y, 40, 40);
+      }
+      color = (color == 'red' ? 'blue' : 'red');
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.closePath();
+    }
+    ctx.restore();
+
+    // store the generate map as this image texture
     this.image = new Image();
-    this.image.src = Imgs.grid.src;
+    this.image.src = ctx.canvas.toDataURL('image/png');
+
+    // clear context
+    ctx = null;
+    */
+    var ctx = document.createElement('canvas').getContext('2d');
+    ctx.canvas.width = this.width;
+    ctx.canvas.height = this.height;
+
+    var rows = this.width / 1600; //Width of grid image
+    var cols = this.height / 960; //Height of grid image
+
+    var gridImage = new Image();
+    gridImage.src = Imgs.grid.src;
+    //Layer the image four times larger
+    //ctx.save();
+    for( var x = 0, i = 0; i < rows; x += 1600, i++ ) {
+      for( var y = 0, j = 0; j < cols; y += 960, j++ ) {
+        ctx.drawImage(gridImage, x, y);
+      }
+    }
+    //ctx.restore();
+
+    this.image = new Image();
+    this.image.src = ctx.canvas.toDataURL('image/png');
 
     ctx = null;
   } //Map.generate()
