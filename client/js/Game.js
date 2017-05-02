@@ -31,6 +31,8 @@ export class Game {
     this.prevScore = 0;
     this.prevClipCount = 0;
     this.prevBlockCount = 0;
+    this.selGridX = -1;
+    this.selGridY = -1;
     this.selectedGrid = -1;
 
     //Mouseclick flags
@@ -163,15 +165,34 @@ export class cBlock {
     this.x = initPack.x;
     this.y = initPack.y;
     this.HP = initPack.HP;
+    this.isActive = initPack.isActive;
   } //cBlock.constructor()
 
   drawSelf(ctx, xView, yView) {
+    //If the block is not active, do not draw
+    if( this.isActive === false ) {
+      return;
+    }
+
     let x = this.x - xView;
     let y = this.y - yView;
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.fillStyle = 'rgba(200, 200, 200, 0.4)';
     ctx.fillRect(x, y, 80, 80);
   } //cBlock.drawSelf()
+
+  drawSelection(ctx, xView, yView, canPlace) {
+    let x = this.x - xView;
+    let y = this.y - yView;
+
+    if( canPlace === true ) {
+      ctx.fillStyle = 'rgba(200, 200, 200, 0.2)';
+    } else {
+      ctx.fillStyle = 'rgba(200, 0, 0, 0.2)';
+    }
+
+    ctx.fillRect(x, y, 80, 80);
+  } //cBlock.drawSelection()
 } //class cBlock
 
 class Rectangle {

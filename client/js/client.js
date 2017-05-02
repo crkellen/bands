@@ -53,12 +53,43 @@ $(document).ready( () => {
     if( cGame.cPlayers[cGame.selfID].mode === 1 ) {
       //Calculate grid square
       let localPlayer = cGame.cPlayers[cGame.selfID];
-      let x = localPlayer.x - GameCamera.xView;
-      let y = localPlayer.y - GameCamera.yView;
-      let gridLocX = localPlayer.mX - x;
-      let gridLocY = localPlayer.mY - y;
+      let selGridX = ~~(localPlayer.mX / 80);
+      let selGridY = ~~(localPlayer.mY / 80);
 
-      cGame.selectedGrid = findSelectedGrid(gridLocX, gridLocY);
+      //Check to see if selection is on top of player
+      if( selGridX === localPlayer.gridX && selGridY === localPlayer.gridY ) {
+        selGridX = -1;
+        selGridY = -1;
+      }
+
+      //Check to see if selection is out of range (grid pos + 1)
+      if( selGridX > localPlayer.gridX + 1  ) { //Out of range on LEFT
+        selGridX = -1;
+      }
+      if( selGridX < localPlayer.gridX - 1  ) { //Out of range on RIGHT
+        selGridX = -1;
+      }
+      if( selGridY < localPlayer.gridY - 1  ) { //Out of range on TOP
+        selGridY = -1;
+      }
+      if( selGridY > localPlayer.gridY + 1  ) { //Out of range on BOTTOM
+        selGridY = -1;
+      }
+      //Corners don't need to be checked, are handled already by the above checks
+
+      cGame.selGridX = selGridX;
+      cGame.selGridY = selGridY;
+
+      //Update the server with which tile is selected
+      socket.emit('keyPress', {
+        inputID: 'selGrid',
+        selGridX: selGridX,
+        selGridY: selGridY
+      });
+
+      //Give the player immediate feedback on which tile is selected
+      //#FIXME: work on this
+      //cGame.selectedGrid = findSelectedGrid(gridLocX, gridLocY);
     }
 
     let mousePos = getMousePos(cGame.ctx, event);
@@ -330,6 +361,9 @@ socket.on('update', (data) => {
       if( bl.HP !== undefined ) {
         bl.HP = pack.HP;
       }
+      if( bl.isActive !== undefined ) {
+        bl.isActive = pack.isActive;
+      }
     }
   } //for( k in data.block.length)
 }); //'update'
@@ -348,6 +382,11 @@ socket.on('remove', (data) => {
     delete cGame.cBlocks[data.block[k]];
   }
 }); //'remove'
+
+socket.on('selGridResponse', (data) => {
+  //Update the ID of the selected grid
+  cGame.selectedGrid = data.selBlockID;
+});
 
 //CLIENT GAME LOOP
 setInterval( () => {
@@ -387,36 +426,15 @@ var drawUI = () => {
 
   //If player is in build mode (check has already happened)
   //And player is above a grid which is not invalid for placement
-  if( cGame.selectedGrid !== -1 ) {
-    //Show where the block will be placed
-    cGame.ctx.fillStyle = 'rgba(200, 200, 200, 0.3)';
-    //#TODO: Replace these hardcoded values with actual grid spaces
-    switch( cGame.selectedGrid ) {
-    case 1: //Bottom Left
-      cGame.ctx.fillRect(0, 160, 80, 80);
-      break;
-    case 2: //Bottom Middle
-      cGame.ctx.fillRect(80, 160, 80, 80);
-      break;
-    case 3: //Bottom Right
-      cGame.ctx.fillRect(160, 160, 80, 80);
-      break;
-    case 4: //Middle Left
-      cGame.ctx.fillRect(0, 80, 80, 80);
-      break;
-    case 6: //Middle Right
-      cGame.ctx.fillRect(160, 80, 80, 80);
-      break;
-    case 7: //Top Left
-      cGame.ctx.fillRect(0, 0, 80, 80);
-      break;
-    case 8: //Top Middle
-      cGame.ctx.fillRect(80, 0, 80, 80);
-      break;
-    case 9: //Top Right
-      cGame.ctx.fillRect(160, 0, 80, 80);
-      break;
-    }
+  let selectionOutOfBounds = false;
+  if( cGame.selGridX === -1 || cGame.selGridY === -1 ||
+    cGame.cPlayers[cGame.selfID].mode === 0 ) {
+    selectionOutOfBounds = true;
+    cGame.UIUpdate = true;
+  }
+  if( selectionOutOfBounds !== true ) {
+    //Update the UI
+    cGame.UIUpdate = true;
   }
 
   //Low-changing Values
@@ -461,5 +479,15 @@ var drawUI = () => {
     cGame.prevBlockCount = cGame.cPlayers[cGame.selfID].blocks;
     let blockString = `Blocks: ${cGame.prevBlockCount}/${cGame.cPlayers[cGame.selfID].maxBlocks}`;
     cGame.ctxUI.fillText(blockString, 200, 30);
+
+    //Show where the block would be placed on the selected grid
+    //Show where the block will be placed
+    if( selectionOutOfBounds !== true ) {
+      if( cGame.cBlocks[cGame.selectedGrid].isActive === true ) {
+        cGame.cBlocks[cGame.selectedGrid].drawSelection(cGame.ctxUI, GameCamera.xView, GameCamera.yView, false);
+      } else {
+        cGame.cBlocks[cGame.selectedGrid].drawSelection(cGame.ctxUI, GameCamera.xView, GameCamera.yView, true);
+      }
+    }
   }
 };

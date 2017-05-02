@@ -1,5 +1,8 @@
 const TILE_WIDTH = 80;
 const TILE_HEIGHT = 80;
+const TILE_EMPTY = 0;
+const TILE_PLAYER = 1;
+const TILE_BLOCK = 2;
 
 export class GameServer {
   constructor() {
@@ -11,7 +14,6 @@ export class GameServer {
 
     //Map variables
     this.grid = []; //0, 1, 2 --- Empty, Player, Wall
-    this.detectPoints = [];
     this.worldWidth = 480; //#TODO: temp values
     this.worldHeight = 480;
     this.mapWidth = this.worldWidth / TILE_WIDTH; //TEMP: 6
@@ -22,33 +24,14 @@ export class GameServer {
   } //GameServer.constructor()
 
   initializeGrid() {
-    //DETECTION POINTS
-    //Create as many rows as the map's height + 1
-    for( let i = 0; i < this.mapHeight + 1; i++ ) {
-      this.detectPoints.push([]);
-      //Inside each row, create as many empty grid tiles as map's width + 1
-      for( let j = 0; j < this.mapWidth + 1; j++ ) {
-        let dp = new DetectionPoint({arrX: j, arrY: i});
-        this.detectPoints[i].push(dp);
-      }
-    }
-    //GRID
     //Create as many rows as the map's height
     for( let i = 0; i < this.mapHeight; i++ ) {
       this.grid.push([]);
       //Inside each row, create as many empty grid tiles as map's width
       for( let j = 0; j < this.mapWidth; j++ ) {
-        let d1 = {x: j, y: i};
-        let d2 = {x: j + 1, y: i};
-        let d3 = {x: j, y: i + 1};
-        let d4 = {x: j + 1, y: i + 1};
         let gt = new GridTile({
           gridX: j,
           gridY: i,
-          d1: d1,
-          d2: d2,
-          d3: d3,
-          d4: d4,
           server: this
         });
         this.grid[i].push(gt);
@@ -66,11 +49,60 @@ export class GameServer {
   } //GameServer.initializeGrid()
 
   updateGrid() {
+    //At least one player has a new position on the grid, update the grid
 
+    //Empty the grid of all instances of Players (1) leave blocks alone (2)
+    for( let i = 0; i < this.mapHeight; i++ ) {
+      for( let j = 0; j < this.mapWidth; j++ ) {
+        if( this.grid[i][j].occupying === 1 ) {
+          this.grid[i][j].updateOccupying(TILE_EMPTY);
+        }
+      }
+    }
 
-    console.info(`
-      [${this.grid[0][0].occupying}][${this.grid[0][1].occupying}]
-      [${this.grid[1][0].occupying}][${this.grid[1][1].occupying}]`);
+    //Loop through every player, update their current grid position to have a 1
+    //If they are overlapping, update the overlap to have a 1 as well
+    for( let p in this.players ) {
+      let player = this.players[p];
+
+      //Update current grid position to be a 1
+      //#TODO: could do a check to make sure the tile is not already a 1
+      //#TODO: could do a check to make sure the tile is not a block (2)
+      this.grid[player.gridY][player.gridX].updateOccupying(TILE_PLAYER);
+
+      //Check every overlap case, if there is an overlap, update that grid tile
+      if( player.isOverlapping.left === true ) {        //OVERLAP ON LEFT
+        this.grid[player.gridY][player.gridX-1].updateOccupying(TILE_PLAYER);
+      }
+      if( player.isOverlapping.right === true ) {       //OVERLAP ON RIGHT
+        this.grid[player.gridY][player.gridX+1].updateOccupying(TILE_PLAYER);
+      }
+      if( player.isOverlapping.top === true ) {         //OVERLAP ON TOP
+        this.grid[player.gridY-1][player.gridX].updateOccupying(TILE_PLAYER);
+      }
+      if( player.isOverlapping.bottom === true ) {      //OVERLAP ON BOTTOM
+        this.grid[player.gridY+1][player.gridX].updateOccupying(TILE_PLAYER);
+      }
+      if( player.isOverlapping.topLeft === true ) {     //OVERLAP ON TOPLEFT
+        this.grid[player.gridY-1][player.gridX-1].updateOccupying(TILE_PLAYER);
+      }
+      if( player.isOverlapping.topRight === true ) {    //OVERLAP ON TOPRIGHT
+        this.grid[player.gridY-1][player.gridX+1].updateOccupying(TILE_PLAYER);
+      }
+      if( player.isOverlapping.bottomLeft === true ) {  //OVERLAP ON BOTTOMLEFT
+        this.grid[player.gridY+1][player.gridX-1].updateOccupying(TILE_PLAYER);
+      }
+      if( player.isOverlapping.bottomRight === true ) { //OVERLAP ON BOTTOMRIGHT
+        this.grid[player.gridY+1][player.gridX+1].updateOccupying(TILE_PLAYER);
+      }
+    } //for( every player in this.players )
+
+    //Now that we have updated the grid, reset the flag
+    this.mustUpdateGrid = false;
+
+    // console.info(`
+    //   [${this.grid[1][1].occupying}][${this.grid[1][2].occupying}]
+    //   [${this.grid[2][1].occupying}][${this.grid[2][2].occupying}]`);
 
   } //GameServer.updateGrid()
 
@@ -86,9 +118,9 @@ export class GameServer {
     //Player's current gridX and gridY
     let oldGridX = player.gridX;
     let oldGridY = player.gridY;
-    //Get the (possibly) updated player gridX and gridY
-    let newGridX = Math.floor((player.x / TILE_WIDTH));
-    let newGridY = Math.floor((player.y / TILE_HEIGHT));
+    //Get the (possibly) updated player gridX and gridY (~~ = Math.floor())
+    let newGridX = ~~(player.x / TILE_WIDTH);
+    let newGridY = ~~(player.y / TILE_HEIGHT);
 
     //If the player has just been spawned his values have not been set
     if( player.gridX === -1 ) { //#TODO: replace this check with a variable (player.isInitialized)
@@ -124,23 +156,39 @@ export class GameServer {
     let innerGridX = player.x - player.gridX * TILE_WIDTH;
     let innerGridY = player.y - player.gridY * TILE_HEIGHT;
 
-
     //If the player's position inside of the tile is overlapping with another tile
     //These values are currently hardcoded.
     //They are based off the player radius (20) and speed (5)
 
+    //#FIXME: This can probably be optimized to only set the rebuild grid flag
+    //to true when the START overlapping, not if they are STILL overlapping
+    //similar to the check above. I already have this code implemented, so it's
+    //a simple optimization fix
+
     //LEFT, RIGHT, TOP, BOTTOM
     if( innerGridX < 20 ) {            //PLAYER OVERLAP LEFT OF CURRENT TILE
       player.isOverlapping.left = true;
+      this.mustUpdateGrid = true;
+    } else {
+      player.isOverlapping.left = false;
     }
     if( innerGridX > 60 ) {            //PLAYER OVERLAP RIGHT OF CURRENT TILE
       player.isOverlapping.right = true;
+      this.mustUpdateGrid = true;
+    } else {
+      player.isOverlapping.right = false;
     }
     if( innerGridY < 20 ) {            //PLAYER OVERLAP TOP OF CURRENT TILE
       player.isOverlapping.top = true;
+      this.mustUpdateGrid = true;
+    } else {
+      player.isOverlapping.top = false;
     }
     if( innerGridY > 60 ) {            //PLAYER OVERLAP BOTTOM OF CURRENT TILE
       player.isOverlapping.bottom = true;
+      this.mustUpdateGrid = true;
+    } else {
+      player.isOverlapping.bottom = false;
     }
 
     //If the player is at a corner, they can overlap 4 spaces at once
@@ -148,18 +196,35 @@ export class GameServer {
     //TOPLEFT, TOPRIGHT, BOTTOMLEFT, BOTTOMRIGHT
     if( innerGridX < 15 && innerGridY < 15 ) { //PLAYER OVERLAP TOPLEFT OF CURRENT TILE
       player.isOverlapping.topLeft = true;
+      this.mustUpdateGrid = true;
+    } else {
+      player.isOverlapping.topLeft = false;
     }
     if( innerGridX > 65 && innerGridY < 15 ) { //PLAYER OVERLAP TOPRIGHT OF CURRENT TILE
       player.isOverlapping.topRight = true;
+      this.mustUpdateGrid = true;
+    } else {
+      player.isOverlapping.topRight = false;
     }
     if( innerGridX < 15 && innerGridY > 65 ) { //PLAYER OVERLAP BOTTOMLEFT OF CURRENT TILE
       player.isOverlapping.bottomLeft = true;
+      this.mustUpdateGrid = true;
+    } else {
+      player.isOverlapping.bottomLeft = false;
     }
     if( innerGridX > 65 && innerGridY > 65 ) { //PLAYER OVERLAP BOTTOMRIGHT OF CURRENT TILE
       player.isOverlapping.bottomRight = true;
+      this.mustUpdateGrid = true;
+    } else {
+      player.isOverlapping.bottomRight = false;
     }
 
-
+    //Now we know the current position of the player, along with whether or not
+    //The player is overlapping in any of the cases. If the player is overlapping
+    //Or if the player is in a new grid tile. We will have to rebuild the entire
+    //Grid. If multiple players trigger the mustUpdateGrid flag, the grid will
+    //still only be updated a single time, after every player has set all their
+    //overlaps and updated their position.
   } //GameServer.checkPlayerGridPos()
 
   playerUpdate() {
@@ -257,6 +322,7 @@ export class GameServer {
 
   addPlayer(socket, playerName, x, y) {
     let player = new Player({
+      socket: socket, //#TODO: I DONT LIKE THIS RESPONSE THING IM DOING
       ID: socket.ID,
       name: playerName,
       x: x,
@@ -275,68 +341,53 @@ export class GameServer {
   } //GameServer.addPlayer()
 } //class GameServer
 
-class DetectionPoint {
-  constructor(params) {
-    this.arrX = params.arrX;
-    this.arrY = params.arrY;
-    this.x = params.arrX * TILE_WIDTH;
-    this.y = params.arrY * TILE_HEIGHT;
-    this.radius = 40; //Equal to player diameter
-  } //DetectionPoint.constructor()
-
-  getDistance(pt) {
-    return Math.sqrt(Math.pow(this.x - pt.x, 2) + Math.pow(this.y - pt.y, 2));
-  } //DetectionPoint.getDistance()
-} //class DetectionPoint
-
 class GridTile {
   constructor(params) {
     this.gridX = params.gridX;
     this.gridY = params.gridY;
     this.x = params.gridX * TILE_WIDTH;
     this.y = params.gridY * TILE_HEIGHT;
-    this.dPoints = [
-      {x: params.d1.x, y: params.d1.y},
-      {x: params.d2.x, y: params.d2.y},
-      {x: params.d3.x, y: params.d3.y},
-      {x: params.d4.x, y: params.d4.y}
-    ];
+
+    this.server = params.server; //Reference to the game server
+
     this.occupying = 0; //0, 1, 2 --- Empty, Player, Block
     this.block = new Block({
+      parent: this,
       gridX: this.gridX,
       gridY: this.gridY,
       x: this.x,
       y: this.y
     });
+    //To fully instantiate the block, must update the initPack
+    this.server.blocks[this.block.ID] = this.block;
+    this.server.initPack.block.push(this.server.blocks[this.block.ID].getInitPack());
   } //GridTile.constructor()
 
+  update() {
+    //If the block on this grid tile is dead, update grid
+    if( this.block.HP <= 0 ) {
+      //#TODO: This could be a step in the GameServer.updateGrid() but this is
+      //The cheaper implementation.
+      this.updateOccupying(0);
+    }
+  } //GridTile.update()
 
-
-  updateOccupying(server, newOccupant) {
+  updateOccupying(newOccupant) {
     //ALL COLLISION CHECKS ARE DONE PRIOR TO updateOccupying()
     //IT IS ASSUMED THERE IS NO POSSIBLE COLLISIONS AT THIS POINT
     switch( newOccupant ) {
     case 0: //New occupant is nothing
-    //#TODO: ONLY NEED TO CHECK IF BLOCK WAS HERE
-      if( this.occupying === 1 ) {
-        //Player has moved out of this tile
-        //Nothing needs to be done
-      } else if( this.occupying === 2 ) {
+      if( this.occupying === 2 ) {
         //Block has been removed from this tile
-        //Set the block to be removed
-        this.block.toRemove = true;
+        //Turn the block for this grid tile off
+        this.block.isActive = false;
+        //Reset it's HP
+        this.block.HP = 3;
       }
       this.occupying = 0;
       break;
     case 1: //New occupant is a player
-    //#TODO: NOTHING NEEDS TO BE DONE
-      if( this.occupying === 0 ) {
-        //Player has moved into this empty tile
-        //Nothing needs to be done
-      } else if( this.occupying === 1 ) {
-        //Player has moved into a tile with a player in it
-        //Nothing needs to be done
-      } else if( this.occupying === 2 ) {
+      if( this.occupying === 2 ) {
         //Player has moved inside of a block
         //This should never happen
         console.error(`ERROR: Player has entered a block at Grid[${this.gridY}][${this.gridX}]`);
@@ -344,11 +395,10 @@ class GridTile {
       this.occupying = 1;
       break;
     case 2: //New occupant is a block
-    //#TODO: ONLY NEED TO CHECK IF EMPTY
       if( this.occupying === 0 ) {
         //Block has been placed at empty tile
-        server.blocks[this.block.ID] = this.block;
-        server.initPack.block.push(server.blocks[this.block.ID].getInitPack());
+        //Turn the block for this grid tile on
+        this.block.isActive = true;
       }
       this.occupying = 2;
       break;
@@ -358,6 +408,7 @@ class GridTile {
 
 class Block {
   constructor(params) {
+    this.parent = params.parent;
     this.ID = Math.random(); //#TODO replace with real ID system
     this.gridX = params.gridX;
     this.gridY = params.gridY;
@@ -365,7 +416,9 @@ class Block {
     this.x = params.x;
     this.y = params.y;
     this.HP = 3;
-    this.toRemove = false;
+    this.isActive = false;
+    this.toRemove = false; //Legacy check.
+    //#FIXME: Remove any reference to toRemove, since I wont be deleteing blocks
 
     //Collision checks
     this.width = TILE_WIDTH;
@@ -373,9 +426,7 @@ class Block {
   } //Block.constructor()
 
   update() {
-    if( this.HP <= 0 ) {
-      this.toRemove = true;
-    }
+    this.parent.update();
   } //Block.update()
 
   getInitPack() {
@@ -385,23 +436,19 @@ class Block {
       gridY: this.gridY,
       x: this.x,
       y: this.y,
-      HP: this.HP
+      HP: this.HP,
+      isActive: this.isActive
     };
   } //Block.getInitPack()
 
   getUpdatePack() {
     return {
       ID: this.ID,
-      HP: this.HP
+      HP: this.HP,
+      isActive: this.isActive
     };
   } //Block.getUpdatePack()
 } //class Block
-
-
-
-
-
-
 
 class Entity {
   constructor(params) {
@@ -425,12 +472,12 @@ class Entity {
 class Player extends Entity {
   constructor(params) {
     super(params);
+    this.socket = params.socket;
     this.name = params.name;
 
+    //Grid variables
     this.gridX = -1;
     this.gridY = -1;
-    this.prevPos = {}; //Can be more than one grid position (corners, sides)
-
     this.isOverlapping = {
       left: false,
       right: false,
@@ -442,7 +489,12 @@ class Player extends Entity {
       bottomRight: false,
       center: false
     };
+    //The currently selected grid tile
+    this.selGridX = -1;
+    this.selGridY = -1;
+    this.selGridResponse = false;
 
+    //Input checks
     this.pressingLeft = false;
     this.pressingRight = false;
     this.pressingUp = false;
@@ -451,6 +503,8 @@ class Player extends Entity {
     this.mouseAngle = 0;
     this.mouseX = 0;
     this.mouseY = 0;
+
+    //Player variables
     this.maxSpd = 5;
     this.HP = 10;
     this.maxHP = 10;
@@ -470,6 +524,14 @@ class Player extends Entity {
   } //Player.constructor()
 
   update(server) {
+    //If we updated selection, send the response
+    if( this.selGridResponse === true ) {
+      this.socket.emit('selGridResponse', {
+        selBlockID: server.grid[this.selGridY][this.selGridX].block.ID
+      });
+      this.selGridResponse = false;
+    }
+
     this.updateSpd();
     super.update();
 
@@ -480,16 +542,23 @@ class Player extends Entity {
     if( this.y < 60 ) {
       this.y = 60;
     }
-    if( this.x > 5000 ) {
-      this.x = 5000;
+    if( this.x > 4980 ) {
+      this.x = 4980;
     }
-    if( this.y > 3000 ) {
-      this.y = 3000;
+    if( this.y > 2960 ) {
+      this.y = 2960;
     }
 
     //COLLISION CHECK - Blocks
+    //#TODO: Optimize this so it only checks surrounding 9 tiles
     for( var i in server.blocks ) {
       var bl = server.blocks[i];
+
+      //If the block is turned off, skip collision detection
+      if( bl.isActive === false ) {
+        continue;
+      }
+
       let other = {
         x: bl.x,
         y: bl.y,
@@ -513,9 +582,7 @@ class Player extends Entity {
       }
     } //for(var i in Player.list) --- Collision check
 
-
-    //If player is in Weapon Mode
-    if( this.mode === 0 ) {
+    if( this.mode === 0 ) {           //If player is in Weapon Mode
       //Shoot
       if( this.pressingAttack === true && this.ammo > 0 ) {
         this.pressingAttack = false;
@@ -528,12 +595,11 @@ class Player extends Entity {
           }
         }
       } //Shoot
-    } else if( this.mode === 1 ) {
+    } else if( this.mode === 1 ) {    //If player is in Build Mode
       //Place block
       if( this.pressingAttack === true && this.blocks > 0 ) {
         this.pressingAttack = false;
         this.placeBlock(server);
-        this.blocks--;
         if( this.blocks <= 0 ) {
           this.blocks = 0;
         }
@@ -601,13 +667,16 @@ class Player extends Entity {
   } //Player.respawn()
 
   placeBlock(server) {
-    let block = new Block({
-      x: this.x + 50,
-      y: this.y + 50
-    });
-    let blockID = Math.random(); //#TODO replace with a real ID system
-    server.blocks[blockID] = block;
-    server.initPack.block.push(server.blocks[blockID].getInitPack());
+    //If the player selection is out of bounds, ignore the request
+    if( this.selGridX === -1 || this.selGridY === -1 ) {
+      return;
+    }
+
+    //If the location is empty space
+    if( server.grid[this.selGridY][this.selGridX].occupying === 0 ) {
+      server.grid[this.selGridY][this.selGridX].updateOccupying(TILE_BLOCK);
+      this.blocks--;
+    }
   } //Player.placeBlock
 
   getInitPack() {
@@ -682,6 +751,20 @@ class Player extends Entity {
         this.mouseX = data.mousePos.x;
         this.mouseY = data.mousePos.y;
         break;
+      case 'selGrid':
+        if( this.selGridX !== data.selGridX ) {
+          this.selGridX = data.selGridX;
+        }
+        if( this.selGridY !== data.selGridY ) {
+          this.selGridY = data.selGridY;
+        }
+        if( this.selGridX === -1 || this.selGridY === -1 ) {
+          //If it's invalid do nothing, otherwise respond
+          this.selGridResponse = false;
+        } else  {
+          this.selGridResponse = true;
+        }
+        break;
       default: break;
       }
     }); //'keyPress'
@@ -745,6 +828,9 @@ class Bullet extends Entity {
     //COLLISION CHECK - Blocks
     for( var j in server.blocks ) {
       var bl = server.blocks[j];
+      if( bl.isActive === false ) {
+        continue;
+      }
       let other = {
         x: bl.x,
         y: bl.y,
