@@ -3,8 +3,8 @@ ctx.translate(0.5, 0.5);
 const ctxUI = document.getElementById('canvas-ui').getContext('2d');
 
 //World constants
-const WORLD_WIDTH = 6400;
-const WORLD_HEIGHT = 3840;
+const WORLD_WIDTH = 3200;
+const WORLD_HEIGHT = 1800;
 
 import { Game, cPlayer, cBullet, cBlock, Camera, Map } from './Game';
 var io = require('socket.io-client');
@@ -207,7 +207,7 @@ $(document).ready( () => {
         }
       } else if( currentMode === 1 ) {  //Building mode
         //Place block
-        if(cGame.canBuild === true) {
+        if(cGame.canBuild === true && cGame.cPlayers[cGame.selfID].blocks > 0 ) {
           cGame.canBuild = false;
           socket.emit('keyPress', {inputID: 'attack', state: true});
           setTimeout( () => {

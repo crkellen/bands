@@ -16,6 +16,7 @@ v0.4.5 --- Released: Not Yet!
 			- Moved Player name to be on top of player
 			- Moved Player Ammo up a pixel
 			- Player name and Ammo are less transparent
+			- Removed Gun when player is in build mode
 
 	Changes:
 		- Changed grid.png to be 4x it's original size (Was: 1600x900, Now: 6400x3840)
@@ -25,6 +26,7 @@ v0.4.5 --- Released: Not Yet!
 		- Grid was not updating player's positions correctly - Fixes #44, #45
 		- Client wouldn't check for ammo when attempting to shoot - Fixes #40
 		- Added offsets to mouse calculation for other deadzones - Fixes #39
+		- Client wouldn't check for blocks when attempting to build - Fixes #51
 
 	Other:
 		- Added GitHub Issue template
@@ -34,7 +36,7 @@ v0.4.5 --- Released: Not Yet!
 	Art Assets:
 		Clinton Bone
 	Debuggers:
-		Marko Vehmas
+		Marko Vehmas, Valmay Green, Clinton Bone
 
 ####################################################################################################################
 

@@ -8,7 +8,7 @@ Imgs.gun.src = './../img/gun.png';
 //Imgs.background = new Image();
 //Imgs.background.src = '/client/img/background.png';
 Imgs.grid = new Image();
-Imgs.grid.src = './../img/grid.png';
+Imgs.grid.src = './../img/smallgrid.png';
 
 export class Game {
   constructor(ctx, ctxUI) {
@@ -96,37 +96,39 @@ export class cPlayer {
     //ctx.fillStyle = '#008BCC';
     //ctx.fillRect(this.x, this.y, width, height);
 
-    //Gun
-    let targetX = this.mX - ctx.canvas.width/2;
-    let targetY = this.mY - ctx.canvas.height/2;
-    //Check if within the deadzones
-    if( xView === 0 ) {     //LEFT
-      targetX = this.mX - x;
-    }
-    if( xView === 4800 ) {  //RIGHT
-      targetX = this.mX - x;
-    }
-    if( yView === 0 ) {     //TOP
-      targetY = this.mY - y;
-    }
-    if( yView === 3040 ) {  //BOTTOM
-      targetY = this.mY - y;
-    }
+    if( this.mode === 0 ) { //If player is in weapon mode
+      //Gun
+      let targetX = this.mX - ctx.canvas.width/2;
+      let targetY = this.mY - ctx.canvas.height/2;
+      //Check if within the deadzones
+      if( xView === 0 ) {     //LEFT
+        targetX = this.mX - x;
+      }
+      if( xView === 4800 ) {  //RIGHT
+        targetX = this.mX - x;
+      }
+      if( yView === 0 ) {     //TOP
+        targetY = this.mY - y;
+      }
+      if( yView === 3040 ) {  //BOTTOM
+        targetY = this.mY - y;
+      }
 
-    let theta = Math.atan2(targetY, targetX);
+      let theta = Math.atan2(targetY, targetX);
 
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(theta);
-    ctx.translate(30, 0); //Move the gun to the outside of the player
-    if( this.invincible === true ) {
-      ctx.fillStyle = 'rgba(65, 135, 255, 0.5)';
-    } else {
-      ctx.fillStyle = 'rgba(65, 135, 255, 1)';
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(theta);
+      ctx.translate(30, 0); //Move the gun to the outside of the player
+      if( this.invincible === true ) {
+        ctx.fillStyle = 'rgba(65, 135, 255, 0.5)';
+      } else {
+        ctx.fillStyle = 'rgba(65, 135, 255, 1)';
+      }
+      //ctx.drawImage(Imgs.gun, 0, 0);
+      ctx.fillRect(19/2 * -1, 8/2 * -1, 19, 8);
+      ctx.restore();
     }
-    //ctx.drawImage(Imgs.gun, 0, 0);
-    ctx.fillRect(19/2 * -1, 8/2 * -1, 19, 8);
-    ctx.restore();
   } //cPlayer.drawSelf()
 
   drawName(ctx, xView, yView) {

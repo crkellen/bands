@@ -19,6 +19,7 @@ Currently the game is just a endless fighter, but soon there will be objectives 
 ### Tips:
 - Blocks can be destroyed by shooting them!
 - You can see when the other players have to reload, use this to your advantage!
+- Players can't shoot when they don't have their gun out, attack them then!
 
 ## Weapons:
 Currently there is only a single weapon implemented. More will be added later! Full stats will be added later once they are closer to being finalized.

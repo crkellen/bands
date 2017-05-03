@@ -1,6 +1,6 @@
 //World constants
-const WORLD_WIDTH = 6400;
-const WORLD_HEIGHT = 3840;
+const WORLD_WIDTH = 3200;
+const WORLD_HEIGHT = 1800;
 
 //Tile constants
 const TILE_WIDTH = 80;
