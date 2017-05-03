@@ -6,8 +6,11 @@ An online multiplayer shooter game
 ## How to play:
 ### Controls:
 **Movement:** Move using the WASD keys.
+
 **Aiming:** Aim using your mouse. Where the mouse points, you will aim.
+
 **Shooting:** Shoot by pressing Left Mouse Button.
+
 **Building:** Switch to Build Mode by pressing Right Mouse Button. Then press Left Mouse Button to build on a tile adjacent to you. **Note:** You cannot build if a player is occupying the tile!
 
 ### Goals:
@@ -30,7 +33,7 @@ Low Damage, Fast Fire Rate, Long Reload Time, Large Clip Size, Average Projectil
 High Damage, Average Fire Rate, Short Reload Time, Small Clip Size, Average Projectile Speed, Good Short-Range Accuracy, Poor Long-Range Accuracy.
 
 ## Updates:
-**Please check the CHANGELOG.txt for a list of current updates**
+**Please check the [CHANGELOG.txt](CHANGELOG.txt) for a list of current updates**
 
 ### Planned Features:
 - Two teams, players will join either team (with balancing)
@@ -46,4 +49,5 @@ You can see my other work on my personal website at [http://lutzkellen.com/](htt
 ## License:
 I am leaving this open source because I think it may help someone else make their own games.
 For any questions please contact me.
-[GNU](LICENSE)
+
+#### [GNU](LICENSE.md)
