@@ -2,6 +2,10 @@ const ctx = document.getElementById('canvas-game').getContext('2d');
 ctx.translate(0.5, 0.5);
 const ctxUI = document.getElementById('canvas-ui').getContext('2d');
 
+//World constants
+const WORLD_WIDTH = 6400;
+const WORLD_HEIGHT = 3840;
+
 import { Game, cPlayer, cBullet, cBlock, Camera, Map } from './Game';
 var io = require('socket.io-client');
 //Replace with hosting IP (144.13.22.62) 'http://localhost'
@@ -9,7 +13,7 @@ var socket = io();
 var cGame = new Game(ctx, ctxUI);
 var playerName = '';
 
-var GameMap = new Map(6400, 3840);
+var GameMap = new Map(WORLD_WIDTH, WORLD_HEIGHT);
 GameMap.generate(cGame.ctx);
 
 let cam = {
@@ -17,8 +21,8 @@ let cam = {
   yView: 0,
   canvasWidth: cGame.ctx.canvas.width,
   canvasHeight: cGame.ctx.canvas.height,
-  worldWidth: 6400,
-  worldHeight: 3840
+  worldWidth: WORLD_WIDTH,
+  worldHeight: WORLD_HEIGHT
 };
 var GameCamera = new Camera(cam);
 
@@ -173,11 +177,20 @@ $(document).ready( () => {
         //Check if within the deadzones
         let mouse = getMousePos(cGame.ctx, e);
         if( cGame.selfID !== null ) {
-          if( GameCamera.xView === 0 ) {
-            x = mouse.x - cGame.cPlayers[cGame.selfID].x - GameCamera.xView;
+          //Offset the calculation if in a deadzone
+          let xOffset = cGame.cPlayers[cGame.selfID].x - GameCamera.xView;
+          let yOffset = cGame.cPlayers[cGame.selfID].y - GameCamera.yView;
+          if( GameCamera.xView === 0 ) {      //LEFT
+            x = mouse.x - xOffset;
           }
-          if( GameCamera.yView === 0 ) {
-            y = mouse.y - cGame.cPlayers[cGame.selfID].y - GameCamera.yView;
+          if( GameCamera.xView === 4800 ) {      //RIGHT
+            x = mouse.x - xOffset;
+          }
+          if( GameCamera.yView === 0 ) {      //TOP
+            y = mouse.y - yOffset;
+          }
+          if( GameCamera.yView === 3040 ) {   //BOTTOM
+            y = mouse.y - yOffset;
           }
         }
         //Update mouse angle
@@ -185,7 +198,7 @@ $(document).ready( () => {
         socket.emit('keyPress', {inputID: 'mouseAngle', state: angle});
 
         //Shoot
-        if(cGame.canShoot === true) {
+        if( cGame.canShoot === true && cGame.cPlayers[cGame.selfID].ammo > 0 ) {
           cGame.canShoot = false;
           socket.emit('keyPress', {inputID: 'attack', state: true});
           setTimeout( () => {
@@ -378,6 +391,7 @@ setInterval( () => {
   if( !cGame.selfID ) {
     return;
   }
+  //console.info(GameCamera.yView);
   cGame.ctx.clearRect(0, 0, cGame.ctx.canvas.width, cGame.ctx.canvas.height);
   GameCamera.update();
   GameMap.draw(cGame.ctx, GameCamera.xView, GameCamera.yView);

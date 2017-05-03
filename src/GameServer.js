@@ -100,7 +100,6 @@ export class GameServer {
       if( player.isOverlapping.bottomRight === true ) { //OVERLAP ON BOTTOMRIGHT
         this.grid[player.gridY+1][player.gridX+1].updateOccupying(TILE_PLAYER);
       }
-      console.info(`${player.isOverlapping.top}`);
     } //for( every player in this.players )
 
     //Now that we have updated the grid, reset the flag
@@ -454,8 +453,13 @@ class GridTile {
         //Player has moved inside of a block
         //This should never happen
         console.error(`ERROR: Player has entered a block at Grid[${this.gridY}][${this.gridX}]`);
+        //#TODO: Temporarily fix this by remove the block
+        this.occupying = 0;
+        this.block.isActive = false;
+      } else {
+        //Do not update the grid if the player is inside a block
+        this.occupying = 1;
       }
-      this.occupying = 1;
       break;
     case 2: //New occupant is a block
       if( this.occupying === 0 ) {
@@ -576,6 +580,7 @@ class Player extends Entity {
     this.maxAmmo = 6;
     this.clips = 3;
     this.maxClips = 3;
+    this.reloading = false;
     this.invincible = false;
     this.mode = 0; //0 for weapon, 1 for block
     this.blocks = 10; //# of blocks held
@@ -717,8 +722,8 @@ class Player extends Entity {
 
   respawn(server) {
     //#TODO: Make it so they respawn after a short time, and at their team base
-    this.x = (getRandomInt(1, 3) * 40);
-    this.y = (getRandomInt(1, 3) * 40);
+    this.x = (getRandomInt(1, 12) * 40);
+    this.y = (getRandomInt(1, 12) * 40);
     if( this.x % 80 === 0 ) {
       this.x += 40;
     }
@@ -885,10 +890,10 @@ class Bullet extends Entity {
     if( this.y < 5 ) {
       this.toRemove = true;
     }
-    if( this.x > 5000 ) {
+    if( this.x > WORLD_WIDTH - 5 ) {
       this.toRemove = true;
     }
-    if( this.y > 3000 ) {
+    if( this.y > WORLD_HEIGHT - 5 ) {
       this.toRemove = true;
     }
 
