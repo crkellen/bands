@@ -34,6 +34,7 @@ export class Game {
     this.selGridX = -1;
     this.selGridY = -1;
     this.selectedGrid = -1;
+    this.reloading = false;
 
     //Mouseclick flags
     this.canShoot = true;
@@ -73,7 +74,7 @@ export class cPlayer {
     //Health bar
     let HPWidth = 30 * this.HP / this.maxHP;
     ctx.fillStyle = 'red';
-    ctx.fillRect(x - HPWidth/2, y + 25, HPWidth, 4);
+    ctx.fillRect(x - HPWidth/1.4, y + 22, HPWidth*1.4, 4);
 
     //Player
     //let width = Imgs.player.width;
@@ -341,10 +342,10 @@ export class Map {
   } //Map.constructor()
 
   generate() {
-    this.image = new Image();
-    this.image.src = Imgs.grid.src;
+    //this.image = new Image();
+    //this.image.src = Imgs.grid.src;
 
-    /*//#FIXME: ISSUE #48
+    //#FIXME: ISSUE #48 FIXME: OPTIMIZE WORLD SIZE
     let ctx = document.createElement('canvas').getContext('2d');
     ctx.canvas.width = this.width;
     ctx.canvas.height = this.height;
@@ -367,7 +368,7 @@ export class Map {
     this.image.src = ctx.canvas.toDataURL('image/png');
 
     ctx = null;
-    */
+
   } //Map.generate()
 
   draw(ctx, xView, yView) {

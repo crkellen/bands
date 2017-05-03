@@ -17,6 +17,8 @@ v0.4.5 --- Released: Not Yet!
 			- Moved Player Ammo up a pixel
 			- Player name and Ammo are less transparent
 			- Removed Gun when player is in build mode
+			- Brought HP bar closer, made it a bit longer
+			- Cursor changes to 'wait' cursor when reloading (This may be temporary)
 
 	Changes:
 		- Changed grid.png to be 4x it's original size (Was: 1600x900, Now: 6400x3840)

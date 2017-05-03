@@ -423,6 +423,16 @@ var drawUI = () => {
     cGame.cPlayers[p].drawAmmo(cGame.ctx, GameCamera.xView, GameCamera.yView);
   }
 
+  //#TODO TEMPORARY USER FEEDBACK ON RELOADING
+  if( cGame.cPlayers[cGame.selfID].ammo <= 0 && cGame.reloading === false ) {
+    cGame.reloading = true;
+    cGame.ctxUI.canvas.style.cursor = 'wait';
+  }
+  if( cGame.reloading === true && cGame.cPlayers[cGame.selfID].ammo > 0 ) {
+    cGame.reloading = false;
+    cGame.ctxUI.canvas.style.cursor = 'crosshair';
+  }
+
   //If player is in build mode (check has already happened)
   //And player is above a grid which is not invalid for placement
   let selectionOutOfBounds = false;
