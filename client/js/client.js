@@ -3,8 +3,8 @@ ctx.translate(0.5, 0.5);
 const ctxUI = document.getElementById('canvas-ui').getContext('2d');
 
 //World constants
-const WORLD_WIDTH = 3200;
-const WORLD_HEIGHT = 1800;
+const WORLD_WIDTH = 6400;
+const WORLD_HEIGHT = 3840;
 
 import { Game, cPlayer, cBullet, cBlock, Camera, Map } from './Game';
 var io = require('socket.io-client');
