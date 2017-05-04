@@ -9,9 +9,9 @@ An online multiplayer shooter game
 
 **Aiming:** Aim using your mouse. Where the mouse points, you will aim.
 
-**Shooting:** Shoot by pressing Left Mouse Button.
+**Shooting:** Shoot by pressing the Left Mouse Button.
 
-**Building:** Switch to Build Mode by pressing Right Mouse Button. Then press Left Mouse Button to build on a tile adjacent to you. **Note:** You cannot build if a player is occupying the tile!
+**Building:** Switch to Build Mode by pressing the Right Mouse Button. Then press the Left Mouse Button to build on a tile adjacent to you. **Note:** You cannot build if a player is occupying the tile!
 
 ### Goals:
 Currently the game is just a endless fighter, but soon there will be objectives for each team to compete for. I have not finalized the goals yet, and there may end up being multiple game modes.
@@ -29,6 +29,7 @@ High Damage, Slow Fire Rate, Medium Reload Time, Medium Clip Size, Fast Projecti
 
 ### SMG (Not Implemented):
 Low Damage, Fast Fire Rate, Long Reload Time, Large Clip Size, Average Projectile Speed, Fair Short-Range Accuracy, Fair Long-Range Accuracy.
+*Note: I may change this from an SMG to more of an LMG. Still deciding. Or add both.*
 
 ### Shotgun (Not Implemented):
 High Damage, Average Fire Rate, Short Reload Time, Small Clip Size, Average Projectile Speed, Good Short-Range Accuracy, Poor Long-Range Accuracy.
