@@ -1,6 +1,6 @@
 //World constants
-const WORLD_WIDTH = 6400;
-const WORLD_HEIGHT = 3840;
+const WORLD_WIDTH = 3200;
+const WORLD_HEIGHT = 1800;
 
 //Tile constants
 const TILE_WIDTH = 80;
@@ -594,12 +594,12 @@ class Player extends Entity {
     this.ammo = 6;
     this.maxAmmo = 6;
     this.clips = 3;
-    this.maxClips = 3;
+    this.maxClips = 99; //FIXME: temp for SGX
     this.reloading = false;
     this.invincible = false;
     this.mode = 0; //0 for weapon, 1 for block
     this.blocks = 10; //# of blocks held
-    this.maxBlocks = 10;
+    this.maxBlocks = 20;
 
     //Collision checks
     this.width = 15;

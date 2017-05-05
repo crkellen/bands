@@ -105,13 +105,13 @@ export class cPlayer {
       if( xView === 0 ) {     //LEFT
         targetX = this.mX - x;
       }
-      if( xView === 4800 ) {  //RIGHT
+      if( xView === 1600 ) {  //RIGHT
         targetX = this.mX - x;
       }
       if( yView === 0 ) {     //TOP
         targetY = this.mY - y;
       }
-      if( yView === 3040 ) {  //BOTTOM
+      if( yView === 1000 ) {  //BOTTOM
         targetY = this.mY - y;
       }
 

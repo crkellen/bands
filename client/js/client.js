@@ -3,8 +3,8 @@ ctx.translate(0.5, 0.5);
 const ctxUI = document.getElementById('canvas-ui').getContext('2d');
 
 //World constants
-const WORLD_WIDTH = 6400;
-const WORLD_HEIGHT = 3840;
+const WORLD_WIDTH = 3200;
+const WORLD_HEIGHT = 1800;
 
 import { Game, cPlayer, cBullet, cBlock, Camera, Map } from './Game';
 var io = require('socket.io-client');
@@ -180,16 +180,17 @@ $(document).ready( () => {
           //Offset the calculation if in a deadzone
           let xOffset = cGame.cPlayers[cGame.selfID].x - GameCamera.xView;
           let yOffset = cGame.cPlayers[cGame.selfID].y - GameCamera.yView;
+          console.info(`X: ${GameCamera.xView}, Y: ${GameCamera.yView}`);
           if( GameCamera.xView === 0 ) {      //LEFT
             x = mouse.x - xOffset;
           }
-          if( GameCamera.xView === 4800 ) {      //RIGHT
+          if( GameCamera.xView === 1600 ) {   //RIGHT 4800
             x = mouse.x - xOffset;
           }
           if( GameCamera.yView === 0 ) {      //TOP
             y = mouse.y - yOffset;
           }
-          if( GameCamera.yView === 3040 ) {   //BOTTOM
+          if( GameCamera.yView === 1000 ) {   //BOTTOM 3040
             y = mouse.y - yOffset;
           }
         }
