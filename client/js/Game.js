@@ -1,14 +1,14 @@
-export var Imgs = {};
-Imgs.player = new Image();
-Imgs.player.src = './../img/player.png';
-Imgs.bullet = new Image();
-Imgs.bullet.src = './../img/bullet.png';
-Imgs.gun = new Image();
-Imgs.gun.src = './../img/gun.png';
+var Imgs = {};
+// Imgs.player = new Image();
+// Imgs.player.src = './../img/player.png';
+// Imgs.bullet = new Image();
+// Imgs.bullet.src = './../img/bullet.png';
+// Imgs.gun = new Image();
+// Imgs.gun.src = './../img/gun.png';
 //Imgs.background = new Image();
 //Imgs.background.src = '/client/img/background.png';
 Imgs.grid = new Image();
-Imgs.grid.src = './../img/smallgrid.png';
+Imgs.grid.src = './../img/grid.png';
 
 export class Game {
   constructor(ctx, ctxUI) {
@@ -65,7 +65,7 @@ export class cPlayer {
     this.maxBlocks = initPack.maxBlocks;
   } //cPlayer.constructor
 
-  drawSelf(ctx, xView, yView) {
+  drawSelf(ctx, xView, yView, isLocalPlayer) {
     //let x = this.x - cGame.cPlayers[cGame.selfID].x + cGame.ctx.canvas.width/2;
     //let y = this.y - cGame.cPlayers[cGame.selfID].y + cGame.ctx.canvas.height/2;
     let x = this.x - xView;
@@ -102,18 +102,29 @@ export class cPlayer {
       let targetX = this.mX - ctx.canvas.width/2;
       let targetY = this.mY - ctx.canvas.height/2;
       //Check if within the deadzones
+      console.info(this.x);
       if( xView === 0 ) {     //LEFT
-        targetX = this.mX - x;
+        targetX = this.mX - this.x;
+      } else if( isLocalPlayer !== true && this.x < ctx.canvas.width/2 ) {
+        targetX = this.mX - this.x;
+      } else if( isLocalPlayer !== true ) {
+        //
       }
       if( xView === 1600 ) {  //RIGHT
         targetX = this.mX - x;
-      }
+      }// } else if( isLocalPlayer !== true ) {
+      //   targetX = this.mX - this.x;
+      // }
       if( yView === 0 ) {     //TOP
-        targetY = this.mY - y;
+        targetY = this.mY - this.y;
+      } else if( isLocalPlayer !== true && this.x < ctx.canvas.height/2 ) {
+        targetY = this.mY - this.y;
       }
       if( yView === 1000 ) {  //BOTTOM
         targetY = this.mY - y;
-      }
+      }// } else if( isLocalPlayer !== true ) {
+      //   targetY = this.mY + this.y;
+      // }
 
       let theta = Math.atan2(targetY, targetX);
 
@@ -193,7 +204,19 @@ export class cBlock {
     let x = this.x - xView;
     let y = this.y - yView;
 
-    ctx.fillStyle = 'rgba(200, 200, 200, 0.4)';
+    //Change the appearance based on it's health, darker = less health
+    switch( this.HP ) {
+    case 1:
+      ctx.fillStyle = 'rgba(200, 75, 75, 0.4)';
+      break;
+    case 2:
+      ctx.fillStyle = 'rgba(200, 130, 130, 0.4)';
+      break;
+    case 3:
+      ctx.fillStyle = 'rgba(200, 170, 170, 0.4)';
+      break;
+    }
+
     ctx.fillRect(x, y, 80, 80);
   } //cBlock.drawSelf()
 
@@ -342,10 +365,11 @@ export class Map {
   } //Map.constructor()
 
   generate() {
-    //this.image = new Image();
-    //this.image.src = Imgs.grid.src;
+    this.image = new Image();
+    this.image.src = Imgs.grid.src;
 
     //#FIXME: ISSUE #48 FIXME: OPTIMIZE WORLD SIZE
+    /*
     let ctx = document.createElement('canvas').getContext('2d');
     ctx.canvas.width = this.width;
     ctx.canvas.height = this.height;
@@ -365,10 +389,10 @@ export class Map {
     ctx.restore();
 
     this.image = new Image();
-    this.image.src = ctx.canvas.toDataURL('image/png');
+    this.image.src = ctx.canvas.toDataURL('image/webp', 0.0);
 
     ctx = null;
-
+    */
   } //Map.generate()
 
   draw(ctx, xView, yView) {
@@ -398,6 +422,7 @@ export class Map {
     //Match destination with source to not scale the image
     dWidth = sWidth;
     dHeight = sHeight;
+
     ctx.drawImage(this.image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
   } //Map.draw()
 } //class Map

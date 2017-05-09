@@ -593,13 +593,13 @@ class Player extends Entity {
     this.score = 0;
     this.ammo = 6;
     this.maxAmmo = 6;
-    this.clips = 3;
+    this.clips = 99; //FIXME: temp for SGX
     this.maxClips = 99; //FIXME: temp for SGX
     this.reloading = false;
     this.invincible = false;
     this.mode = 0; //0 for weapon, 1 for block
-    this.blocks = 10; //# of blocks held
-    this.maxBlocks = 20;
+    this.blocks = 20; //# of blocks held //FIXME: temp for SGX
+    this.maxBlocks = 20; //FIXME: temp for SGX
 
     //Collision checks
     this.width = 15;

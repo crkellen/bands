@@ -172,15 +172,18 @@ $(document).ready( () => {
     case 1: //Left mouse button
       if( currentMode === 0 ) {         //Weapon mode
         //Calculate the angle from player to mouse
+        let mouse = getMousePos(cGame.ctx, e);
         let x = -cGame.ctx.canvas.clientWidth/2 + e.clientX;
         let y = -cGame.ctx.canvas.clientHeight/2 + e.clientY;
+        //TODO: DEBUG FOR #52
+        // console.info(`X: ${x}, Y: ${y}
+        // cW: ${-cGame.ctx.canvas.clientWidth/2}, cH: ${-cGame.ctx.canvas.clientHeight/2}
+        // eX: ${e.clientX}, eY: ${e.clientY}`);
         //Check if within the deadzones
-        let mouse = getMousePos(cGame.ctx, e);
         if( cGame.selfID !== null ) {
           //Offset the calculation if in a deadzone
-          let xOffset = cGame.cPlayers[cGame.selfID].x - GameCamera.xView;
-          let yOffset = cGame.cPlayers[cGame.selfID].y - GameCamera.yView;
-          console.info(`X: ${GameCamera.xView}, Y: ${GameCamera.yView}`);
+          let xOffset = cGame.cPlayers[cGame.selfID].x;// - GameCamera.xView;
+          let yOffset = cGame.cPlayers[cGame.selfID].y;// - GameCamera.yView;
           if( GameCamera.xView === 0 ) {      //LEFT
             x = mouse.x - xOffset;
           }
@@ -392,7 +395,6 @@ setInterval( () => {
   if( !cGame.selfID ) {
     return;
   }
-  //console.info(GameCamera.yView);
   cGame.ctx.clearRect(0, 0, cGame.ctx.canvas.width, cGame.ctx.canvas.height);
   GameCamera.update();
   GameMap.draw(cGame.ctx, GameCamera.xView, GameCamera.yView);
@@ -403,7 +405,11 @@ setInterval( () => {
 var drawEntities = () => {
   //Each player object draws itself
   for( let p in cGame.cPlayers ) {
-    cGame.cPlayers[p].drawSelf(cGame.ctx, GameCamera.xView, GameCamera.yView);
+    let isLocalPlayer = false;
+    if( cGame.cPlayers[cGame.selfID] === cGame.cPlayers[p] ) {
+      isLocalPlayer = true;
+    }
+    cGame.cPlayers[p].drawSelf(cGame.ctx, GameCamera.xView, GameCamera.yView, isLocalPlayer);
   }
   //Each bullet object draws itself
   for( let b in cGame.cBullets ) {
