@@ -1,10 +1,10 @@
-export var Imgs = {};
-Imgs.player = new Image();
-Imgs.player.src = './../img/player.png';
-Imgs.bullet = new Image();
-Imgs.bullet.src = './../img/bullet.png';
-Imgs.gun = new Image();
-Imgs.gun.src = './../img/gun.png';
+var Imgs = {};
+// Imgs.player = new Image();
+// Imgs.player.src = './../img/player.png';
+// Imgs.bullet = new Image();
+// Imgs.bullet.src = './../img/bullet.png';
+// Imgs.gun = new Image();
+// Imgs.gun.src = './../img/gun.png';
 //Imgs.background = new Image();
 //Imgs.background.src = '/client/img/background.png';
 Imgs.grid = new Image();
@@ -34,6 +34,7 @@ export class Game {
     this.selGridX = -1;
     this.selGridY = -1;
     this.selectedGrid = -1;
+    this.reloading = false;
 
     //Mouseclick flags
     this.canShoot = true;
@@ -64,17 +65,16 @@ export class cPlayer {
     this.maxBlocks = initPack.maxBlocks;
   } //cPlayer.constructor
 
-  drawSelf(ctx, xView, yView) {
+  drawSelf(ctx, xView, yView, isLocalPlayer) {
     //let x = this.x - cGame.cPlayers[cGame.selfID].x + cGame.ctx.canvas.width/2;
     //let y = this.y - cGame.cPlayers[cGame.selfID].y + cGame.ctx.canvas.height/2;
-
     let x = this.x - xView;
     let y = this.y - yView;
 
     //Health bar
     let HPWidth = 30 * this.HP / this.maxHP;
     ctx.fillStyle = 'red';
-    ctx.fillRect(x - HPWidth/2, y + 25, HPWidth, 4);
+    ctx.fillRect(x - HPWidth/1.4, y + 22, HPWidth*1.4, 4);
 
     //Player
     //let width = Imgs.player.width;
@@ -83,45 +83,72 @@ export class cPlayer {
     //User feedback for respawn invincibility
     if( this.invincible === true ) {
       ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
     } else {
       ctx.strokeStyle = 'black'; //#TODO: This will change to team color later
+      ctx.fillStyle = 'black';
     }
 
     ctx.beginPath();
     ctx.arc(x, y, 20, 0, 2*Math.PI);
+    ctx.fill();
     ctx.stroke();
     //ctx.drawImage(Imgs.player, 0, 0, Imgs.player.width, Imgs.player.height, x - width/2, y - height/2, width, height);
     //ctx.fillStyle = '#008BCC';
     //ctx.fillRect(this.x, this.y, width, height);
 
-    //Gun
-    let targetX = this.mX - ctx.canvas.width/2;
-    let targetY = this.mY - ctx.canvas.height/2;
-    //Check if within the deadzones
-    if( xView === 0 ) {
-      targetX = this.mX - x;
-    }
-    if( yView === 0 ) {
-      targetY = this.mY - y;
-    }
+    if( this.mode === 0 ) { //If player is in weapon mode
+      //Gun
+      let targetX = this.mX - ctx.canvas.width/2;
+      let targetY = this.mY - ctx.canvas.height/2;
+      //Check if within the deadzones
+      console.info(this.x);
+      if( xView === 0 ) {     //LEFT
+        targetX = this.mX - this.x;
+      } else if( isLocalPlayer !== true && this.x < ctx.canvas.width/2 ) {
+        targetX = this.mX - this.x;
+      } else if( isLocalPlayer !== true ) {
+        //
+      }
+      if( xView === 1600 ) {  //RIGHT
+        targetX = this.mX - x;
+      }// } else if( isLocalPlayer !== true ) {
+      //   targetX = this.mX - this.x;
+      // }
+      if( yView === 0 ) {     //TOP
+        targetY = this.mY - this.y;
+      } else if( isLocalPlayer !== true && this.x < ctx.canvas.height/2 ) {
+        targetY = this.mY - this.y;
+      }
+      if( yView === 1000 ) {  //BOTTOM
+        targetY = this.mY - y;
+      }// } else if( isLocalPlayer !== true ) {
+      //   targetY = this.mY + this.y;
+      // }
 
-    let theta = Math.atan2(targetY, targetX);
+      let theta = Math.atan2(targetY, targetX);
 
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(theta);
-    ctx.fillStyle = '#008BCC';
-    //ctx.drawImage(Imgs.gun, 0, 0);
-    ctx.fillRect(19/2 * -1, 8/2 * -1, 19, 8);
-    ctx.restore();
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(theta);
+      ctx.translate(30, 0); //Move the gun to the outside of the player
+      if( this.invincible === true ) {
+        ctx.fillStyle = 'rgba(65, 135, 255, 0.5)';
+      } else {
+        ctx.fillStyle = 'rgba(65, 135, 255, 1)';
+      }
+      //ctx.drawImage(Imgs.gun, 0, 0);
+      ctx.fillRect(19/2 * -1, 8/2 * -1, 19, 8);
+      ctx.restore();
+    }
   } //cPlayer.drawSelf()
 
   drawName(ctx, xView, yView) {
     let x = this.x - xView;
     let y = this.y - yView;
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.fillText(this.name, x - this.name.length * 2.5, y - 25);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.fillText(this.name, x - this.name.length * 2.5, y);
   } //cPlayer.drawName()
 
   drawAmmo(ctx, xView, yView) {
@@ -129,8 +156,8 @@ export class cPlayer {
     let y = this.y - yView;
 
     let ammoString = `${this.ammo}/${this.maxAmmo}`;
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.fillText(ammoString, x - 8, y + 17);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.fillText(ammoString, x - 8, y + 16);
   } //cPlayer.drawAmmo()
 } //class cPlayer
 
@@ -177,7 +204,19 @@ export class cBlock {
     let x = this.x - xView;
     let y = this.y - yView;
 
-    ctx.fillStyle = 'rgba(200, 200, 200, 0.4)';
+    //Change the appearance based on it's health, darker = less health
+    switch( this.HP ) {
+    case 1:
+      ctx.fillStyle = 'rgba(200, 75, 75, 0.4)';
+      break;
+    case 2:
+      ctx.fillStyle = 'rgba(200, 130, 130, 0.4)';
+      break;
+    case 3:
+      ctx.fillStyle = 'rgba(200, 170, 170, 0.4)';
+      break;
+    }
+
     ctx.fillRect(x, y, 80, 80);
   } //cBlock.drawSelf()
 
@@ -326,58 +365,34 @@ export class Map {
   } //Map.constructor()
 
   generate() {
-    /*
-    var ctx = document.createElement('canvas').getContext('2d');
-    ctx.canvas.width = this.width;
-    ctx.canvas.height = this.height;
-
-    var rows = ~~(this.width/44) + 1;
-    var columns = ~~(this.height/44) + 1;
-
-    var color = 'red';
-    ctx.save();
-    ctx.fillStyle = 'red';
-    for (var x = 0, i = 0; i < rows; x+=44, i++) {
-      ctx.beginPath();
-      for (var y = 0, j=0; j < columns; y+=44, j++) {
-        ctx.rect (x, y, 40, 40);
-      }
-      color = (color == 'red' ? 'blue' : 'red');
-      ctx.fillStyle = color;
-      ctx.fill();
-      ctx.closePath();
-    }
-    ctx.restore();
-
-    // store the generate map as this image texture
     this.image = new Image();
-    this.image.src = ctx.canvas.toDataURL('image/png');
+    this.image.src = Imgs.grid.src;
 
-    // clear context
-    ctx = null;
-    */
-    var ctx = document.createElement('canvas').getContext('2d');
+    //#FIXME: ISSUE #48 FIXME: OPTIMIZE WORLD SIZE
+    /*
+    let ctx = document.createElement('canvas').getContext('2d');
     ctx.canvas.width = this.width;
     ctx.canvas.height = this.height;
 
-    var rows = this.width / 1600; //Width of grid image
-    var cols = this.height / 960; //Height of grid image
+    let rows = this.width / 1600; //Width of grid image
+    let cols = this.height / 960; //Height of grid image
 
-    var gridImage = new Image();
+    let gridImage = new Image();
     gridImage.src = Imgs.grid.src;
     //Layer the image four times larger
-    //ctx.save();
-    for( var x = 0, i = 0; i < rows; x += 1600, i++ ) {
-      for( var y = 0, j = 0; j < cols; y += 960, j++ ) {
+    ctx.save();
+    for( let x = 0, i = 0; i < rows; x += 1600, i++ ) {
+      for( let y = 0, j = 0; j < cols; y += 960, j++ ) {
         ctx.drawImage(gridImage, x, y);
       }
     }
-    //ctx.restore();
+    ctx.restore();
 
     this.image = new Image();
-    this.image.src = ctx.canvas.toDataURL('image/png');
+    this.image.src = ctx.canvas.toDataURL('image/webp', 0.0);
 
     ctx = null;
+    */
   } //Map.generate()
 
   draw(ctx, xView, yView) {

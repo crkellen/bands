@@ -1,6 +1,6 @@
 //World constants
-const WORLD_WIDTH = 6400;
-const WORLD_HEIGHT = 3840;
+const WORLD_WIDTH = 3200;
+const WORLD_HEIGHT = 1800;
 
 //Tile constants
 const TILE_WIDTH = 80;
@@ -21,8 +21,8 @@ export class GameServer {
     this.grid = []; //0, 1, 2 --- Empty, Player, Wall
     this.worldWidth = WORLD_WIDTH;
     this.worldHeight = WORLD_HEIGHT;
-    this.mapWidth = this.worldWidth / TILE_WIDTH; //TEMP: 6
-    this.mapHeight = this.worldHeight / TILE_HEIGHT; //TEMP: 6
+    this.mapWidth = this.worldWidth / TILE_WIDTH;
+    this.mapHeight = this.worldHeight / TILE_HEIGHT;
     this.mustUpdateGrid = false;
 
     this.initializeGrid();
@@ -71,36 +71,51 @@ export class GameServer {
       let player = this.players[p];
 
       //Update current grid position to be a 1
-      //#TODO: could do a check to make sure the tile is not already a 1
-      //#TODO: could do a check to make sure the tile is not a block (2)
-      this.grid[player.gridY][player.gridX].updateOccupying(TILE_PLAYER);
+      if( this.grid[player.gridY][player.gridX].occupying !== 1 ) {
+        this.grid[player.gridY][player.gridX].updateOccupying(TILE_PLAYER);
+      }
 
       //Check every overlap case, if there is an overlap, update that grid tile
       if( player.isOverlapping.left === true ) {        //OVERLAP ON LEFT
-        this.grid[player.gridY][player.gridX-1].updateOccupying(TILE_PLAYER);
+        if( this.grid[player.gridY][player.gridX-1].occupying !== 1 ) {
+          this.grid[player.gridY][player.gridX-1].updateOccupying(TILE_PLAYER);
+        }
       }
       if( player.isOverlapping.right === true ) {       //OVERLAP ON RIGHT
-        this.grid[player.gridY][player.gridX+1].updateOccupying(TILE_PLAYER);
+        if( this.grid[player.gridY][player.gridX+1].occupying !== 1 ) {
+          this.grid[player.gridY][player.gridX+1].updateOccupying(TILE_PLAYER);
+        }
       }
       if( player.isOverlapping.top === true ) {         //OVERLAP ON TOP
-        this.grid[player.gridY-1][player.gridX].updateOccupying(TILE_PLAYER);
+        if( this.grid[player.gridY-1][player.gridX].occupying !== 1 ) {
+          this.grid[player.gridY-1][player.gridX].updateOccupying(TILE_PLAYER);
+        }
       }
       if( player.isOverlapping.bottom === true ) {      //OVERLAP ON BOTTOM
-        this.grid[player.gridY+1][player.gridX].updateOccupying(TILE_PLAYER);
+        if( this.grid[player.gridY+1][player.gridX].occupying !== 1 ) {
+          this.grid[player.gridY+1][player.gridX].updateOccupying(TILE_PLAYER);
+        }
       }
       if( player.isOverlapping.topLeft === true ) {     //OVERLAP ON TOPLEFT
-        this.grid[player.gridY-1][player.gridX-1].updateOccupying(TILE_PLAYER);
+        if( this.grid[player.gridY-1][player.gridX-1].occupying !== 1 ) {
+          this.grid[player.gridY-1][player.gridX-1].updateOccupying(TILE_PLAYER);
+        }
       }
       if( player.isOverlapping.topRight === true ) {    //OVERLAP ON TOPRIGHT
-        this.grid[player.gridY-1][player.gridX+1].updateOccupying(TILE_PLAYER);
+        if( this.grid[player.gridY-1][player.gridX+1].occupying !== 1 ) {
+          this.grid[player.gridY-1][player.gridX+1].updateOccupying(TILE_PLAYER);
+        }
       }
       if( player.isOverlapping.bottomLeft === true ) {  //OVERLAP ON BOTTOMLEFT
-        this.grid[player.gridY+1][player.gridX-1].updateOccupying(TILE_PLAYER);
+        if( this.grid[player.gridY+1][player.gridX-1].occupying !== 1 ) {
+          this.grid[player.gridY+1][player.gridX-1].updateOccupying(TILE_PLAYER);
+        }
       }
       if( player.isOverlapping.bottomRight === true ) { //OVERLAP ON BOTTOMRIGHT
-        this.grid[player.gridY+1][player.gridX+1].updateOccupying(TILE_PLAYER);
+        if( this.grid[player.gridY+1][player.gridX+1].occupying !== 1 ) {
+          this.grid[player.gridY+1][player.gridX+1].updateOccupying(TILE_PLAYER);
+        }
       }
-      console.info(`${player.isOverlapping.top}`);
     } //for( every player in this.players )
 
     //Now that we have updated the grid, reset the flag
@@ -429,8 +444,7 @@ class GridTile {
   update() {
     //If the block on this grid tile is dead, update grid
     if( this.block.HP <= 0 ) {
-      //#TODO: This could be a step in the GameServer.updateGrid() but this is
-      //The cheaper implementation.
+      //#TODO: This check does not need to happen every time
       this.updateOccupying(0);
     }
   } //GridTile.update()
@@ -454,8 +468,13 @@ class GridTile {
         //Player has moved inside of a block
         //This should never happen
         console.error(`ERROR: Player has entered a block at Grid[${this.gridY}][${this.gridX}]`);
+        //#TODO: Temporarily fix this by remove the block
+        this.occupying = 0;
+        this.block.isActive = false;
+      } else {
+        //Do not update the grid if the player is inside a block
+        this.occupying = 1;
       }
-      this.occupying = 1;
       break;
     case 2: //New occupant is a block
       if( this.occupying === 0 ) {
@@ -574,12 +593,13 @@ class Player extends Entity {
     this.score = 0;
     this.ammo = 6;
     this.maxAmmo = 6;
-    this.clips = 3;
-    this.maxClips = 3;
+    this.clips = 99; //FIXME: temp for SGX
+    this.maxClips = 99; //FIXME: temp for SGX
+    this.reloading = false;
     this.invincible = false;
     this.mode = 0; //0 for weapon, 1 for block
-    this.blocks = 10; //# of blocks held
-    this.maxBlocks = 10;
+    this.blocks = 20; //# of blocks held //FIXME: temp for SGX
+    this.maxBlocks = 20; //FIXME: temp for SGX
 
     //Collision checks
     this.width = 15;
@@ -612,10 +632,66 @@ class Player extends Entity {
       this.y = WORLD_HEIGHT - 20;
     }
 
+    if( this.mode === 0 ) {           //If player is in Weapon Mode
+      //Shoot
+      if( this.pressingAttack === true && this.ammo > 0 ) {
+        this.pressingAttack = false;
+        this.shoot(server);
+        this.ammo--;
+        if( this.ammo <= 0 ) {
+          this.ammo = 0;
+          if( this.clips > 0 ) {
+            this.reload();
+          }
+        }
+      } //Shoot
+    } else if( this.mode === 1 ) {    //If player is in Build Mode
+      //Place block
+      if( this.pressingAttack === true && this.blocks > 0 ) {
+        this.pressingAttack = false;
+        this.placeBlock(server);
+        if( this.blocks <= 0 ) {
+          this.blocks = 0;
+        }
+      } //Place block
+    } //if( this.mode )
+
     //COLLISION CHECK - Blocks
-    //#TODO: Optimize this so it only checks surrounding 9 tiles
-    for( var i in server.blocks ) {
-      var bl = server.blocks[i];
+    //#TODO: Optimize this because if there is a player, there can't be a block
+    if( this.gridX === -1 ) {
+      //Player is not initialized, return
+      return;
+    }
+    //The 9 blocks surrounding the player
+    let surrBlocks = {};
+    surrBlocks[5] = server.grid[this.gridY][this.gridX].block;     //CENTER
+    if( this.gridX !== 0 ) {
+      surrBlocks[4] = server.grid[this.gridY][this.gridX-1].block;   //LEFT
+    }
+    if( this.gridX !== server.mapWidth-1 ) {
+      surrBlocks[6] = server.grid[this.gridY][this.gridX+1].block;   //RIGHT
+    }
+    if( this.gridY !== 0 ) {
+      surrBlocks[8] = server.grid[this.gridY-1][this.gridX].block;   //TOP
+    }
+    if( this.gridY !== server.mapHeight-1 ) {
+      surrBlocks[2] = server.grid[this.gridY+1][this.gridX].block;   //BOTTOM
+    }
+    if( this.gridX !== 0 && this.gridY !== 0 ) {
+      surrBlocks[7] = server.grid[this.gridY-1][this.gridX-1].block; //TOPLEFT
+    }
+    if( this.gridX !== server.mapWidth-1 && this.gridY !== 0 ) {
+      surrBlocks[9] = server.grid[this.gridY-1][this.gridX+1].block; //TOPRIGHT
+    }
+    if( this.gridX !== 0 && this.gridY !== server.mapHeight-1 ) {
+      surrBlocks[1] = server.grid[this.gridY+1][this.gridX-1].block; //BOTTOMLEFT
+    }
+    if( this.gridX !== server.mapWidth-1 && this.gridY !== server.mapHeight-1 ) {
+      surrBlocks[3] = server.grid[this.gridY+1][this.gridX+1].block; //BOTTOMRIGHT
+    }
+
+    for( var i in surrBlocks ) {
+      var bl = surrBlocks[i];
 
       //If the block is turned off, skip collision detection
       if( bl.isActive === false ) {
@@ -643,31 +719,7 @@ class Player extends Entity {
           this.y -= this.spdY;
         }
       }
-    } //for(var i in Player.list) --- Collision check
-
-    if( this.mode === 0 ) {           //If player is in Weapon Mode
-      //Shoot
-      if( this.pressingAttack === true && this.ammo > 0 ) {
-        this.pressingAttack = false;
-        this.shoot(server);
-        this.ammo--;
-        if( this.ammo <= 0 ) {
-          this.ammo = 0;
-          if( this.clips > 0 ) {
-            this.reload();
-          }
-        }
-      } //Shoot
-    } else if( this.mode === 1 ) {    //If player is in Build Mode
-      //Place block
-      if( this.pressingAttack === true && this.blocks > 0 ) {
-        this.pressingAttack = false;
-        this.placeBlock(server);
-        if( this.blocks <= 0 ) {
-          this.blocks = 0;
-        }
-      } //Place block
-    } //if( this.mode )
+    } //for( var i in surrBlocks ) --- Block Collision Check
   } //Player.update()
 
   updateSpd() {
@@ -717,8 +769,8 @@ class Player extends Entity {
 
   respawn(server) {
     //#TODO: Make it so they respawn after a short time, and at their team base
-    this.x = (getRandomInt(1, 3) * 40);
-    this.y = (getRandomInt(1, 3) * 40);
+    this.x = (getRandomInt(1, 12) * 40);
+    this.y = (getRandomInt(1, 12) * 40);
     if( this.x % 80 === 0 ) {
       this.x += 40;
     }
@@ -885,10 +937,10 @@ class Bullet extends Entity {
     if( this.y < 5 ) {
       this.toRemove = true;
     }
-    if( this.x > 5000 ) {
+    if( this.x > WORLD_WIDTH - 5 ) {
       this.toRemove = true;
     }
-    if( this.y > 3000 ) {
+    if( this.y > WORLD_HEIGHT - 5 ) {
       this.toRemove = true;
     }
 

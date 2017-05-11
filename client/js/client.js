@@ -2,6 +2,10 @@ const ctx = document.getElementById('canvas-game').getContext('2d');
 ctx.translate(0.5, 0.5);
 const ctxUI = document.getElementById('canvas-ui').getContext('2d');
 
+//World constants
+const WORLD_WIDTH = 3200;
+const WORLD_HEIGHT = 1800;
+
 import { Game, cPlayer, cBullet, cBlock, Camera, Map } from './Game';
 var io = require('socket.io-client');
 //Replace with hosting IP (144.13.22.62) 'http://localhost'
@@ -9,7 +13,7 @@ var socket = io();
 var cGame = new Game(ctx, ctxUI);
 var playerName = '';
 
-var GameMap = new Map(6400, 3840);
+var GameMap = new Map(WORLD_WIDTH, WORLD_HEIGHT);
 GameMap.generate(cGame.ctx);
 
 let cam = {
@@ -17,8 +21,8 @@ let cam = {
   yView: 0,
   canvasWidth: cGame.ctx.canvas.width,
   canvasHeight: cGame.ctx.canvas.height,
-  worldWidth: 6400,
-  worldHeight: 3840
+  worldWidth: WORLD_WIDTH,
+  worldHeight: WORLD_HEIGHT
 };
 var GameCamera = new Camera(cam);
 
@@ -168,16 +172,29 @@ $(document).ready( () => {
     case 1: //Left mouse button
       if( currentMode === 0 ) {         //Weapon mode
         //Calculate the angle from player to mouse
+        let mouse = getMousePos(cGame.ctx, e);
         let x = -cGame.ctx.canvas.clientWidth/2 + e.clientX;
         let y = -cGame.ctx.canvas.clientHeight/2 + e.clientY;
+        //TODO: DEBUG FOR #52
+        // console.info(`X: ${x}, Y: ${y}
+        // cW: ${-cGame.ctx.canvas.clientWidth/2}, cH: ${-cGame.ctx.canvas.clientHeight/2}
+        // eX: ${e.clientX}, eY: ${e.clientY}`);
         //Check if within the deadzones
-        let mouse = getMousePos(cGame.ctx, e);
         if( cGame.selfID !== null ) {
-          if( GameCamera.xView === 0 ) {
-            x = mouse.x - cGame.cPlayers[cGame.selfID].x - GameCamera.xView;
+          //Offset the calculation if in a deadzone
+          let xOffset = cGame.cPlayers[cGame.selfID].x;// - GameCamera.xView;
+          let yOffset = cGame.cPlayers[cGame.selfID].y;// - GameCamera.yView;
+          if( GameCamera.xView === 0 ) {      //LEFT
+            x = mouse.x - xOffset;
           }
-          if( GameCamera.yView === 0 ) {
-            y = mouse.y - cGame.cPlayers[cGame.selfID].y - GameCamera.yView;
+          if( GameCamera.xView === 1600 ) {   //RIGHT 4800
+            x = mouse.x - xOffset;
+          }
+          if( GameCamera.yView === 0 ) {      //TOP
+            y = mouse.y - yOffset;
+          }
+          if( GameCamera.yView === 1000 ) {   //BOTTOM 3040
+            y = mouse.y - yOffset;
           }
         }
         //Update mouse angle
@@ -185,7 +202,7 @@ $(document).ready( () => {
         socket.emit('keyPress', {inputID: 'mouseAngle', state: angle});
 
         //Shoot
-        if(cGame.canShoot === true) {
+        if( cGame.canShoot === true && cGame.cPlayers[cGame.selfID].ammo > 0 ) {
           cGame.canShoot = false;
           socket.emit('keyPress', {inputID: 'attack', state: true});
           setTimeout( () => {
@@ -194,7 +211,7 @@ $(document).ready( () => {
         }
       } else if( currentMode === 1 ) {  //Building mode
         //Place block
-        if(cGame.canBuild === true) {
+        if(cGame.canBuild === true && cGame.cPlayers[cGame.selfID].blocks > 0 ) {
           cGame.canBuild = false;
           socket.emit('keyPress', {inputID: 'attack', state: true});
           setTimeout( () => {
@@ -388,7 +405,11 @@ setInterval( () => {
 var drawEntities = () => {
   //Each player object draws itself
   for( let p in cGame.cPlayers ) {
-    cGame.cPlayers[p].drawSelf(cGame.ctx, GameCamera.xView, GameCamera.yView);
+    let isLocalPlayer = false;
+    if( cGame.cPlayers[cGame.selfID] === cGame.cPlayers[p] ) {
+      isLocalPlayer = true;
+    }
+    cGame.cPlayers[p].drawSelf(cGame.ctx, GameCamera.xView, GameCamera.yView, isLocalPlayer);
   }
   //Each bullet object draws itself
   for( let b in cGame.cBullets ) {
@@ -407,6 +428,16 @@ var drawUI = () => {
   for( let p in cGame.cPlayers ) {
     cGame.cPlayers[p].drawName(cGame.ctx, GameCamera.xView, GameCamera.yView);
     cGame.cPlayers[p].drawAmmo(cGame.ctx, GameCamera.xView, GameCamera.yView);
+  }
+
+  //#TODO TEMPORARY USER FEEDBACK ON RELOADING
+  if( cGame.cPlayers[cGame.selfID].ammo <= 0 && cGame.reloading === false ) {
+    cGame.reloading = true;
+    cGame.ctxUI.canvas.style.cursor = 'wait';
+  }
+  if( cGame.reloading === true && cGame.cPlayers[cGame.selfID].ammo > 0 ) {
+    cGame.reloading = false;
+    cGame.ctxUI.canvas.style.cursor = 'crosshair';
   }
 
   //If player is in build mode (check has already happened)

@@ -4,6 +4,44 @@ Known Bugs can be found at the issues page on GitHub here: https://github.com/cr
 
 ####################################################################################################################
 
+v0.4.5 --- Released: Not Yet!
+
+	Additions:
+		Gameplay:
+			- Expanded map to 4x it's size (6400x3840)
+			- Changed Player's weapons to be on the outside of their body
+				- Player's weapons also go transparent when they are invincible
+			- Changed players to be fully colored in (just black for now)
+		UI:
+			- Moved Player name to be on top of player
+			- Moved Player Ammo up a pixel
+			- Player name and Ammo are less transparent
+			- Removed Gun when player is in build mode
+			- Brought HP bar closer, made it a bit longer
+			- Cursor changes to 'wait' cursor when reloading (This may be temporary)
+
+	Changes:
+		- Changed grid.png to be 4x it's original size (Was: 1600x900, Now: 6400x3840)
+
+	Fixes:
+		- Player will try to respawn if respawn area is occupied by a block - Fixes #43
+		- Grid was not updating player's positions correctly - Fixes #44, #45
+		- Client wouldn't check for ammo when attempting to shoot - Fixes #40
+		- Added offsets to mouse calculation for other deadzones - Fixes #39
+		- Client wouldn't check for blocks when attempting to build - Fixes #51
+
+	Other:
+		- Added GitHub Issue template
+		- Updated README.md
+
+	SPECIAL THANKS:
+	Art Assets:
+		Clinton Bone
+	Debuggers:
+		Marko Vehmas, Valmay Green, Clinton Bone
+
+####################################################################################################################
+
 v0.4.0 --- Released: 5-2-2017
 	Additions:
 		Gameplay:
@@ -41,13 +79,14 @@ v0.4.0 --- Released: 5-2-2017
 		- Only send cGame.ctxUI to drawName/drawAmmo
 		- Bullets fly directly towards mouse, no offset - prevents #31
 		- Changed cPlayer.drawSelf() and cBullet.drawSelf() to only pass in ctx not cGame entirely
-	
+
 	Other:
 		- Began documenting changes in changelogs.
 		- Updated LICENSE.md
-		- Created a GitHub issues template
-		
+
 SPECIAL THANKS:
+Art Assets:
+	Clinton Bone
 Debuggers:
 	Reed Kendall, Alex Meyer, Tony Dols, Marko Vehmas
 Assistance:
