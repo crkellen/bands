@@ -1,10 +1,10 @@
 var Imgs = {};
-// Imgs.player = new Image();
-// Imgs.player.src = './../img/player.png';
-// Imgs.bullet = new Image();
-// Imgs.bullet.src = './../img/bullet.png';
-// Imgs.gun = new Image();
-// Imgs.gun.src = './../img/gun.png';
+//Imgs.player = new Image();
+//Imgs.player.src = './../img/player.png';
+//Imgs.bullet = new Image();
+//Imgs.bullet.src = './../img/bullet.png';
+//Imgs.gun = new Image();
+//Imgs.gun.src = './../img/gun.png';
 //Imgs.background = new Image();
 //Imgs.background.src = '/client/img/background.png';
 Imgs.grid = new Image();
@@ -15,7 +15,6 @@ export class Game {
     this.ctx = ctx;
     this.ctx.font = '12px Callibri';
     this.ctxUI = ctxUI;
-    //#TODO: Only need to update this once, unless I decide to change font
     this.ctxUI.font = '20px Callibri';
     this.UIUpdate = true; //Flag to update low-changing UI
 
@@ -102,7 +101,6 @@ export class cPlayer {
       let targetX = this.mX - ctx.canvas.width/2;
       let targetY = this.mY - ctx.canvas.height/2;
       //Check if within the deadzones
-      console.info(this.x);
       if( xView === 0 ) {     //LEFT
         targetX = this.mX - this.x;
       } else if( isLocalPlayer !== true && this.x < ctx.canvas.width/2 ) {
@@ -227,7 +225,7 @@ export class cBlock {
     if( canPlace === true ) {
       ctx.fillStyle = 'rgba(200, 200, 200, 0.2)';
     } else {
-      ctx.fillStyle = 'rgba(200, 0, 0, 0.2)';
+      ctx.fillStyle = 'rgba(200, 0, 0, 0.8)';
     }
 
     ctx.fillRect(x, y, 80, 80);

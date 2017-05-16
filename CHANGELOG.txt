@@ -8,27 +8,42 @@ v0.4.5 --- Released: Not Yet!
 
 	Additions:
 		Gameplay:
-			- Expanded map to 4x it's size (6400x3840)
+			- Expanded map to 2x it's size (3200x1800), will be eventually 4x (6400x3840)
 			- Changed Player's weapons to be on the outside of their body
 				- Player's weapons also go transparent when they are invincible
 			- Changed players to be fully colored in (just black for now)
+			- Blocks now show their health
+				- Starts whiteish with a tinge of red, to more red, to a darker red, then gone
+			- Players respawn only in the middle of a tile
 		UI:
 			- Moved Player name to be on top of player
 			- Moved Player Ammo up a pixel
 			- Player name and Ammo are less transparent
 			- Removed Gun when player is in build mode
 			- Brought HP bar closer, made it a bit longer
-			- Cursor changes to 'wait' cursor when reloading (This may be temporary)
+			- Cursor changes to 'wait' cursor when reloading (This is temporary)
+			- If the player cannot place a block, selection highlight is bright red
 
 	Changes:
-		- Changed grid.png to be 4x it's original size (Was: 1600x900, Now: 6400x3840)
+		- Changed grid.png to be 4x it's original size (Was: 1600x900, Now: 6400x3840) - Fixes #48
+		- Changed starting screen to show the background image at the start rather than a blank white background
+		- Players can spawn in any gridX 1 to 39, and any gridY 1 to 20
+		- Players temporarily have 20 blocks max, and 99 clips max
 
 	Fixes:
+		- Added a mousedown listener for compatibility - Fixes #42
 		- Player will try to respawn if respawn area is occupied by a block - Fixes #43
 		- Grid was not updating player's positions correctly - Fixes #44, #45
 		- Client wouldn't check for ammo when attempting to shoot - Fixes #40
 		- Added offsets to mouse calculation for other deadzones - Fixes #39
 		- Client wouldn't check for blocks when attempting to build - Fixes #51
+		- Objects now only send/Update information if there is information to update - Fixes #62
+		- Removed any reference to blocks being removed. They are now created once, and that's it
+		- Grid tile only checks block health when it is updated
+		- Bullets are no longer able to hit multiple people/blocks
+		- Bullets no longer check collisions if they are supposed to be removed
+		- Players replace blocks if all respawn positions are occupied - Fixes #64
+		- Player names can only be a max of 9 characters currently - Helps with #57
 
 	Other:
 		- Added GitHub Issue template
@@ -38,7 +53,7 @@ v0.4.5 --- Released: Not Yet!
 	Art Assets:
 		Clinton Bone
 	Debuggers:
-		Marko Vehmas, Valmay Green, Clinton Bone
+		Marko Vehmas, Valmay Green, Clinton Bone, Reed Kendall, Alex Meyer
 
 ####################################################################################################################
 
@@ -81,7 +96,7 @@ v0.4.0 --- Released: 5-2-2017
 		- Changed cPlayer.drawSelf() and cBullet.drawSelf() to only pass in ctx not cGame entirely
 
 	Other:
-		- Began documenting changes in changelogs.
+		- Began documenting changes in changelogs
 		- Updated LICENSE.md
 
 SPECIAL THANKS:

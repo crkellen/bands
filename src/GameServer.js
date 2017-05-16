@@ -1,13 +1,13 @@
 //World constants
-const WORLD_WIDTH = 3200;
-const WORLD_HEIGHT = 1800;
+const WORLD_WIDTH   = 3200;
+const WORLD_HEIGHT  = 1800;
 
 //Tile constants
-const TILE_WIDTH = 80;
-const TILE_HEIGHT = 80;
-const TILE_EMPTY = 0;
-const TILE_PLAYER = 1;
-const TILE_BLOCK = 2;
+const TILE_WIDTH   = 80;
+const TILE_HEIGHT  = 80;
+const TILE_EMPTY   = 0;
+const TILE_PLAYER  = 1;
+const TILE_BLOCK   = 2;
 
 export class GameServer {
   constructor() {
@@ -15,7 +15,7 @@ export class GameServer {
     this.bullets = {};
     this.blocks = {};
     this.initPack = {player: [], bullet: [], block: []};
-    this.removePack = {player: [], bullet: [], block: []};
+    this.removePack = {player: [], bullet: []};
 
     //Map variables
     this.grid = []; //0, 1, 2 --- Empty, Player, Wall
@@ -120,13 +120,6 @@ export class GameServer {
 
     //Now that we have updated the grid, reset the flag
     this.mustUpdateGrid = false;
-
-    //#TODO: REMOVE DEBUG
-    // console.info(`AFTER:
-    //    [${this.grid[0][0].occupying}][${this.grid[0][1].occupying}][${this.grid[0][2].occupying}]
-    //    [${this.grid[1][0].occupying}][${this.grid[1][1].occupying}][${this.grid[1][2].occupying}]
-    //    [${this.grid[2][0].occupying}][${this.grid[2][1].occupying}][${this.grid[2][2].occupying}]`);
-
   } //GameServer.updateGrid()
 
   checkPlayerGridPos(player) {
@@ -312,6 +305,9 @@ export class GameServer {
       player.update(this);
       this.checkPlayerGridPos(player);
       pack.push(player.getUpdatePack());
+      player.updatePack = {
+        ID: player.ID
+      };
     }
     return pack;
   } //GameServer.playerUpdate()
@@ -326,6 +322,9 @@ export class GameServer {
         this.removePack.bullet.push(bullet.ID);
       } else {
         pack.push(bullet.getUpdatePack());
+        bullet.updatePack = {
+          ID: bullet.ID
+        };
       }
     }
     return pack;
@@ -335,13 +334,10 @@ export class GameServer {
     var pack = [];
     for( let bl in this.blocks ) {
       let block = this.blocks[bl];
-      block.update();
-      if( block.toRemove === true ) {
-        delete this.blocks[bl];
-        this.removePack.block.push(block.ID);
-      } else {
-        pack.push(block.getUpdatePack());
-      }
+      pack.push(block.getUpdatePack());
+      block.updatePack = {
+        ID: block.ID
+      };
     }
     return pack;
   } //GameServer.blockUpdate()
@@ -441,14 +437,6 @@ class GridTile {
     this.server.initPack.block.push(this.server.blocks[this.block.ID].getInitPack());
   } //GridTile.constructor()
 
-  update() {
-    //If the block on this grid tile is dead, update grid
-    if( this.block.HP <= 0 ) {
-      //#TODO: This check does not need to happen every time
-      this.updateOccupying(0);
-    }
-  } //GridTile.update()
-
   updateOccupying(newOccupant) {
     //ALL COLLISION CHECKS ARE DONE PRIOR TO updateOccupying()
     //IT IS ASSUMED THERE IS NO POSSIBLE COLLISIONS AT THIS POINT
@@ -456,8 +444,7 @@ class GridTile {
     case 0: //New occupant is nothing
       if( this.occupying === 2 ) {
         //Block has been removed from this tile
-        //Turn the block for this grid tile off
-        this.block.isActive = false;
+        //Block is turned off when the block HP is modified Block.set HP()
         //Reset it's HP
         this.block.HP = 3;
       }
@@ -466,10 +453,11 @@ class GridTile {
     case 1: //New occupant is a player
       if( this.occupying === 2 ) {
         //Player has moved inside of a block
-        //This should never happen
-        console.error(`ERROR: Player has entered a block at Grid[${this.gridY}][${this.gridX}]`);
-        //#TODO: Temporarily fix this by remove the block
+        //This should never happen unless all respawn positions are blocked
+        console.error(`WARNING: Player has entered a block at Grid[${this.gridY}][${this.gridX}]`);
+        //#TODO: Temporarily fix this by remove the block, is there a better solution?
         this.occupying = 0;
+        this.block.HP = 3;
         this.block.isActive = false;
       } else {
         //Do not update the grid if the player is inside a block
@@ -491,25 +479,23 @@ class GridTile {
 class Block {
   constructor(params) {
     this.parent = params.parent;
-    this.ID = Math.random(); //#TODO replace with real ID system
+    this.ID = Math.random(); //#TODO: replace with real ID system
     this.gridX = params.gridX;
     this.gridY = params.gridY;
 
     this.x = params.x;
     this.y = params.y;
-    this.HP = 3;
-    this.isActive = false;
-    this.toRemove = false; //Legacy check.
-    //#FIXME: Remove any reference to toRemove, since I wont be deleteing blocks
+    this._HP = 3;
+    this._isActive = false;
 
     //Collision checks
     this.width = TILE_WIDTH;
     this.height = TILE_HEIGHT;
-  } //Block.constructor()
 
-  update() {
-    this.parent.update();
-  } //Block.update()
+    this.updatePack = {
+      ID: this.ID
+    };
+  } //Block.constructor()
 
   getInitPack() {
     return {
@@ -524,21 +510,53 @@ class Block {
   } //Block.getInitPack()
 
   getUpdatePack() {
-    return {
-      ID: this.ID,
-      HP: this.HP,
-      isActive: this.isActive
-    };
+    return this.updatePack;
   } //Block.getUpdatePack()
+
+//BLOCK GETTERS AND SETTERS
+  get HP() {
+    return this._HP;
+  }
+
+  set HP(newHP) {
+    if( this._HP !== newHP ) {
+      this._HP = newHP;
+      this.updatePack.HP = this._HP;
+    }
+    if( this._HP <= 0 ) {
+      this.isActive = false;
+    }
+  }
+
+  get isActive() {
+    return this._isActive;
+  }
+
+  set isActive(newIsActive) {
+    if( this._isActive !== newIsActive ) {
+      this._isActive = newIsActive;
+      this.updatePack.isActive = this._isActive;
+    }
+    if( this._isActive === true ) {
+      //Do nothing as this was already handled in GridTile.updateOccupying()
+    } else {
+      this.parent.updateOccupying(TILE_EMPTY);
+    }
+  }
+//END BLOCK GETTERS AND SETTERS
 } //class Block
 
 class Entity {
   constructor(params) {
     this.ID = params.ID;
-    this.x = params.x;
-    this.y = params.y;
+    this._x = params.x;
+    this._y = params.y;
     this.spdX = 0;
     this.spdY = 0;
+
+    this.updatePack = {
+      ID: this.ID
+    };
   } //Entity.constructor()
 
   update() {
@@ -549,6 +567,30 @@ class Entity {
     this.x += this.spdX;
     this.y += this.spdY;
   } //Entity.updatePosition()
+
+//ENTITY GETTERS AND SETTERS
+  get x() {
+    return this._x;
+  }
+
+  set x(newX) {
+    if( this._x !== newX ) {
+      this._x = newX;
+      this.updatePack.x = this._x;
+    }
+  }
+
+  get y() {
+    return this._y;
+  }
+
+  set y(newY) {
+    if( this._y !== newY ) {
+      this._y = newY;
+      this.updatePack.y = this._y;
+    }
+  }
+//END ENTITY GETTERS AND SETTERS
 } //class Entity
 
 class Player extends Entity {
@@ -558,8 +600,8 @@ class Player extends Entity {
     this.name = params.name;
 
     //Grid variables
-    this.gridX = -1;
-    this.gridY = -1;
+    this._gridX = -1;
+    this._gridY = -1;
     this.isOverlapping = {
       left: false,
       right: false,
@@ -583,27 +625,28 @@ class Player extends Entity {
     this.pressingDown = false;
     this.pressingAttack = false;
     this.mouseAngle = 0;
-    this.mouseX = 0;
-    this.mouseY = 0;
+    this._mX = 0;
+    this._mY = 0;
 
     //Player variables
     this.maxSpd = 5;
-    this.HP = 10;
+    this._HP = 10;
     this.maxHP = 10;
-    this.score = 0;
-    this.ammo = 6;
+    this._score = 0;
+    this._ammo = 6;
     this.maxAmmo = 6;
-    this.clips = 99; //FIXME: temp for SGX
+    this._clips = 99; //FIXME: temp for SGX
     this.maxClips = 99; //FIXME: temp for SGX
     this.reloading = false;
-    this.invincible = false;
-    this.mode = 0; //0 for weapon, 1 for block
-    this.blocks = 20; //# of blocks held //FIXME: temp for SGX
+    this._invincible = false;
+    this._mode = 0; //0 for weapon, 1 for block
+    this._blocks = 20; //# of blocks held //FIXME: temp for SGX
     this.maxBlocks = 20; //FIXME: temp for SGX
 
     //Collision checks
     this.width = 15;
     this.height = 15;
+    this.respawnTries = 0;
   } //Player.constructor()
 
   update(server) {
@@ -769,17 +812,25 @@ class Player extends Entity {
 
   respawn(server) {
     //#TODO: Make it so they respawn after a short time, and at their team base
-    this.x = (getRandomInt(1, 12) * 40);
-    this.y = (getRandomInt(1, 12) * 40);
+    this.x = (getRandomInt(1, 39) * 40);
+    this.y = (getRandomInt(1, 20) * 40);
     if( this.x % 80 === 0 ) {
       this.x += 40;
     }
     if( this.y % 80 === 0 ) {
       this.y += 40;
     }
-    if( this.respawnPositionOccupied(server) === true ) {
-      return;
+    if( this.respawnTries >= 10 ) {
+      this.respawnTries = 0;
+      console.error('WARNING: All available player respawn positions are blocks.');
+    } else {
+      if( this.respawnPositionOccupied(server) === true ) {
+        //The function call in the if statement will call respawn() again if true
+        //Return to pop this function call off the stack
+        return;
+      }
     }
+
     this.HP = this.maxHP;
     this.ammo = this.maxAmmo;
     this.clips = this.maxClips;
@@ -794,6 +845,7 @@ class Player extends Entity {
     let newGridX = ~~(this.x / TILE_WIDTH);
     let newGridY = ~~(this.y / TILE_HEIGHT);
     if( server.grid[newGridY][newGridX].occupying === 2 ) {
+      this.respawnTries++;
       this.respawn(server);
       return true;
     } else {
@@ -840,22 +892,23 @@ class Player extends Entity {
   } //Player.getInitPack()
 
   getUpdatePack() {
-    return {
-      ID: this.ID,
-      gridX: this.gridX,
-      gridY: this.gridY,
-      x: this.x,
-      y: this.y,
-      HP: this.HP,
-      mX: this.mouseX,
-      mY: this.mouseY,
-      score: this.score,
-      ammo: this.ammo,
-      clips: this.clips,
-      invincible: this.invincible,
-      mode: this.mode,
-      blocks: this.blocks
-    };
+    return this.updatePack;
+    // return {
+    //   ID: this.ID,
+    //   gridX: this.gridX,
+    //   gridY: this.gridY,
+    //   x: this.x,
+    //   y: this.y,
+    //   HP: this.HP,
+    //   mX: this.mouseX,
+    //   mY: this.mouseY,
+    //   score: this.score,
+    //   ammo: this.ammo,
+    //   clips: this.clips,
+    //   invincible: this.invincible,
+    //   mode: this.mode,
+    //   blocks: this.blocks
+    // };
   } //Player.getUpdatePack()
 
   onConnect(socket) {
@@ -884,8 +937,8 @@ class Player extends Entity {
         this.mouseAngle = data.state;
         break;
       case 'mousePos':
-        this.mouseX = data.mousePos.x;
-        this.mouseY = data.mousePos.y;
+        this.mX = data.mousePos.x;
+        this.mY = data.mousePos.y;
         break;
       case 'selGrid':
         if( this.selGridX !== data.selGridX ) {
@@ -905,6 +958,129 @@ class Player extends Entity {
       }
     }); //'keyPress'
   } //Player.onConnect()
+
+//PLAYER GETTERS AND SETTERS
+  get gridX() {
+    return this._gridX;
+  }
+
+  set gridX(newGridX) {
+    if( this._gridX !== newGridX ) {
+      this._gridX = newGridX;
+      this.updatePack.gridX = this._gridX;
+    }
+  }
+
+  get gridY() {
+    return this._gridY;
+  }
+
+  set gridY(newGridY) {
+    if( this._gridY !== newGridY ) {
+      this._gridY = newGridY;
+      this.updatePack.gridY = this._gridY;
+    }
+  }
+
+  get HP() {
+    return this._HP;
+  }
+
+  set HP(newHP) {
+    if( this._HP !== newHP ) {
+      this._HP = newHP;
+      this.updatePack.HP = this._HP;
+    }
+  }
+
+  get mX() {
+    return this._mX;
+  }
+
+  set mX(newMX) {
+    if( this._mX !== newMX ) {
+      this._mX = newMX;
+      this.updatePack.mX = this._mX;
+    }
+  }
+
+  get mY() {
+    return this._mY;
+  }
+
+  set mY(newMY) {
+    if( this._mY !== newMY ) {
+      this._mY = newMY;
+      this.updatePack.mY = this._mY;
+    }
+  }
+
+  get score() {
+    return this._score;
+  }
+
+  set score(newScore) {
+    if( this._score !== newScore ) {
+      this._score = newScore;
+      this.updatePack.score = this._score;
+    }
+  }
+
+  get ammo() {
+    return this._ammo;
+  }
+
+  set ammo(newAmmo) {
+    if( this._ammo !== newAmmo ) {
+      this._ammo = newAmmo;
+      this.updatePack.ammo = this._ammo;
+    }
+  }
+
+  get clips() {
+    return this._clips;
+  }
+
+  set clips(newClips) {
+    if( this._clips !== newClips ) {
+      this._clips = newClips;
+      this.updatePack.clips = this._clips;
+    }
+  }
+
+  get invincible() {
+    return this._invincible;
+  }
+
+  set invincible(newInvincible) {
+    if( this._invincible !== newInvincible ) {
+      this._invincible = newInvincible;
+      this.updatePack.invincible = this._invincible;
+    }
+  }
+
+  get mode() {
+    return this._mode;
+  }
+
+  set mode(newMode) {
+    if( this._mode !== newMode ) {
+      this._mode = newMode;
+      this.updatePack.mode = this._mode;
+    }
+  }
+
+  get blocks() {
+    return this._blocks;
+  }
+
+  set blocks(newBlocks) {
+    if( this._blocks !== newBlocks ) {
+      this._blocks = newBlocks;
+      this.updatePack.blocks = this._blocks;
+    }
+  }
+//END PLAYER GETTERS AND SETTERS
 } //class Player
 
 class Bullet extends Entity {
@@ -922,26 +1098,38 @@ class Bullet extends Entity {
     //Collision checks
     this.width = 5;
     this.height = 5;
+
+    this.updatePack.ID = this.ID;
   } //Bullet.constructor()
 
   update(server) {
     if( ++this.timer > 38 ) {
       this.toRemove = true;
+      //If the bullet needs to be removed, return
+      return;
     }
     super.update();
 
     //Boundries check
     if( this.x < 5 ) {
       this.toRemove = true;
+      //If the bullet needs to be removed, return
+      return;
     }
     if( this.y < 5 ) {
       this.toRemove = true;
+      //If the bullet needs to be removed, return
+      return;
     }
     if( this.x > WORLD_WIDTH - 5 ) {
       this.toRemove = true;
+      //If the bullet needs to be removed, return
+      return;
     }
     if( this.y > WORLD_HEIGHT - 5 ) {
       this.toRemove = true;
+      //If the bullet needs to be removed, return
+      return;
     }
 
     //COLLISION CHECK - Players
@@ -958,6 +1146,8 @@ class Bullet extends Entity {
           p.respawn(server);
         }
         this.toRemove = true;
+        //If the bullet needs to be removed, return
+        return;
       }
     } //for(var i in Player list) --- Collision check
 
@@ -976,6 +1166,8 @@ class Bullet extends Entity {
       if( this.isColliding(other) ) {
         bl.HP -= 1;
         this.toRemove = true;
+        //If the bullet needs to be removed, return
+        return;
       }
     } //for(var j in Block list) --- Collision check
   } //Bullet.update()
@@ -1000,11 +1192,7 @@ class Bullet extends Entity {
   } //Bullet.getInitPack()
 
   getUpdatePack() {
-    return {
-      ID: this.ID,
-      x: this.x,
-      y: this.y
-    };
+    return this.updatePack;
   } //Bullet.getUpdatePack()
 } //class Bullet
 

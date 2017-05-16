@@ -1,5 +1,4 @@
 const ctx = document.getElementById('canvas-game').getContext('2d');
-ctx.translate(0.5, 0.5);
 const ctxUI = document.getElementById('canvas-ui').getContext('2d');
 
 //World constants
@@ -25,8 +24,6 @@ let cam = {
   worldHeight: WORLD_HEIGHT
 };
 var GameCamera = new Camera(cam);
-
-
 
 $(document).ready( () => {
   $('#play').click( () => {
@@ -79,7 +76,7 @@ $(document).ready( () => {
         selGridX = -1;
         selGridY = -1;
       }
-
+      //FIXME: MOVE ALL OF THIS OVER TO THE SERVER SIDE?
       //Check to see if selection is out of range (grid pos + 1)
       if( selGridX > localPlayer.gridX + 1  ) { //Out of range on LEFT
         selGridX = -1;
@@ -175,10 +172,7 @@ $(document).ready( () => {
         let mouse = getMousePos(cGame.ctx, e);
         let x = -cGame.ctx.canvas.clientWidth/2 + e.clientX;
         let y = -cGame.ctx.canvas.clientHeight/2 + e.clientY;
-        //TODO: DEBUG FOR #52
-        // console.info(`X: ${x}, Y: ${y}
-        // cW: ${-cGame.ctx.canvas.clientWidth/2}, cH: ${-cGame.ctx.canvas.clientHeight/2}
-        // eX: ${e.clientX}, eY: ${e.clientY}`);
+
         //Check if within the deadzones
         if( cGame.selfID !== null ) {
           //Offset the calculation if in a deadzone
@@ -240,7 +234,7 @@ $(window).on('beforeunload', () => {
 }); //$(window).on('beforeunload')
 
 function joinGame(playerName, socket) {
-  if( playerName !== '' ) {
+  if( playerName !== '' && playerName.length < 10 ) {
     $('#prompt').hide();
     socket.emit('joinGame', {name: playerName});
     cGame.gameStarted = true;
@@ -289,53 +283,56 @@ socket.on('update', (data) => {
   //For all players, if there is data, update it
   for( let i = 0; i < data.player.length; i++ ) {
     let pack = data.player[i];
+    //If there is no data to update, don't update at all
+    if( Object.keys(pack).length === 1 ) {
+      continue;
+    }
     let p = cGame.cPlayers[pack.ID];
-    //#FIXME: THIS MAY BE REDUNDANT CHECKS all the p.x !== undefined etc.
-    //#TODO: REMOVE IF REDUDANT
+
     if( p !== undefined ) {
-      if( p.gridX !== undefined ) {
+      if( pack.gridX !== undefined ) {
         p.gridX = pack.gridX;
       }
-      if( p.gridY !== undefined ) {
+      if( pack.gridY !== undefined ) {
         p.gridY = pack.gridY;
       }
-      if( p.x !== undefined ) {
+      if( pack.x !== undefined ) {
         p.x = pack.x;
         if( p.ID === cGame.selfID ) {
           GameCamera.followed.x = pack.x;
         }
       }
-      if( p.y !== undefined ) {
+      if( pack.y !== undefined ) {
         p.y = pack.y;
         if( p.ID === cGame.selfID ) {
           GameCamera.followed.y = pack.y;
         }
       }
-      if( p.HP !== undefined ) {
+      if( pack.HP !== undefined ) {
         p.HP = pack.HP;
       }
-      if( p.mX !== undefined ) {
+      if( pack.mX !== undefined ) {
         p.mX = pack.mX;
       }
-      if( p.mY !== undefined ) {
+      if( pack.mY !== undefined ) {
         p.mY = pack.mY;
       }
-      if( p.score !== undefined ) {
+      if( pack.score !== undefined ) {
         p.score = pack.score;
       }
-      if( p.ammo !== undefined ) {
+      if( pack.ammo !== undefined ) {
         p.ammo = pack.ammo;
       }
-      if( p.clips !== undefined ) {
+      if( pack.clips !== undefined ) {
         p.clips = pack.clips;
       }
-      if( p.invincible !== undefined ) {
+      if( pack.invincible !== undefined ) {
         p.invincible = pack.invincible;
       }
-      if( p.mode !== undefined ) {
+      if( pack.mode !== undefined ) {
         p.mode = pack.mode;
       }
-      if( p.blocks !== undefined ) {
+      if( pack.blocks !== undefined ) {
         p.blocks = pack.blocks;
       }
     }
@@ -344,12 +341,17 @@ socket.on('update', (data) => {
   //For all bullets, if there is data, update it
   for( let j = 0; j < data.bullet.length; j++ ) {
     let pack = data.bullet[j];
+    //If there is no data to update, don't update at all
+    if( Object.keys(pack).length === 1 ) {
+      continue;
+    }
     let b = cGame.cBullets[data.bullet[j].ID];
+    
     if( b !== undefined ) {
-      if( b.x !== undefined ) {
+      if( pack.x !== undefined ) {
         b.x = pack.x;
       }
-      if( b.y !== undefined ) {
+      if( pack.y !== undefined ) {
         b.y = pack.y;
       }
     }
@@ -358,12 +360,17 @@ socket.on('update', (data) => {
   //For all blocks, if there is data, update it
   for( let k = 0; k < data.block.length; k++ ) {
     let pack = data.block[k];
+    //If there is no data to update, don't update at all
+    if( Object.keys(pack).length === 1 ) {
+      continue;
+    }
     let bl = cGame.cBlocks[data.block[k].ID];
+
     if( bl !== undefined ) {
-      if( bl.HP !== undefined ) {
+      if( pack.HP !== undefined ) {
         bl.HP = pack.HP;
       }
-      if( bl.isActive !== undefined ) {
+      if( pack.isActive !== undefined ) {
         bl.isActive = pack.isActive;
       }
     }
@@ -379,10 +386,6 @@ socket.on('remove', (data) => {
   for( let j = 0; j < data.bullet.length; j++ ) {
     delete cGame.cBullets[data.bullet[j]];
   }
-  //Blocks
-  for( let k = 0; k < data.block.length; k++ ) {
-    delete cGame.cBlocks[data.block[k]];
-  }
 }); //'remove'
 
 socket.on('selGridResponse', (data) => {
@@ -392,9 +395,13 @@ socket.on('selGridResponse', (data) => {
 
 //CLIENT GAME LOOP
 setInterval( () => {
-  if( !cGame.selfID ) {
+  //TODO: Can optimize to only draw the background once, before the game actually starts
+  GameMap.draw(cGame.ctx, GameCamera.xView, GameCamera.yView);
+  if( cGame.selfID === null ) {
     return;
   }
+
+  //Clear the main game canvas
   cGame.ctx.clearRect(0, 0, cGame.ctx.canvas.width, cGame.ctx.canvas.height);
   GameCamera.update();
   GameMap.draw(cGame.ctx, GameCamera.xView, GameCamera.yView);
@@ -430,12 +437,11 @@ var drawUI = () => {
     cGame.cPlayers[p].drawAmmo(cGame.ctx, GameCamera.xView, GameCamera.yView);
   }
 
-  //#TODO TEMPORARY USER FEEDBACK ON RELOADING
+  //#TODO: TEMPORARY USER FEEDBACK ON RELOADING
   if( cGame.cPlayers[cGame.selfID].ammo <= 0 && cGame.reloading === false ) {
     cGame.reloading = true;
     cGame.ctxUI.canvas.style.cursor = 'wait';
-  }
-  if( cGame.reloading === true && cGame.cPlayers[cGame.selfID].ammo > 0 ) {
+  } else if( cGame.cPlayers[cGame.selfID].ammo > 0 && cGame.reloading === true ) {
     cGame.reloading = false;
     cGame.ctxUI.canvas.style.cursor = 'crosshair';
   }
@@ -443,8 +449,7 @@ var drawUI = () => {
   //If player is in build mode (check has already happened)
   //And player is above a grid which is not invalid for placement
   let selectionOutOfBounds = false;
-  if( cGame.selGridX === -1 || cGame.selGridY === -1 ||
-    cGame.cPlayers[cGame.selfID].mode === 0 ) {
+  if( cGame.cPlayers[cGame.selfID].mode === 0 || cGame.selGridX === -1 || cGame.selGridY === -1 ) {
     selectionOutOfBounds = true;
     cGame.UIUpdate = true;
   }
@@ -500,8 +505,10 @@ var drawUI = () => {
     //Show where the block will be placed
     if( selectionOutOfBounds !== true && cGame.selectedGrid !== -1 ) {
       if( cGame.cBlocks[cGame.selectedGrid].isActive === true ) {
+        //Can place === false
         cGame.cBlocks[cGame.selectedGrid].drawSelection(cGame.ctxUI, GameCamera.xView, GameCamera.yView, false);
       } else {
+        //Can place === true
         cGame.cBlocks[cGame.selectedGrid].drawSelection(cGame.ctxUI, GameCamera.xView, GameCamera.yView, true);
       }
     }
