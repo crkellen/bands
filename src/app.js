@@ -76,7 +76,7 @@ setInterval( () => {
   if( ServerGame.mustUpdateGrid === true ) {
     ServerGame.updateGrid();
   }
-}, 1000/25); //END SERVER GAME LOOP
+}, 30); //END SERVER GAME LOOP
 
 /* TODO: random int generator for placement not currently used, not deprecated, yet
 function getRandomInt(min, max) {

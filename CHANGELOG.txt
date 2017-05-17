@@ -29,6 +29,9 @@ v0.4.5 --- Released: Not Yet!
 		- Changed starting screen to show the background image at the start rather than a blank white background
 		- Players can spawn in any gridX 1 to 39, and any gridY 1 to 20
 		- Players temporarily have 20 blocks max, and 99 clips max
+		- Changed framerate of game loop
+			- Server is now every 30ms (was 40ms)
+			- Client now uses requestAnimationFrame (was setInterval every 40ms) for rendering
 
 	Fixes:
 		- Added a mousedown listener for compatibility - Fixes #42
@@ -44,10 +47,17 @@ v0.4.5 --- Released: Not Yet!
 		- Bullets no longer check collisions if they are supposed to be removed
 		- Players replace blocks if all respawn positions are occupied - Fixes #64
 		- Player names can only be a max of 9 characters currently - Helps with #57
+			- Added message saying name is too long
+		- Players now correctly aim in the correct directions in all cases - Fixes #29
+		- Background map now shows up in Chrome - Fixes #55
+		- Constants are now stored in Globals.js
+		- cGame.cPlayers[cGame.selfID] is now just cGame.localPlayer
+		- Moved all classes into their own files on both client and server
 
 	Other:
 		- Added GitHub Issue template
 		- Updated README.md
+		- Added SPECIAL_THANKS.md
 
 	SPECIAL THANKS:
 	Art Assets:
@@ -82,12 +92,14 @@ v0.4.0 --- Released: 5-2-2017
 				- If a block is already at the selection, highlight will be red
 			- UI canvas is only redrawn when updated info comes in
 			- UI uses transparent text
+
 	Changes:
 		- Changed bullet speed from 12 to 40
 		- Increased bullet damage from 1 to 5
 		- Lowered player max speed from 10 to 5
 		- Lowered bullet timer from 50 to 40
 		- Removed offset on mouse angle calculation
+		
 	Fixes:
 		- mouseAngle only calculated on click() - prevents #32
 		- Name was drawn on main canvas not UI canvas

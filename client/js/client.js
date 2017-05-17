@@ -1,18 +1,17 @@
-const ctx = document.getElementById('canvas-game').getContext('2d');
-const ctxUI = document.getElementById('canvas-ui').getContext('2d');
-
-//World constants
-const WORLD_WIDTH = 3200;
-const WORLD_HEIGHT = 1800;
-
-import { Game, cPlayer, cBullet, cBlock, Camera, Map } from './Game';
+import { GLOBALS } from './Globals';
+import { Game } from './Game';
+import { cPlayer } from './cPlayer.js';
+import { cBullet } from './cBullet.js';
+import { cBlock } from './cBlock.js';
+import { Camera } from './Camera.js';
+import { Map } from './Map.js';
 var io = require('socket.io-client');
 //Replace with hosting IP (144.13.22.62) 'http://localhost'
 var socket = io();
-var cGame = new Game(ctx, ctxUI);
+var cGame = new Game(GLOBALS.CTX, GLOBALS.CTX_UI);
 var playerName = '';
 
-var GameMap = new Map(WORLD_WIDTH, WORLD_HEIGHT);
+var GameMap = new Map(GLOBALS.WORLD_WIDTH, GLOBALS.WORLD_HEIGHT);
 GameMap.generate(cGame.ctx);
 
 let cam = {
@@ -20,8 +19,8 @@ let cam = {
   yView: 0,
   canvasWidth: cGame.ctx.canvas.width,
   canvasHeight: cGame.ctx.canvas.height,
-  worldWidth: WORLD_WIDTH,
-  worldHeight: WORLD_HEIGHT
+  worldWidth: GLOBALS.WORLD_WIDTH,
+  worldHeight: GLOBALS.WORLD_HEIGHT
 };
 var GameCamera = new Camera(cam);
 
@@ -46,14 +45,14 @@ $(document).ready( () => {
     }
 
     //If there is a significant lag, this can be undefined
-    if( cGame.cPlayers[cGame.selfID] === undefined ) {
+    if( cGame.localPlayer === null ) {
       return;
     }
 
     //If player is in build mode
-    if( cGame.cPlayers[cGame.selfID].mode === 1 ) {
+    if( cGame.localPlayer.mode === 1 ) {
       //Calculate grid square
-      let localPlayer = cGame.cPlayers[cGame.selfID];
+      let localPlayer = cGame.localPlayer;
       let selGridX = -1;
       let selGridY = -1;
 
@@ -159,11 +158,11 @@ $(document).ready( () => {
     }
 
     //If there is a significant lag, this can be undefined
-    if( cGame.cPlayers[cGame.selfID] === undefined ) {
+    if( cGame.localPlayer === null ) {
       return;
     }
 
-    let currentMode = cGame.cPlayers[cGame.selfID].mode;
+    let currentMode = cGame.localPlayer.mode;
     //Check for left or right mouse button
     switch( e.which ) {
     case 1: //Left mouse button
@@ -176,19 +175,20 @@ $(document).ready( () => {
         //Check if within the deadzones
         if( cGame.selfID !== null ) {
           //Offset the calculation if in a deadzone
-          let xOffset = cGame.cPlayers[cGame.selfID].x;// - GameCamera.xView;
-          let yOffset = cGame.cPlayers[cGame.selfID].y;// - GameCamera.yView;
+          let xOffset = cGame.localPlayer.x;
+          let yOffset = cGame.localPlayer.y;
+
           if( GameCamera.xView === 0 ) {      //LEFT
             x = mouse.x - xOffset;
           }
-          if( GameCamera.xView === 1600 ) {   //RIGHT 4800
-            x = mouse.x - xOffset;
+          if( GameCamera.xView === (GLOBALS.WORLD_WIDTH - cGame.ctx.canvas.width) ) {   //RIGHT
+            x = mouse.x - xOffset + GameCamera.xView;
           }
           if( GameCamera.yView === 0 ) {      //TOP
             y = mouse.y - yOffset;
           }
-          if( GameCamera.yView === 1000 ) {   //BOTTOM 3040
-            y = mouse.y - yOffset;
+          if( GameCamera.yView === (GLOBALS.WORLD_HEIGHT - cGame.ctx.canvas.height) ) {   //BOTTOM
+            y = mouse.y - yOffset + GameCamera.yView;
           }
         }
         //Update mouse angle
@@ -196,7 +196,7 @@ $(document).ready( () => {
         socket.emit('keyPress', {inputID: 'mouseAngle', state: angle});
 
         //Shoot
-        if( cGame.canShoot === true && cGame.cPlayers[cGame.selfID].ammo > 0 ) {
+        if( cGame.canShoot === true && cGame.localPlayer.ammo > 0 ) {
           cGame.canShoot = false;
           socket.emit('keyPress', {inputID: 'attack', state: true});
           setTimeout( () => {
@@ -205,7 +205,7 @@ $(document).ready( () => {
         }
       } else if( currentMode === 1 ) {  //Building mode
         //Place block
-        if(cGame.canBuild === true && cGame.cPlayers[cGame.selfID].blocks > 0 ) {
+        if(cGame.canBuild === true && cGame.localPlayer.blocks > 0 ) {
           cGame.canBuild = false;
           socket.emit('keyPress', {inputID: 'attack', state: true});
           setTimeout( () => {
@@ -227,6 +227,10 @@ $(document).ready( () => {
       break;
     } //switch( e.which )
   }); //$(document).keydown().keyup().mousemove().click().onmousedown()
+
+  //Draw the map once before the game starts
+  GameMap.draw(cGame.ctx, GameCamera.xView, GameCamera.yView);
+  requestAnimationFrame(renderLoop);
 }); //$(document).ready()
 
 $(window).on('beforeunload', () => {
@@ -236,8 +240,11 @@ $(window).on('beforeunload', () => {
 function joinGame(playerName, socket) {
   if( playerName !== '' && playerName.length < 10 ) {
     $('#prompt').hide();
+    $('#errorMessage').hide();
     socket.emit('joinGame', {name: playerName});
     cGame.gameStarted = true;
+  } else {
+    $('#errorMessage').show();
   }
 } //joingame()
 
@@ -265,7 +272,8 @@ socket.on('init', (data) => {
     cGame.cPlayers[data.player[i].ID] = new cPlayer(data.player[i]);
   }
   if( makeCamera ) {
-    GameCamera.follow(cGame.cPlayers[cGame.selfID], cGame.ctx.canvas.width/2, cGame.ctx.canvas.height/2);
+    cGame.localPlayer = cGame.cPlayers[cGame.selfID];
+    GameCamera.follow(cGame.localPlayer, cGame.ctx.canvas.width/2, cGame.ctx.canvas.height/2);
   }
 
   //Bullets
@@ -393,11 +401,9 @@ socket.on('selGridResponse', (data) => {
   cGame.selectedGrid = data.selBlockID;
 });
 
-//CLIENT GAME LOOP
-setInterval( () => {
-  //TODO: Can optimize to only draw the background once, before the game actually starts
-  GameMap.draw(cGame.ctx, GameCamera.xView, GameCamera.yView);
+function renderLoop() {
   if( cGame.selfID === null ) {
+    requestAnimationFrame(renderLoop);
     return;
   }
 
@@ -407,13 +413,15 @@ setInterval( () => {
   GameMap.draw(cGame.ctx, GameCamera.xView, GameCamera.yView);
   drawEntities(); //Draws only the Entities
   drawUI();       //Draws only the UI when it updates
-}, 40);
+  cGame.localPlayer = cGame.cPlayers[cGame.selfID];
+  requestAnimationFrame(renderLoop);
+}
 
 var drawEntities = () => {
   //Each player object draws itself
   for( let p in cGame.cPlayers ) {
     let isLocalPlayer = false;
-    if( cGame.cPlayers[cGame.selfID] === cGame.cPlayers[p] ) {
+    if( cGame.localPlayer === cGame.cPlayers[p] ) {
       isLocalPlayer = true;
     }
     cGame.cPlayers[p].drawSelf(cGame.ctx, GameCamera.xView, GameCamera.yView, isLocalPlayer);
@@ -438,10 +446,10 @@ var drawUI = () => {
   }
 
   //#TODO: TEMPORARY USER FEEDBACK ON RELOADING
-  if( cGame.cPlayers[cGame.selfID].ammo <= 0 && cGame.reloading === false ) {
+  if( cGame.localPlayer.ammo <= 0 && cGame.reloading === false ) {
     cGame.reloading = true;
     cGame.ctxUI.canvas.style.cursor = 'wait';
-  } else if( cGame.cPlayers[cGame.selfID].ammo > 0 && cGame.reloading === true ) {
+  } else if( cGame.localPlayer.ammo > 0 && cGame.reloading === true ) {
     cGame.reloading = false;
     cGame.ctxUI.canvas.style.cursor = 'crosshair';
   }
@@ -449,7 +457,7 @@ var drawUI = () => {
   //If player is in build mode (check has already happened)
   //And player is above a grid which is not invalid for placement
   let selectionOutOfBounds = false;
-  if( cGame.cPlayers[cGame.selfID].mode === 0 || cGame.selGridX === -1 || cGame.selGridY === -1 ) {
+  if( cGame.localPlayer.mode === 0 || cGame.selGridX === -1 || cGame.selGridY === -1 ) {
     selectionOutOfBounds = true;
     cGame.UIUpdate = true;
   }
@@ -460,17 +468,17 @@ var drawUI = () => {
 
   //Low-changing Values
   //Player Score
-  if( cGame.prevScore !== cGame.cPlayers[cGame.selfID].score ) {
+  if( cGame.prevScore !== cGame.localPlayer.score ) {
     cGame.UIUpdate = true;
   }
 
   //Player Clips
-  if( cGame.prevClipCount !== cGame.cPlayers[cGame.selfID].clips ) {
+  if( cGame.prevClipCount !== cGame.localPlayer.clips ) {
     cGame.UIUpdate = true;
   }
 
   //Player Clips
-  if( cGame.prevBlockCount !== cGame.cPlayers[cGame.selfID].blocks ) {
+  if( cGame.prevBlockCount !== cGame.localPlayer.blocks ) {
     cGame.UIUpdate = true;
   }
 
@@ -487,18 +495,18 @@ var drawUI = () => {
     cGame.ctxUI.fillStyle = 'rgba(255, 255, 255, 0.5)';
 
     //Player Score
-    cGame.prevScore = cGame.cPlayers[cGame.selfID].score;
+    cGame.prevScore = cGame.localPlayer.score;
     let scoreString = `Score: ${cGame.prevScore}`;
     cGame.ctxUI.fillText(scoreString, 15, 30);
 
     //Player Clips
-    cGame.prevClipCount = cGame.cPlayers[cGame.selfID].clips;
-    let clipString = `Clips: ${cGame.prevClipCount}/${cGame.cPlayers[cGame.selfID].maxClips}`;
+    cGame.prevClipCount = cGame.localPlayer.clips;
+    let clipString = `Clips: ${cGame.prevClipCount}/${cGame.localPlayer.maxClips}`;
     cGame.ctxUI.fillText(clipString, 100, 30);
 
     //Player Blocks
-    cGame.prevBlockCount = cGame.cPlayers[cGame.selfID].blocks;
-    let blockString = `Blocks: ${cGame.prevBlockCount}/${cGame.cPlayers[cGame.selfID].maxBlocks}`;
+    cGame.prevBlockCount = cGame.localPlayer.blocks;
+    let blockString = `Blocks: ${cGame.prevBlockCount}/${cGame.localPlayer.maxBlocks}`;
     cGame.ctxUI.fillText(blockString, 200, 30);
 
     //Show where the block would be placed on the selected grid
