@@ -14,7 +14,7 @@ var Imgs = {};
 //Imgs.background = new Image();
 //Imgs.background.src = '/client/img/background.png';
 Imgs.grid = new Image();
-Imgs.grid.src = './../img/grid.png';
+Imgs.grid.src = './../img/grid2x.png';
 
 export class GLOBALS {
   static get WORLD_WIDTH() {

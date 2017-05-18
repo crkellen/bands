@@ -22,10 +22,12 @@ export class Player extends Entity {
       bottomRight: false,
       center: false
     };
-    //The currently selected grid tile
+
+    //The build selection variables
     this.selGridX = -1;
     this.selGridY = -1;
-    this.selGridResponse = false;
+    this.mustCheckBuildSelection = false;
+    this.camera = null;
 
     //Input checks
     this.pressingLeft = false;
@@ -59,12 +61,9 @@ export class Player extends Entity {
   } //Player.constructor()
 
   update(server) {
-    //If we updated selection, send the response
-    if( this.selGridResponse === true ) {
-      this.socket.emit('selGridResponse', {
-        selBlockID: server.grid[this.selGridY][this.selGridX].block.ID
-      });
-      this.selGridResponse = false;
+    if( this.mustCheckBuildSelection === true ) {
+      //this.mustCheckBuildSelection = false;
+      this.checkBuildSelection(server, this.camera);
     }
 
     this.updateSpd();
@@ -116,7 +115,7 @@ export class Player extends Entity {
     }
     //The 9 blocks surrounding the player
     let surrBlocks = {};
-    surrBlocks[5] = server.grid[this.gridY][this.gridX].block;     //CENTER
+    //surrBlocks[5] = server.grid[this.gridY][this.gridX].block;     //CENTER
     if( this.gridX !== 0 ) {
       surrBlocks[4] = server.grid[this.gridY][this.gridX-1].block;   //LEFT
     }
@@ -320,50 +319,133 @@ export class Player extends Entity {
     // };
   } //Player.getUpdatePack()
 
+  checkBuildSelection(server, camera) {
+    let selGridX = -1;
+    let selGridY = -1;
+
+    //If we are outside of left deadzone, need to offset the tile calculation
+    if( camera.xView > 0 ) {
+      let xOffset = camera.xView;
+      selGridX = ~~((this._mX + xOffset) / 80);
+    } else {
+      selGridX = ~~(this._mX / 80);
+    }
+    //If we are outside of top deadzone, need to offset the tile calculation
+    if( camera.yView > 0 ) {
+      let yOffset = camera.yView;
+      selGridY = ~~((this._mY + yOffset) / 80);
+    } else {
+      selGridY = ~~(this._mY / 80);
+    }
+
+    //Check to see if selection is on top of player
+    if( selGridX === this._gridX && selGridY === this._gridY ) {
+      //selGridX = -1;
+      //selGridY = -1;
+    }
+
+    //Check to see if selection is out of range (grid pos + 1)
+    if( selGridX > this._gridX + 1  ) { //Out of range on LEFT
+      selGridX = -1;
+    }
+    if( selGridX < this._gridX - 1  ) { //Out of range on RIGHT
+      selGridX = -1;
+    }
+    if( selGridY < this._gridY - 1  ) { //Out of range on TOP
+      selGridY = -1;
+    }
+    if( selGridY > this._gridY + 1  ) { //Out of range on BOTTOM
+      selGridY = -1;
+    }
+    //Corners don't need to be checked, are handled already by the above checks
+    //Bottom and Right deadzones don't need to be check, they are handled with > 0 check
+    if( (selGridX !== -1 && selGridY !== -1) &&
+        server.grid[selGridY][selGridX].occupying === 0 ) {
+      //Tell client selection is valid
+      this.socket.emit('buildSelection', {
+        isValid:  true,
+        selBlockID: server.grid[selGridY][selGridX].block.ID,
+        selGridX: selGridX,
+        selGridY: selGridY
+      });
+      this.selGridX = selGridX;
+      this.selGridY = selGridY;
+    } else {
+      //Tell client selection is invalid
+      if( selGridX !== -1 && selGridY !== -1 ) {
+        this.socket.emit('buildSelection', {
+          isValid:  false,
+          selBlockID: server.grid[selGridY][selGridX].block.ID,
+          selGridX: selGridX,
+          selGridY: selGridY
+        });
+      } else {
+        this.socket.emit('buildSelection', {
+          isValid:  false,
+          selBlockID: -1,
+          selGridX: selGridX,
+          selGridY: selGridY
+        });
+      }
+      this.selGridX = selGridX;
+      this.selGridY = selGridY;
+    }
+  } //Player.checkBuildSelection()
+
   onConnect(socket) {
     socket.on('keyPress', (data) => {
       switch( data.inputID ) {
-      case 'left':
-        this.pressingLeft = data.state;
-        break;
-      case 'right':
-        this.pressingRight = data.state;
-        break;
-      case 'up':
-        this.pressingUp = data.state;
-        break;
-      case 'down':
-        this.pressingDown = data.state;
-        break;
-      case 'attack':
-        this.pressingAttack = data.state;
-        break;
-      case 'switchMode':
-        //Swap mode from 0 to 1 or 1 to 0 (this.mode ^= 1;)
-        this.mode = 1 - this.mode;
-        break;
-      case 'mouseAngle':
-        this.mouseAngle = data.state;
-        break;
-      case 'mousePos':
-        this.mX = data.mousePos.x;
-        this.mY = data.mousePos.y;
-        break;
-      case 'selGrid':
-        if( this.selGridX !== data.selGridX ) {
-          this.selGridX = data.selGridX;
-        }
-        if( this.selGridY !== data.selGridY ) {
-          this.selGridY = data.selGridY;
-        }
-        if( this.selGridX === -1 || this.selGridY === -1 ) {
-          //If it's invalid do nothing, otherwise respond
-          this.selGridResponse = false;
-        } else  {
-          this.selGridResponse = true;
-        }
-        break;
-      default: break;
+        case 'left':
+          this.pressingLeft = data.state;
+          break;
+        case 'right':
+          this.pressingRight = data.state;
+          break;
+        case 'up':
+          this.pressingUp = data.state;
+          break;
+        case 'down':
+          this.pressingDown = data.state;
+          break;
+        case 'attack':
+          this.pressingAttack = data.state;
+          break;
+        case 'switchMode':
+          //Swap mode from 0 to 1 or 1 to 0 (this.mode ^= 1;)
+          this.mode = 1 - this._mode;
+          if( this._mode === 0 ) {
+            this.mustCheckBuildSelection = false;
+            this.socket.emit('buildSelection', {
+              isValid:  false,
+              selBlockID: -1,
+              selGridX: -1,
+              selGridY: -1
+            });
+            this.selGridX = -1;
+            this.selGridY = -1;
+          } else {
+            this.mustCheckBuildSelection = true;
+          }
+          break;
+        case 'mouseAngle':
+          this.mouseAngle = data.state;
+          break;
+        case 'mousePos':
+          this.mX = data.mousePos.x;
+          this.mY = data.mousePos.y;
+          if( this._mode === 1 ) {
+            this.camera = data.camera;
+            this.mustCheckBuildSelection = true;
+          }
+          break;
+        case 'focusLost':
+          this.pressingLeft = false;
+          this.pressingRight = false;
+          this.pressingUp = false;
+          this.pressingDown = false;
+          this.pressingAttack = false;
+          break;
+        default: break;
       }
     }); //'keyPress'
   } //Player.onConnect()

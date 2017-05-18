@@ -1,4 +1,4 @@
-import { GLOBALS } from './Globals.js';
+import { GLOBALS, getTimestamp } from './Globals.js';
 import { GridTile } from './GridTile.js';
 import { Player } from './Player.js';
 
@@ -404,6 +404,6 @@ export class GameServer {
       bullet: this.getAllInitPacksForBullet(),
       block: this.getAllInitPacksForBlock()
     });
-    console.info(`${player.name} has joined the game.`);
+    console.info(`${getTimestamp()} - ${player.name} has joined the game.`);
   } //GameServer.addPlayer()
 } //class GameServer

@@ -20,15 +20,15 @@ export class cBlock {
 
     //Change the appearance based on it's health, darker = less health
     switch( this.HP ) {
-    case 1:
-      ctx.fillStyle = 'rgba(200, 75, 75, 0.4)';
-      break;
-    case 2:
-      ctx.fillStyle = 'rgba(200, 130, 130, 0.4)';
-      break;
-    case 3:
-      ctx.fillStyle = 'rgba(200, 170, 170, 0.4)';
-      break;
+      case 1:
+        ctx.fillStyle = 'rgba(200, 75, 75, 0.4)';
+        break;
+      case 2:
+        ctx.fillStyle = 'rgba(200, 130, 130, 0.4)';
+        break;
+      case 3:
+        ctx.fillStyle = 'rgba(200, 170, 170, 0.4)';
+        break;
     }
 
     ctx.fillRect(x, y, 80, 80);

@@ -1,6 +1,6 @@
 {
   "name": "buildnshoot.io",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "description": "A real-time online multiplayer CTF shooter game",
   "main": "src/app.js",
   "scripts": {

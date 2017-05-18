@@ -16,12 +16,16 @@ export class Game {
     this.localPlayer = null;
 
     //UI Updaters
+    //TODO: Update this so it uses getters and setters instead of prevScore === curScore
     this.prevScore = 0;
     this.prevClipCount = 0;
     this.prevBlockCount = 0;
+
+    this.isValidSelection = false;
+    this.selBlockID = -1;
     this.selGridX = -1;
     this.selGridY = -1;
-    this.selectedGrid = -1;
+
     this.reloading = false;
 
     //Mouseclick flags

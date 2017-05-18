@@ -4,7 +4,7 @@ Known Bugs can be found at the issues page on GitHub here: https://github.com/cr
 
 ####################################################################################################################
 
-v0.4.5 --- Released: Not Yet!
+v0.4.5 --- Released: 5-17-2017
 
 	Additions:
 		Gameplay:
@@ -26,6 +26,7 @@ v0.4.5 --- Released: Not Yet!
 
 	Changes:
 		- Changed grid.png to be 4x it's original size (Was: 1600x900, Now: 6400x3840) - Fixes #48
+			- However, due to #53, a 2x version will be used (3200x1800)
 		- Changed starting screen to show the background image at the start rather than a blank white background
 		- Players can spawn in any gridX 1 to 39, and any gridY 1 to 20
 		- Players temporarily have 20 blocks max, and 99 clips max
@@ -53,6 +54,14 @@ v0.4.5 --- Released: Not Yet!
 		- Constants are now stored in Globals.js
 		- cGame.cPlayers[cGame.selfID] is now just cGame.localPlayer
 		- Moved all classes into their own files on both client and server
+		- Init messages are only sent from server when there is information to send
+		- Remove messages are only sent from server when there is information to send
+		- Changed grid.png to have correct spacing for blocks (previously was slightly off) - Fixes #65
+		- Build Selection has been refactored - Fixes #46, #47 
+			- When a player switches modes, or moves the mouse server updates selection
+			- Selection is still checked even if the player does not update but is still in build mode
+				- This means if the player moves into the selected tile, it will show it is invalid
+		- Inputs are reset when player leaves focus of the browser - Fixes #66
 
 	Other:
 		- Added GitHub Issue template
