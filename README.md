@@ -7,7 +7,7 @@ An online multiplayer shooter game
 ### Controls:
 **Movement:** Move using the WASD keys.
 
-**Aiming:** Aim using your mouse. Where the mouse points, you will aim.
+**Aiming:** Aim by moving your mouse.
 
 **Shooting:** Shoot by pressing the Left Mouse Button.
 
@@ -17,7 +17,7 @@ An online multiplayer shooter game
 Currently the game is just a endless fighter, but soon there will be objectives for each team to compete for. I have not finalized the goals yet, and there may end up being multiple game modes.
 
 ### Tips:
-- Blocks can be destroyed by shooting them!
+- Blocks can be destroyed by shooting them! (3 hits!)
 - You can see when the other players have to reload, use this to your advantage!
 - Players can't shoot when they don't have their gun out, attack them then!
 
@@ -44,6 +44,8 @@ High Damage, Average Fire Rate, Short Reload Time, Small Clip Size, Average Proj
 - Images for the players, weapons, bullets, blocks
 - Rifle will be a hitscan not a projectile
 - Some sort of non-intrusive Ad system for monetization
+- Leaderboard
+- Chat (Perhaps locked to team only chat, to provide better cooperation)
 
 ## Other Information:
 You can see my other work on my personal website at [http://lutzkellen.com/](http://lutzkellen.com/).
