@@ -1,3 +1,4 @@
+import { getTimestamp } from './Globals.js';
 //########## BEGIN INIT SERVER
 import { GameServer } from './GameServer';
 var ServerGame = new GameServer;
@@ -18,7 +19,7 @@ app.get('/', (req, res) => {
 var io = require('socket.io')(server);
 
 server.listen(2000, () => {
-  console.info('Server Initialized on port 2000.');
+  console.info(`${getTimestamp()} - Server Initialized on port 2000.`);
 });
 //########## END INIT SERVER
 
@@ -38,7 +39,7 @@ io.on('connection', (socket) => {
   //Add the connected socket to the list of sockets
   //CHeck for exists before adding
   SOCKET_LIST[socket.ID] = socket;
-  console.info('Player Connection: ' + socket.ID);
+  console.info(`${getTimestamp()} - Player Connection: ${socket.ID}.`);
 
   //PlayerData is currently only playerName
   socket.on('joinGame', (playerData) => {
@@ -55,7 +56,13 @@ io.on('connection', (socket) => {
   //This is currently whenever the client leaves the webpage
   //Removes the socket from the list of connected sockets
   socket.on('disconnect', () => {
-    console.info(`${socket.ID} has left the game.`);
+    if( ServerGame.players[socket.ID] === undefined ) {
+      //Player never joined the game
+      console.info(`${getTimestamp()} - ${socket.ID} has left the game.`);
+    } else {
+      console.info(`${getTimestamp()} - ${ServerGame.players[socket.ID].name} has left the game.`);
+    }
+    
     delete SOCKET_LIST[socket.ID];
     ServerGame.removePack.player.push(socket.ID);
     delete ServerGame.players[socket.ID];
@@ -69,16 +76,23 @@ setInterval( () => {
   //For every connected socket, emit the data packs
   for( let s in SOCKET_LIST ) {
     let socket = SOCKET_LIST[s];
-    socket.emit('init', packs.initPack);
-    socket.emit('remove', packs.removePack);
+    if( packs.initPack.player.length > 0 ||
+        packs.initPack.bullet.length > 0 ||
+        packs.initPack.block.length  > 0 ) {
+      socket.emit('init', packs.initPack);
+    }
+    if( packs.removePack.player.length > 0 ||
+        packs.removePack.bullet.length > 0 ) {
+      socket.emit('remove', packs.removePack);
+    }
     socket.emit('update', packs.updatePack);
   }
   if( ServerGame.mustUpdateGrid === true ) {
     ServerGame.updateGrid();
   }
-}, 1000/25); //END SERVER GAME LOOP
+}, 30); //END SERVER GAME LOOP
 
-/* #TODO random int generator for placement not currently used, not deprecated
+/* TODO: random int generator for placement not currently used, not deprecated, yet
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }*/

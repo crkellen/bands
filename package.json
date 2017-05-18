@@ -1,6 +1,6 @@
 {
-  "name": "bands-io",
-  "version": "0.4.4",
+  "name": "buildnshoot.io",
+  "version": "0.4.5",
   "description": "A real-time online multiplayer CTF shooter game",
   "main": "src/app.js",
   "scripts": {
@@ -17,10 +17,12 @@
     "real-time",
     "socket.io",
     "game",
-    "multiplayer"
+    "multiplayer",
+    "io game",
+    "browser game"
   ],
   "author": "Lutz Kellen",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "bugs": {
     "url": "https://github.com/crkellen/bands/issues"
   },
@@ -39,6 +41,7 @@
     "babel-loader": "^6.4.1",
     "babel-preset-es2015": "^6.22.0",
     "babel-preset-stage-2": "^6.22.0",
+    "eslint": "^3.19.0",
     "nodemon": "^1.11.0",
     "webpack": "^2.2.1"
   }
