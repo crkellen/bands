@@ -24,11 +24,11 @@ export class cPlayer {
   } //cPlayer.constructor
 
   drawSelf(ctx, xView, yView, isLocalPlayer) {
-    let x = this.x - xView;
-    let y = this.y - yView;
+    const x = this.x - xView;
+    const y = this.y - yView;
 
     //Health bar
-    let HPWidth = 30 * this.HP / this.maxHP;
+    const HPWidth = 30 * this.HP / this.maxHP;
     ctx.fillStyle = 'red';
     ctx.fillRect(x - HPWidth/1.4, y + 22, HPWidth*1.4, 4);
 
@@ -89,7 +89,7 @@ export class cPlayer {
         targetY = this.mY - (this.y - (GLOBALS.WORLD_HEIGHT - ctx.canvas.height));
       }
 
-      let theta = Math.atan2(targetY, targetX);
+      const theta = Math.atan2(targetY, targetX);
 
       ctx.save();
       ctx.translate(x, y);
@@ -106,18 +106,18 @@ export class cPlayer {
   } //cPlayer.drawSelf()
 
   drawName(ctx, xView, yView) {
-    let x = this.x - xView;
-    let y = this.y - yView;
+    const x = this.x - xView;
+    const y = this.y - yView;
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
     ctx.fillText(this.name, x - this.name.length * 2.5, y);
   } //cPlayer.drawName()
 
   drawAmmo(ctx, xView, yView) {
-    let x = this.x - xView;
-    let y = this.y - yView;
+    const x = this.x - xView;
+    const y = this.y - yView;
 
-    let ammoString = `${this.ammo}/${this.maxAmmo}`;
+    const ammoString = `${this.ammo}/${this.maxAmmo}`;
     ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
     ctx.fillText(ammoString, x - 8, y + 16);
   } //cPlayer.drawAmmo()

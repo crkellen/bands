@@ -51,12 +51,12 @@ export class Bullet extends Entity {
     }
 
     //COLLISION CHECK - Players
-    for( var i in server.players ) {
-      var p = server.players[i];
+    for( let i in server.players ) {
+      const p = server.players[i];
       if( this.getDistance(p) < 24 && this.parent !== p.ID && p.invincible !== true ) {
         p.HP -= 5;
         if( p.HP <= 0 ) {
-          var shooter = server.players[this.parent];
+          const shooter = server.players[this.parent];
           if( shooter ) {
             shooter.score += 1;
           }
@@ -70,12 +70,12 @@ export class Bullet extends Entity {
     } //for(var i in Player list) --- Collision check
 
     //COLLISION CHECK - Blocks
-    for( var j in server.blocks ) {
-      var bl = server.blocks[j];
+    for( let j in server.blocks ) {
+      const bl = server.blocks[j];
       if( bl.isActive === false ) {
         continue;
       }
-      let other = {
+      const other = {
         x: bl.x,
         y: bl.y,
         width: bl.width,

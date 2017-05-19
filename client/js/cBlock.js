@@ -15,8 +15,8 @@ export class cBlock {
       return;
     }
 
-    let x = this.x - xView;
-    let y = this.y - yView;
+    const x = this.x - xView;
+    const y = this.y - yView;
 
     //Change the appearance based on it's health, darker = less health
     switch( this.HP ) {
@@ -35,8 +35,8 @@ export class cBlock {
   } //cBlock.drawSelf()
 
   drawSelection(ctx, xView, yView, canPlace) {
-    let x = this.x - xView;
-    let y = this.y - yView;
+    const x = this.x - xView;
+    const y = this.y - yView;
 
     if( canPlace === true ) {
       ctx.fillStyle = 'rgba(200, 200, 200, 0.2)';

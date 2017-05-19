@@ -6,16 +6,16 @@ import { cBlock } from './cBlock.js';
 import { Camera } from './Camera.js';
 import { Map } from './Map.js';
 
-var io = require('socket.io-client');
-var socket = io();
+const io = require('socket.io-client');
+const socket = io();
 
-var cGame = new Game(GLOBALS.CTX, GLOBALS.CTX_UI);
-var playerName = '';
+const cGame = new Game(GLOBALS.CTX, GLOBALS.CTX_UI);
+let playerName = '';
 
-var GameMap = new Map(GLOBALS.WORLD_WIDTH, GLOBALS.WORLD_HEIGHT);
+const GameMap = new Map(GLOBALS.WORLD_WIDTH, GLOBALS.WORLD_HEIGHT);
 GameMap.generate(cGame.ctx);
 
-let cam = {
+const cam = {
   xView: 0,
   yView: 0,
   canvasWidth: cGame.ctx.canvas.width,
@@ -23,7 +23,7 @@ let cam = {
   worldWidth: GLOBALS.WORLD_WIDTH,
   worldHeight: GLOBALS.WORLD_HEIGHT
 };
-var GameCamera = new Camera(cam);
+const GameCamera = new Camera(cam);
 
 $(document).ready( () => {
   $('#play').click( () => {
@@ -33,7 +33,7 @@ $(document).ready( () => {
 
   $('#player-name').keyup( (e) => {
     playerName = $('#player-name').val();
-    let k = e.keyCode || e.which;
+    const k = e.keyCode || e.which;
     if( k == 13 ) {
       joinGame(playerName, socket);
     }
@@ -51,8 +51,8 @@ $(document).ready( () => {
     }
 
     //Update mouse position
-    let mousePos = getMousePos(cGame.ctx, e);
-    let camera = { xView: GameCamera.xView, yView: GameCamera.yView };
+    const mousePos = getMousePos(cGame.ctx, e);
+    const camera = { xView: GameCamera.xView, yView: GameCamera.yView };
     socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos, camera: camera});
 
     //If player is in build mode
@@ -70,7 +70,7 @@ $(document).ready( () => {
     if( cGame.gameStarted !== true ) {
       return;
     }
-    let k = e.keyCode || e.which;
+    const k = e.keyCode || e.which;
 
     switch(k) {
       case 87: //W
@@ -91,7 +91,7 @@ $(document).ready( () => {
     if( cGame.gameStarted !== true ) {
       return;
     }
-    let k = e.keyCode || e.which;
+    const k = e.keyCode || e.which;
     switch(k) {
       case 87: //W
         socket.emit('keyPress', {inputID: 'up', state: false});
@@ -122,15 +122,15 @@ $(document).ready( () => {
       case 1: //Left mouse button
         if( cGame.localPlayer.mode === 0 ) {         //Weapon mode
           //Calculate the angle from player to mouse
-          let mouse = getMousePos(cGame.ctx, e);
+          const mouse = getMousePos(cGame.ctx, e);
           let x = -cGame.ctx.canvas.clientWidth/2 + e.clientX;
           let y = -cGame.ctx.canvas.clientHeight/2 + e.clientY;
 
           //Check if within the deadzones
           if( cGame.selfID !== null ) {
             //Offset the calculation if in a deadzone
-            let xOffset = cGame.localPlayer.x;
-            let yOffset = cGame.localPlayer.y;
+            const xOffset = cGame.localPlayer.x;
+            const yOffset = cGame.localPlayer.y;
 
             if( GameCamera.xView === 0 ) {      //LEFT
               x = mouse.x - xOffset;
@@ -146,7 +146,7 @@ $(document).ready( () => {
             }
           }
           //Update mouse angle
-          let angle = Math.atan2(y, x) / Math.PI * 180;
+          const angle = Math.atan2(y, x) / Math.PI * 180;
           socket.emit('keyPress', {inputID: 'mouseAngle', state: angle});
 
           //Shoot
@@ -181,8 +181,8 @@ $(document).ready( () => {
         if( cGame.localPlayer.mode === 0 ) {
           //Mode will switch from attack to build mode, so update the camera/mousePos
           //Update mouse position
-          let mousePos = getMousePos(cGame.ctx, e);
-          let camera = { xView: GameCamera.xView, yView: GameCamera.yView };
+          const mousePos = getMousePos(cGame.ctx, e);
+          const camera = { xView: GameCamera.xView, yView: GameCamera.yView };
           socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos, camera: camera});
         }
         break;
@@ -237,12 +237,12 @@ socket.on('init', (data) => {
 socket.on('update', (data) => {
   //For all players, if there is data, update it
   for( let i = 0; i < data.player.length; i++ ) {
-    let pack = data.player[i];
+    const pack = data.player[i];
     //If there is no data to update, don't update at all
     if( Object.keys(pack).length === 1 ) {
       continue;
     }
-    let p = cGame.cPlayers[pack.ID];
+    const p = cGame.cPlayers[pack.ID];
 
     if( p !== undefined ) {
       if( pack.gridX !== undefined ) {
@@ -295,12 +295,12 @@ socket.on('update', (data) => {
 
   //For all bullets, if there is data, update it
   for( let j = 0; j < data.bullet.length; j++ ) {
-    let pack = data.bullet[j];
+    const pack = data.bullet[j];
     //If there is no data to update, don't update at all
     if( Object.keys(pack).length === 1 ) {
       continue;
     }
-    let b = cGame.cBullets[data.bullet[j].ID];
+    const b = cGame.cBullets[data.bullet[j].ID];
     
     if( b !== undefined ) {
       if( pack.x !== undefined ) {
@@ -314,12 +314,12 @@ socket.on('update', (data) => {
 
   //For all blocks, if there is data, update it
   for( let k = 0; k < data.block.length; k++ ) {
-    let pack = data.block[k];
+    const pack = data.block[k];
     //If there is no data to update, don't update at all
     if( Object.keys(pack).length === 1 ) {
       continue;
     }
-    let bl = cGame.cBlocks[data.block[k].ID];
+    const bl = cGame.cBlocks[data.block[k].ID];
 
     if( bl !== undefined ) {
       if( pack.HP !== undefined ) {
@@ -355,7 +355,7 @@ socket.on('buildSelection', (data) => {
 
 //GAME LOGIC FUNCTIONS ##########################################################
 
-var joinGame = (playerName, socket) => {
+const joinGame = (playerName, socket) => {
   if( playerName !== '' && playerName.length < 10 ) {
     $('#prompt').hide();
     $('#errorMessage').hide();
@@ -366,10 +366,10 @@ var joinGame = (playerName, socket) => {
   }
 }; //joingame()
 
-var getMousePos = (ctx, e) => {
-  let rect = ctx.canvas.getBoundingClientRect();
-  let mouseX = e.clientX - rect.left;
-  let mouseY = e.clientY - rect.top;
+const getMousePos = (ctx, e) => {
+  const rect = ctx.canvas.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
   return {
     x: mouseX,
     y: mouseY
@@ -380,7 +380,7 @@ var getMousePos = (ctx, e) => {
 
 //RENDER FUNCTIONS ##############################################################
 
-var renderLoop = () => {
+const renderLoop = () => {
   if( cGame.selfID === null ) {
     requestAnimationFrame(renderLoop);
     return;
@@ -396,7 +396,7 @@ var renderLoop = () => {
   requestAnimationFrame(renderLoop);
 }; //renderLoop()
 
-var drawEntities = () => {
+const drawEntities = () => {
   //Each player object draws itself
   for( let p in cGame.cPlayers ) {
     let isLocalPlayer = false;
@@ -415,7 +415,7 @@ var drawEntities = () => {
   }
 }; //drawEntities()
 
-var drawUI = () => {
+const drawUI = () => {
   //All players names and ammo
   //Note: To prevent excessive drawing for unchanged values, name and ammo
   //are drawn on the main canvas, and the UI canvas only updates when needed
@@ -457,24 +457,24 @@ var drawUI = () => {
 
     //Background
     cGame.ctxUI.fillStyle = 'rgba(200, 200, 200, 0.3)';
-    cGame.ctxUI.fillRect(0, 0, 330, 40);
+    cGame.ctxUI.fillRect(0, 0, 380, 40);
 
     cGame.ctxUI.fillStyle = 'rgba(255, 255, 255, 0.5)';
 
     //Player Score
     cGame.prevScore = cGame.localPlayer.score;
-    let scoreString = `Score: ${cGame.prevScore}`;
+    const scoreString = `Score: ${cGame.prevScore}`;
     cGame.ctxUI.fillText(scoreString, 15, 30);
 
     //Player Clips
     cGame.prevClipCount = cGame.localPlayer.clips;
-    let clipString = `Clips: ${cGame.prevClipCount}/${cGame.localPlayer.maxClips}`;
-    cGame.ctxUI.fillText(clipString, 100, 30);
+    const clipString = `Clips: ${cGame.prevClipCount}/${cGame.localPlayer.maxClips}`;
+    cGame.ctxUI.fillText(clipString, 120, 30);
 
     //Player Blocks
     cGame.prevBlockCount = cGame.localPlayer.blocks;
-    let blockString = `Blocks: ${cGame.prevBlockCount}/${cGame.localPlayer.maxBlocks}`;
-    cGame.ctxUI.fillText(blockString, 200, 30);
+    const blockString = `Blocks: ${cGame.prevBlockCount}/${cGame.localPlayer.maxBlocks}`;
+    cGame.ctxUI.fillText(blockString, 240, 30);
 
     //Show where the block would be placed on the selected grid
     if( cGame.selGridX !== -1 && cGame.selGridY !== -1 ) {

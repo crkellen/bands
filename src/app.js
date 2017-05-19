@@ -1,13 +1,13 @@
 import { getTimestamp } from './Globals.js';
 //########## BEGIN INIT SERVER
 import { GameServer } from './GameServer';
-var ServerGame = new GameServer;
+const ServerGame = new GameServer;
 //APP: Make an express server instance
 import express from 'express';
-var app = express();
+const app = express();
 app.set('views', './client/views');
 app.set('view engine', 'ejs');
-var server = require('http').Server(app);
+const server = require('http').Server(app);
 
 app.use( express.static(__dirname + '/../client') );
 
@@ -16,7 +16,7 @@ app.get('/', (req, res) => {
 });
 
 //Setup socket.io
-var io = require('socket.io')(server);
+const io = require('socket.io')(server);
 
 server.listen(2000, () => {
   console.info(`${getTimestamp()} - Server Initialized on port 2000.`);
@@ -24,21 +24,21 @@ server.listen(2000, () => {
 //########## END INIT SERVER
 
 //A list of every connected Socket
-var SOCKET_LIST = {};
+const Socket_List = {};
 
 //Returns 'true' if Username is valid
-var isValidUsername = (data, cb) => {
+const isValidUsername = (data, cb) => {
   return cb(true);
 };
 
 //This function is called whenever a socket connects
 //This currently happens the moment they successfully connect to the webpage
 io.on('connection', (socket) => {
-  //#TODO: Usage of Math.random() in place of a database USER ID
+  //#TODO: Replace with an actual ID system
   socket.ID = Math.random();
   //Add the connected socket to the list of sockets
-  //CHeck for exists before adding
-  SOCKET_LIST[socket.ID] = socket;
+  //Check for exists before adding
+  Socket_List[socket.ID] = socket;
   console.info(`${getTimestamp()} - Player Connection: ${socket.ID}.`);
 
   //PlayerData is currently only playerName
@@ -63,7 +63,7 @@ io.on('connection', (socket) => {
       console.info(`${getTimestamp()} - ${ServerGame.players[socket.ID].name} has left the game.`);
     }
     
-    delete SOCKET_LIST[socket.ID];
+    delete Socket_List[socket.ID];
     ServerGame.removePack.player.push(socket.ID);
     delete ServerGame.players[socket.ID];
   }); //'disconnect'
@@ -72,10 +72,10 @@ io.on('connection', (socket) => {
 //SERVER GAME LOOP
 setInterval( () => {
   //Gather all of the server's instance data packs
-  let packs = ServerGame.getFrameUpdateData();
+  const packs = ServerGame.getFrameUpdateData();
   //For every connected socket, emit the data packs
-  for( let s in SOCKET_LIST ) {
-    let socket = SOCKET_LIST[s];
+  for( let s in Socket_List ) {
+    const socket = Socket_List[s];
     if( packs.initPack.player.length > 0 ||
         packs.initPack.bullet.length > 0 ||
         packs.initPack.block.length  > 0 ) {

@@ -114,7 +114,7 @@ export class Player extends Entity {
       return;
     }
     //The 9 blocks surrounding the player
-    let surrBlocks = {};
+    const surrBlocks = {};
     //surrBlocks[5] = server.grid[this.gridY][this.gridX].block;     //CENTER
     if( this.gridX !== 0 ) {
       surrBlocks[4] = server.grid[this.gridY][this.gridX-1].block;   //LEFT
@@ -141,15 +141,15 @@ export class Player extends Entity {
       surrBlocks[3] = server.grid[this.gridY+1][this.gridX+1].block; //BOTTOMRIGHT
     }
 
-    for( var i in surrBlocks ) {
-      var bl = surrBlocks[i];
+    for( let i in surrBlocks ) {
+      const bl = surrBlocks[i];
 
       //If the block is turned off, skip collision detection
       if( bl.isActive === false ) {
         continue;
       }
 
-      let other = {
+      const other = {
         x: bl.x,
         y: bl.y,
         width: 95,
@@ -170,7 +170,7 @@ export class Player extends Entity {
           this.y -= this.spdY;
         }
       }
-    } //for( var i in surrBlocks ) --- Block Collision Check
+    } //for( let i in surrBlocks ) --- Block Collision Check
   } //Player.update()
 
   updateSpd() {
@@ -199,13 +199,13 @@ export class Player extends Entity {
   } //Player.isColliding()
 
   shoot(server) {
-    let b = new Bullet({
+    const b = new Bullet({
       parent: this.ID,
       angle: this.mouseAngle,
       x: this.x,
       y: this.y
     });
-    let bulletID = Math.random(); //#TODO replace with a real ID system
+    const bulletID = Math.random(); //#TODO replace with a real ID system
     server.bullets[bulletID] = b;
     server.initPack.bullet.push(server.bullets[bulletID].getInitPack());
   } //Player.shoot()
@@ -250,8 +250,8 @@ export class Player extends Entity {
   } //Player.respawn()
 
   respawnPositionOccupied(server) {
-    let newGridX = ~~(this.x / GLOBALS.TILE_WIDTH);
-    let newGridY = ~~(this.y / GLOBALS.TILE_HEIGHT);
+    const newGridX = ~~(this.x / GLOBALS.TILE_WIDTH);
+    const newGridY = ~~(this.y / GLOBALS.TILE_HEIGHT);
     if( server.grid[newGridY][newGridX].occupying === 2 ) {
       this.respawnTries++;
       this.respawn(server);
@@ -325,14 +325,14 @@ export class Player extends Entity {
 
     //If we are outside of left deadzone, need to offset the tile calculation
     if( camera.xView > 0 ) {
-      let xOffset = camera.xView;
+      const xOffset = camera.xView;
       selGridX = ~~((this._mX + xOffset) / 80);
     } else {
       selGridX = ~~(this._mX / 80);
     }
     //If we are outside of top deadzone, need to offset the tile calculation
     if( camera.yView > 0 ) {
-      let yOffset = camera.yView;
+      const yOffset = camera.yView;
       selGridY = ~~((this._mY + yOffset) / 80);
     } else {
       selGridY = ~~(this._mY / 80);

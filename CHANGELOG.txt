@@ -19,7 +19,9 @@ v0.4.6 --- Released: Not Yet!
 		-
 
 	Other:
-		-
+		- Updated variable declarations from being var or let to const when the variable should not be modified
+			- IMPORTANT: const Socket_List = {} does not mean Socket_List's object is never modified, it is, but rather the variable is never reassigned
+			- const packs = ServerGame.getFrameUpdateData(); is const because packs is never redefined in it's lifetime. Once the setInterval runs again, it is defined for the first time, again.
 
 	SPECIAL THANKS:
 

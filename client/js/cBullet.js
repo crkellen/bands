@@ -6,8 +6,8 @@ export class cBullet {
   } //cBullet.constructor()
 
   drawSelf(ctx, xView, yView) {
-    let x = this.x - xView;
-    let y = this.y - yView;
+    const x = this.x - xView;
+    const y = this.y - yView;
 
 
     ctx.beginPath();
