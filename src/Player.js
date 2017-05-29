@@ -55,6 +55,7 @@ export class Player extends Entity {
     this.maxBlocks = 20; //FIXME: temp for SGX
 
     //Collision checks
+    //TODO: Player is actually a 20radius circle, from top left corner he is 40 pixels wide/tall
     this.width = 15;
     this.height = 15;
     this.respawnTries = 0;
