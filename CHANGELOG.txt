@@ -16,7 +16,7 @@ v0.4.6 --- Released: Not Yet!
 		-
 
 	Fixes:
-		-
+		- Players no longer get 'stuck' to walls, can move in other directions while holding the key that causes the collision - Fixes #59
 
 	Other:
 		- Updated variable declarations from being var or let to const when the variable should not be modified

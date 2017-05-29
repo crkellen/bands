@@ -67,6 +67,7 @@ export class Player extends Entity {
     }
 
     this.updateSpd();
+    this.checkCollisions(server);
     super.update();
 
     //Boundries check
@@ -106,7 +107,9 @@ export class Player extends Entity {
         }
       } //Place block
     } //if( this.mode )
+  } //Player.update()
 
+  checkCollisions(server) {
     //COLLISION CHECK - Blocks
     //#TODO: Optimize this because if there is a player, there can't be a block
     if( this.gridX === -1 ) {
@@ -156,22 +159,21 @@ export class Player extends Entity {
         height: 95
       };
 
-      if( this.isColliding(other) ) {
-        if( this.pressingRight === true ) {
-          this.x -= this.spdX;
-        }
-        if( this.pressingLeft === true ) {
-          this.x -= this.spdX;
-        }
-        if( this.pressingDown === true ) {
-          this.y -= this.spdY;
-        }
-        if( this.pressingUp === true ) {
-          this.y -= this.spdY;
-        }
+      //Offset for the direction prevents 'sticky walls'
+      if( this.pressingLeft && this.isColliding(other, -this.spdX, 0) ) {
+        this.spdX = 0;
+      }
+      if( this.pressingRight && this.isColliding(other, -this.spdX, 0) ) {
+        this.spdX = 0;
+      }
+      if( this.pressingUp && this.isColliding(other, 0, -this.spdY) ) {
+        this.spdY = 0;
+      }
+      if( this.pressingDown && this.isColliding(other, 0, -this.spdY) ) {
+        this.spdY = 0;
       }
     } //for( let i in surrBlocks ) --- Block Collision Check
-  } //Player.update()
+  } //Player.checkCollisions()
 
   updateSpd() {
     if( this.pressingLeft === true ) {
@@ -191,11 +193,11 @@ export class Player extends Entity {
     }
   } //Player.updateSpd()
 
-  isColliding(other) {
-    return !( other.x + other.width < this.x
-      || this.x + this.width < other.x
-      || other.y + other.height < this.y
-      || this.y + this.height < other.y );
+  isColliding(other, dirOffsetX, dirOffsetY) {
+    return !( other.x + dirOffsetX + other.width < this.x
+      || this.x + this.width < other.x + dirOffsetX
+      || other.y + dirOffsetY + other.height < this.y
+      || this.y + this.height < other.y + dirOffsetY );
   } //Player.isColliding()
 
   shoot(server) {
