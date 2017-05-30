@@ -4,6 +4,9 @@ const WORLD_HEIGHT = 1800;
 const CTX    = document.getElementById('canvas-game').getContext('2d');
 const CTX_UI = document.getElementById('canvas-ui').getContext('2d');
 
+const RIFLE_RELOAD_TIME = 1000;
+const RIFLE_CLIP_RELOAD_TIME = 3000;
+
 var Imgs = {};
 //Imgs.player = new Image();
 //Imgs.player.src = './../img/player.png';
@@ -15,6 +18,8 @@ var Imgs = {};
 //Imgs.background.src = '/client/img/background.png';
 Imgs.grid = new Image();
 Imgs.grid.src = './../img/grid2x.png';
+Imgs.aimingGuide = new Image();
+Imgs.aimingGuide.src = './../img/aimingGuide.png';
 
 export class GLOBALS {
   static get WORLD_WIDTH() {
@@ -31,6 +36,14 @@ export class GLOBALS {
 
   static get CTX_UI() {
     return CTX_UI;
+  }
+
+  static get RIFLE_RELOAD_TIME() {
+    return RIFLE_RELOAD_TIME;
+  }
+
+  static get RIFLE_CLIP_RELOAD_TIME() {
+    return RIFLE_CLIP_RELOAD_TIME;
   }
 
   static get Imgs() {

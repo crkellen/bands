@@ -34,12 +34,14 @@ export class cBlock {
     ctx.fillRect(x, y, 80, 80);
   } //cBlock.drawSelf()
 
-  drawSelection(ctx, xView, yView, canPlace) {
+  drawSelection(ctx, xView, yView, canPlace, canBuild) {
     const x = this.x - xView;
     const y = this.y - yView;
 
-    if( canPlace === true ) {
+    if( canPlace === true && canBuild === true ) {
       ctx.fillStyle = 'rgba(200, 200, 200, 0.2)';
+    } else if( canPlace === true && canBuild === false ) {
+      ctx.fillStyle = 'rgba(255, 255, 0, 0.2)';
     } else {
       ctx.fillStyle = 'rgba(200, 0, 0, 0.8)';
     }

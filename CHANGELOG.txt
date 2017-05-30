@@ -8,23 +8,36 @@ v0.4.6 --- Released: Not Yet!
 
 	Additions:
 		Gameplay:
-			-
+			- Added building cooldown when swapping to build mode - Implements #63
+			- Players' weapons now get progressively more white as they run out of ammo
+				- This will eventually be reworked to have more feedback, or dropped entirely
+			- Players can now manually reload - Implements #54, #77
+				- Reload for the Rifle is now by individual bullets, you can cancel reloading by shooting or switching modes
+				- Reloads at a rate of 1 bullet per second
+			- Rifle will reload entire clip if you run out of bullets from shooting, this takes 3 seconds
+				- If the player still has ammo, but no clips, the player must manually reload
+				- If the player cancels the automatic clip reload, it must be restarted manually
 		UI:
-			-
+			- Selection highlight will now be yellow if you are in block placement cooldown
+			- Feedback on how long until reload is finished, small bar at mouse position when reloading
+				- This is based off of the reload time for the task, clip is longer than manual reload
 
 	Changes:
-		-
+		- Increased wait time before placing another block from 300ms to 1000ms
 
 	Fixes:
 		- Players no longer get 'stuck' to walls, can move in other directions while holding the key that causes the collision - Fixes #59
 		- Changed bullet collisions with players to use AABB, collisions much more accurate - Fixes #70
 		- Bullets now sample from a line drawn from their current position + 25% of the distance to what their new position will be - Fixes #58
 			- This means bullets check the 4 positions (not starting position) along the distance (25%, 50%, 75%, newPos) for collisions
+		- Fixed issue where camera would be null on the server, causing a crash
+		- Fixed issue where clicking on a block in build mode would still cause the building cooldown to be set
 
 	Other:
 		- Updated variable declarations from being var or let to const when the variable should not be modified
 			- IMPORTANT: const Socket_List = {} does not mean Socket_List's object is never modified, it is, but rather the variable is never reassigned
-			- const packs = ServerGame.getFrameUpdateData(); is const because packs is never redefined in it's lifetime. Once the setInterval runs again, it is defined for the first time, again.
+			- const packs = ServerGame.getFrameUpdateData(); is const because packs is never redefined in it's lifetime. Once the setInterval runs again, it is defined for the first time, again
+		- Renamed Player.maxAmmo to Player.clipSize
 
 	SPECIAL THANKS:
 

@@ -14,9 +14,13 @@ export class cPlayer {
     this.maxHP = initPack.maxHP;
     this.score = initPack.score;
     this.ammo = initPack.ammo;
-    this.maxAmmo = initPack.maxAmmo;
+    this.clipSize = initPack.clipSize;
     this.clips = initPack.clips;
     this.maxClips = initPack.clips;
+    this.heldAmmo = initPack.heldAmmo;
+    this.mustReloadClip = initPack.mustReloadClip;
+    this.mustReload = initPack.mustReload;
+    this.isReloading = initPack.isReloading;
     this.invincible = initPack.invincible;
     this.mode = initPack.mode;
     this.blocks = initPack.blocks;
@@ -90,18 +94,36 @@ export class cPlayer {
       }
 
       const theta = Math.atan2(targetY, targetX);
+      const scaleByAmmo = 20 * (6 - this.ammo);
 
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(theta);
       ctx.translate(30, 0); //Move the gun to the outside of the player
       if( this.invincible === true ) {
-        ctx.fillStyle = 'rgba(65, 135, 255, 0.5)';
+        ctx.fillStyle = 'rgba(15, 135, 255, 0.5)';
       } else {
-        ctx.fillStyle = 'rgba(65, 135, 255, 1)';
+        ctx.fillStyle = `rgba(${15 + scaleByAmmo * 2}, ${135 + scaleByAmmo}, 255, 1)`;
       }
       ctx.fillRect(19/2 * -1, 8/2 * -1, 19, 8);
       ctx.restore();
+
+      //PARTY HAT (A joke, but also a test for future implementations)
+      /*
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(theta);
+      ctx.translate(-28, 0);
+      ctx.fillStyle = 'rgba(200, 200, 0, 1)';
+      ctx.fillRect(4, -8, 4, 19);
+      ctx.fillStyle = 'rgba(0, 200, 0, 1)';
+      ctx.fillRect(0, -6, 4, 14);
+      ctx.fillStyle = 'rgba(0, 0, 200, 1)';
+      ctx.fillRect(-4, -4, 4, 9);
+      ctx.fillStyle = 'rgba(200, 0, 0, 1)';
+      ctx.fillRect(-8, -2, 4, 4);
+      ctx.restore();
+      */
     }
   } //cPlayer.drawSelf()
 
@@ -117,7 +139,7 @@ export class cPlayer {
     const x = this.x - xView;
     const y = this.y - yView;
 
-    const ammoString = `${this.ammo}/${this.maxAmmo}`;
+    const ammoString = `${this.ammo}/${this.clipSize}`;
     ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
     ctx.fillText(ammoString, x - 8, y + 16);
   } //cPlayer.drawAmmo()

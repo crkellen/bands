@@ -1,3 +1,5 @@
+import { GLOBALS } from './Globals';
+
 export class Game {
   constructor(ctx, ctxUI) {
     this.ctx = ctx;
@@ -18,6 +20,7 @@ export class Game {
     //UI Updaters
     //TODO: Update this so it uses getters and setters instead of prevScore === curScore
     this.prevScore = 0;
+    this.prevHeldAmmo = 0;    
     this.prevClipCount = 0;
     this.prevBlockCount = 0;
 
@@ -26,10 +29,10 @@ export class Game {
     this.selGridX = -1;
     this.selGridY = -1;
 
-    this.reloading = false;
+    this.reloadTimeLeft = GLOBALS.RIFLE_RELOAD_TIME;
 
     //Mouseclick flags
     this.canShoot = true;
-    this.canBuild = true;
+    this.canBuild = false;
   } //Game.constructor()
 } //class Game
