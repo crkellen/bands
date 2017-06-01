@@ -8,20 +8,21 @@ const RIFLE_RELOAD_TIME = 1000;
 const RIFLE_CLIP_RELOAD_TIME = 3000;
 
 var Imgs = {};
-//Imgs.player = new Image();
-//Imgs.player.src = './../img/player.png';
-//Imgs.bullet = new Image();
-//Imgs.bullet.src = './../img/bullet.png';
-//Imgs.gun = new Image();
-//Imgs.gun.src = './../img/gun.png';
-//Imgs.background = new Image();
-//Imgs.background.src = '/client/img/background.png';
+Imgs.player = new Image();
+Imgs.player.src = './../img/player.png';
+Imgs.bullet = new Image();
+Imgs.bullet.src = './../img/bullet.png';
+Imgs.gun = new Image();
+Imgs.gun.src = './../img/gun.png';
+Imgs.shovel = new Image();
+Imgs.shovel.src = './../img/shovel.png';
 Imgs.grid = new Image();
 Imgs.grid.src = './../img/grid2x.png';
 Imgs.aimingGuide = new Image();
 Imgs.aimingGuide.src = './../img/aimingGuide.png';
 
 export class GLOBALS {
+
   static get WORLD_WIDTH() {
     return WORLD_WIDTH;
   }
@@ -49,4 +50,40 @@ export class GLOBALS {
   static get Imgs() {
     return Imgs;
   }
+
 } //class Globals
+
+//LocalPlayerAnimationController Static Variables
+//AIMING GUIDE ANIMATION VARIABLES
+var _aimingGuideFrame = 0;
+var _aimingGuideFrameTick = 0;
+var _aimingGuideAnimSpeed = 3;
+
+//The animation controller for only the local player. All accessed variables and functionality is static.
+export class LocalPlayerAnimationController {
+
+//AIMING GUIDE ANIMATION FUNCTIONS
+  static aimingGuideAnimationUpdate() {
+    if( _aimingGuideFrameTick === _aimingGuideAnimSpeed ) {
+      _aimingGuideFrame++;
+      if( _aimingGuideFrame >= 5 ) { //Image has 5 frames of animation
+        _aimingGuideFrame = 0;
+      }
+    }
+    _aimingGuideFrameTick++;
+    if( _aimingGuideFrameTick >= (_aimingGuideAnimSpeed + 1) ) {
+      _aimingGuideFrameTick = 0;
+    }
+  } //GLOBALS.aimingGuideAnimationUpdate()
+
+  static get aimingGuideFrame() {
+    return _aimingGuideFrame;
+  }
+//END AIMING GUIDE ANIMATION
+
+} //class LocalPlayerAnimationController
+
+//The animation controller for any player, including the local player, but not the local only animations.
+export class PlayerAnimationController {
+
+} //class PlayerAnimationController

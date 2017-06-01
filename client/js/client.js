@@ -441,7 +441,7 @@ const drawEntities = () => {
   //Each player object draws itself
   for( let p in cGame.cPlayers ) {
     let isLocalPlayer = false;
-    if( cGame.localPlayer === cGame.cPlayers[p] ) {
+    if( cGame.localPlayer.ID === cGame.cPlayers[p].ID ) {
       isLocalPlayer = true;
     }
     cGame.cPlayers[p].drawSelf(cGame.ctx, GameCamera.xView, GameCamera.yView, isLocalPlayer);

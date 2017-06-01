@@ -1,4 +1,6 @@
-import { GLOBALS } from './Globals';
+import { GLOBALS, LocalPlayerAnimationController } from './Globals';
+
+//const AnimController = new AnimationController();
 
 export class cPlayer {
   constructor(initPack) {
@@ -25,6 +27,8 @@ export class cPlayer {
     this.mode = initPack.mode;
     this.blocks = initPack.blocks;
     this.maxBlocks = initPack.maxBlocks;
+
+    this.bulletTheta = 0;
   } //cPlayer.constructor
 
   drawSelf(ctx, xView, yView, isLocalPlayer) {
@@ -46,10 +50,13 @@ export class cPlayer {
       ctx.fillStyle = 'black';
     }
 
+    /*
     ctx.beginPath();
     ctx.arc(x, y, 20, 0, 2*Math.PI);
     ctx.fill();
     ctx.stroke();
+    */
+    ctx.drawImage(GLOBALS.Imgs.player, x-20, y-20, 40, 40);
 
     if( this.mode === 0 ) { //If player is in weapon mode
       //Gun
@@ -94,19 +101,35 @@ export class cPlayer {
       }
 
       const theta = Math.atan2(targetY, targetX);
+      this.bulletTheta = theta;
       const scaleByAmmo = 20 * (6 - this.ammo);
 
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(theta);
-      ctx.translate(30, 0); //Move the gun to the outside of the player
+      ctx.translate(0, -8); //Move the gun to the outside of the player
+      /*
       if( this.invincible === true ) {
         ctx.fillStyle = 'rgba(15, 135, 255, 0.5)';
       } else {
         ctx.fillStyle = `rgba(${15 + scaleByAmmo * 2}, ${135 + scaleByAmmo}, 255, 1)`;
       }
       ctx.fillRect(19/2 * -1, 8/2 * -1, 19, 8);
+      */
+      ctx.rotate(0);
+      ctx.drawImage(GLOBALS.Imgs.gun, 0, 0, 80, 18);
       ctx.restore();
+
+      if( isLocalPlayer === true ) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(theta);
+        ctx.translate(80, -1);
+        //ctx.drawImage(this.aimingImg, 0, this.aimingFrame*5, 200, 3, 0, 0, 200, 3);
+        ctx.drawImage(GLOBALS.Imgs.aimingGuide, 0, LocalPlayerAnimationController.aimingGuideFrame*5, 200, 3, 0, 0, 200, 3);
+        ctx.restore();
+        LocalPlayerAnimationController.aimingGuideAnimationUpdate();
+      }
 
       //PARTY HAT (A joke, but also a test for future implementations)
       /*
