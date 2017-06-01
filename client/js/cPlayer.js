@@ -126,6 +126,7 @@ export class cPlayer {
         ctx.rotate(theta);
         ctx.translate(80, -1);
         //ctx.drawImage(this.aimingImg, 0, this.aimingFrame*5, 200, 3, 0, 0, 200, 3);
+        ctx.globalAlpha = 0.5;
         ctx.drawImage(GLOBALS.Imgs.aimingGuide, 0, LocalPlayerAnimationController.aimingGuideFrame*5, 200, 3, 0, 0, 200, 3);
         ctx.restore();
         LocalPlayerAnimationController.aimingGuideAnimationUpdate();
