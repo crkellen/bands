@@ -50,3 +50,32 @@ export class GLOBALS {
     return Imgs;
   }
 } //class Globals
+
+//LocalPlayerAnimationController Static Variables
+//Aiming Guide Animation Variables
+var _aimingGuideFrame = 0;
+var _aimingGuideFrameTick = 0;
+var _aimingGuideAnimSpeed = 5;
+
+//The animation controller for only the local player. All accessed variables and functionality is static.
+export class LocalPlayerAnimationController {
+//AIMING GUIDE ANIMATION FUNCTIONS
+  static aimingGuideAnimationUpdate() {
+    if( _aimingGuideFrameTick === _aimingGuideAnimSpeed ) {
+      _aimingGuideFrame = (_aimingGuideFrame+1) % 6;
+    }
+    _aimingGuideFrameTick++;
+    _aimingGuideFrameTick %= (_aimingGuideAnimSpeed + 1);
+  } //GLOBALS.aimingGuideAnimationUpdate()
+
+  static get aimingGuideFrame() {
+    return _aimingGuideFrame;
+  }
+//END AIMING GUIDE ANIMATION
+
+} //class LocalPlayerAnimationController
+
+//The animation controller for any player, including the local player, but not the local only animations.
+export class PlayerAnimationController {
+
+} //class PlayerAnimationController 

@@ -1,4 +1,4 @@
-import { GLOBALS } from './Globals';
+import { GLOBALS, LocalPlayerAnimationController } from './Globals';
 
 export class cPlayer {
   constructor(initPack) {
@@ -96,6 +96,7 @@ export class cPlayer {
       const theta = Math.atan2(targetY, targetX);
       const scaleByAmmo = 20 * (6 - this.ammo);
 
+      //Draw the Gun
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(theta);
@@ -107,6 +108,18 @@ export class cPlayer {
       }
       ctx.fillRect(19/2 * -1, 8/2 * -1, 19, 8);
       ctx.restore();
+
+      //Draw the Aiming Guide
+      if( isLocalPlayer === true ) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(theta);
+        ctx.translate(40, -1);
+        ctx.globalAlpha = 0.5;
+        ctx.drawImage(GLOBALS.Imgs.aimingGuide, 0, LocalPlayerAnimationController.aimingGuideFrame*5, 200, 3, 0, 0, 200, 3);
+        ctx.restore();
+        LocalPlayerAnimationController.aimingGuideAnimationUpdate();
+      }
 
       //PARTY HAT (A joke, but also a test for future implementations)
       /*
