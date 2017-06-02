@@ -100,13 +100,13 @@ export class cPlayer {
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(theta);
-      ctx.translate(30, 0); //Move the gun to the outside of the player
+      ctx.translate(20, -5); //Move the gun to the outside of the player
       if( this.invincible === true ) {
         ctx.fillStyle = 'rgba(15, 135, 255, 0.5)';
       } else {
         ctx.fillStyle = `rgba(${15 + scaleByAmmo * 2}, ${135 + scaleByAmmo}, 255, 1)`;
       }
-      ctx.fillRect(19/2 * -1, 8/2 * -1, 19, 8);
+      ctx.fillRect(0, 0, 20, 10);
       ctx.restore();
 
       //Draw the Aiming Guide
