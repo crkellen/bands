@@ -14,8 +14,8 @@ export class Bullet extends Entity {
     this.toRemove = false;
 
     //Collision checks
-    this.width = 5;
-    this.height = 5;
+    this.width = 10;
+    this.height = 10;
 
     this.updatePack.ID = this.ID;
   } //Bullet.constructor()
@@ -23,6 +23,12 @@ export class Bullet extends Entity {
   update(server) {
     if( ++this.timer > 38 ) {
       this.toRemove = true;
+      //If the bullet needs to be removed, return
+      return;
+    }
+
+    this.checkCollisions(server);
+    if( this.toRemove === true ) {
       //If the bullet needs to be removed, return
       return;
     }
@@ -49,25 +55,48 @@ export class Bullet extends Entity {
       //If the bullet needs to be removed, return
       return;
     }
+  } //Bullet.update()
+
+  checkCollisions(server) {
+    const newX = this.x + this.spdX;
+    const newY = this.y + this.spdY;
 
     //COLLISION CHECK - Players
     for( let i in server.players ) {
       const p = server.players[i];
-      if( this.getDistance(p) < 24 && this.parent !== p.ID && p.invincible !== true ) {
-        p.HP -= 5;
-        if( p.HP <= 0 ) {
-          const shooter = server.players[this.parent];
-          if( shooter ) {
-            shooter.score += 1;
+
+      //TODO: Fix this so it uses proper width/height variables
+      //p.pos - 20 to center the collider at the top left, not the middle
+      const other = {
+        x: p.x - 20,
+        y: p.y - 20,
+        width: 40,
+        height: 40
+      };
+
+      for( let u = 0.25; u < 1.1; u += 0.25 ) {
+        //this.pos - 5 to center the collider at the top left, not the middle
+        const point = {
+          x: (this.x-5) + (u * (newX - this.x)),
+          y: (this.y-5) + (u * (newY - this.y))
+        };
+
+        if( this.parent !== p.ID && p.invincible !== true && this.isCollidingPoint(other, point) ) {
+          p.HP -= 5;
+          if( p.HP <= 0 ) {
+            const shooter = server.players[this.parent];
+            if( shooter ) {
+              shooter.score += 1;
+            }
+            //Respawn the dead player
+            p.respawn(server);
           }
-          //Respawn the dead player
-          p.respawn(server);
+          this.toRemove = true;
+          //If the bullet needs to be removed, return
+          return;
         }
-        this.toRemove = true;
-        //If the bullet needs to be removed, return
-        return;
-      }
-    } //for(var i in Player list) --- Collision check
+      } //for(let u = 0.0)
+    } //for(let i in Player list) --- Collision check
 
     //COLLISION CHECK - Blocks
     for( let j in server.blocks ) {
@@ -81,25 +110,31 @@ export class Bullet extends Entity {
         width: bl.width,
         height: bl.height
       };
-      if( this.isColliding(other) ) {
-        bl.HP -= 1;
-        this.toRemove = true;
-        //If the bullet needs to be removed, return
-        return;
-      }
-    } //for(var j in Block list) --- Collision check
-  } //Bullet.update()
 
-  getDistance(pt) {
-    return Math.sqrt(Math.pow(this.x - pt.x, 2) + Math.pow(this.y - pt.y, 2));
-  } //Bullet.getDistance()
+      //Sample distances on the line from currentPos to newPos and if there is a collision, return
+      for( let u = 0.25; u < 1.1; u += 0.25 ) {
+        //this.pos - 5 to center the collider at the top left, not the middle
+        const point = {
+          x: (this.x-5) + (u * (newX - this.x)),
+          y: (this.y-5) + (u * (newY - this.y))
+        };
 
-  isColliding(other) {
-    return !( other.x + other.width < this.x
-      || this.x + this.width < other.x
-      || other.y + other.height < this.y
-      || this.y + this.height < other.y );
-  } //Bullet.isColliding()
+        if( this.isCollidingPoint(other, point) ) {
+          bl.HP -= 1;
+          this.toRemove = true;
+          //If the bullet needs to be removed, return
+          return;
+        }
+      } //for(let u = 0.0)
+    } //for(let j in Block list) --- Collision check
+  } //Bullet.checkCollisions()
+
+  isCollidingPoint(other, point) {
+    return !( other.x + other.width < point.x
+      || point.x + this.width < other.x
+      || other.y + other.height < point.y
+      || point.y + this.height < other.y );
+  } //Bullet.isCollidingPoint()
 
   getInitPack() {
     return {
