@@ -499,9 +499,9 @@ export class Player extends Entity {
           }
           break;
         case 'switchMode':
-          //Swap mode from 0 to 1 or 1 to 0 (this.mode ^= 1;)
-          this.mode = 1 - this._mode;
-          if( this._mode === 0 ) {
+          //Swap the mode, increasing by 1
+          this.mode = (this.mode + 1) % 3;
+          if( this._mode === 0 ) {        //Weapon
             this.mustCheckBuildSelection = false;
             this.socket.emit('buildSelection', {
               isValid:  false,
@@ -511,12 +511,14 @@ export class Player extends Entity {
             });
             this.selGridX = -1;
             this.selGridY = -1;
-          } else {
+          } else if( this._mode === 1 ) { //Build
             this.mustCheckBuildSelection = true;
             this.mustReloadClip = false;
             this.mustReload = false;
             this.isReloading = false;
             this.cancelActiveReloadRequests();
+          } else {                        //Shovel
+            
           }
           break;
         case 'mouseAngle':
