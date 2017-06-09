@@ -117,7 +117,12 @@ export class Player extends Entity {
           this.blocks = 0;
         }
       } //Place block
-    } //if( this.mode )
+    } else if( this.mode === 2 ) {
+      //Try to remove block with Shovel
+      if( this.pressingAttack === true ) {
+        this.tryToRemoveBlock(server);
+      }
+    }//if( this.mode )
 
     //If player canceled clipReload, call it again
     if( this.mustReloadClip === true && this.isReloading === false && this.heldAmmo >= this.clipSize ) {
@@ -344,6 +349,13 @@ export class Player extends Entity {
     }
   } //Player.placeBlock
 
+  tryToRemoveBlock(server) {
+    //If the player selection is not a block, ignore the request
+    if( this.selGridX === -1 || this.selGridY === -1 ) {
+      return;
+    }
+  } //Player.tryToRemoveBlock()
+
   getInitPack() {
     return {
       ID: this.ID,
@@ -518,7 +530,7 @@ export class Player extends Entity {
             this.isReloading = false;
             this.cancelActiveReloadRequests();
           } else {                        //Shovel
-            
+
           }
           break;
         case 'mouseAngle':
