@@ -507,18 +507,18 @@ const drawUI = () => {
     if( cGame.localPlayer.mode === 1 ) {
       if( cGame.isValidSelection === true ) {
         //Can place the block
-        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, true, cGame.canBuild);
+        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, true, cGame.canBuild, 1);
       } else {
         //Cannot place the block
-        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, false, cGame.canBuild);
+        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, false, cGame.canBuild, 1);
       }
     } else if( cGame.localPlayer.mode === 2 ) {
       if( cGame.isValidSelection === true ) {
         //Can remove the block
-        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, true, cGame.canShovel);
+        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, true, cGame.canShovel, 2);
       } else {
         //Cannot remove the block
-        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, false, cGame.canShovel);
+        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, false, cGame.canShovel, 2);
       }
     }
   }
