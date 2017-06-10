@@ -559,9 +559,9 @@ export class Player extends Entity {
           selGridY: selGridY
         });
       }
+      this.selGridX = selGridX;
+      this.selGridY = selGridY;
     }
-    this.selGridX = selGridX;
-    this.selGridY = selGridY;
   } //Player.validateShovelSelection()
 
   onConnect(socket) {
