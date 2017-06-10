@@ -356,7 +356,8 @@ export class Player extends Entity {
     }
     //If the location is a block
     if( server.grid[this.selGridY][this.selGridX].occupying === 2 ) {
-      server.grid[this.selGridY][this.selGridX].updateOccupying(GLOBALS.TILE_EMPTY);
+      //HP setter handles isActive and updating the grid
+      server.grid[this.selGridY][this.selGridX].block.HP = 0;
       if( this.blocks < this.maxBlocks ) {
         this.blocks++;
       }
