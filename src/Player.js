@@ -111,7 +111,7 @@ export class Player extends Entity {
       //Place block
       if( this.pressingAttack === true && this.blocks > 0 ) {
         this.pressingAttack = false;
-        this.placeBlock(server);
+        this.tryToPlaceBlock(server);
         if( this.blocks <= 0 ) {
           this.blocks = 0;
         }
@@ -336,7 +336,7 @@ export class Player extends Entity {
     }
   } //Player.respawnPositionOccupied()
 
-  placeBlock(server) {
+  tryToPlaceBlock(server) {
     //If the player selection is out of bounds, ignore the request
     if( this.selGridX === -1 || this.selGridY === -1 ) {
       return;
@@ -347,7 +347,7 @@ export class Player extends Entity {
       server.grid[this.selGridY][this.selGridX].updateOccupying(GLOBALS.TILE_BLOCK);
       this.blocks--;
     }
-  } //Player.placeBlock
+  } //Player.tryToPlaceBlock
 
   tryToRemoveBlock(server) {
     //If the player selection is not a block, ignore the request
