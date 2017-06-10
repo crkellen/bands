@@ -119,6 +119,7 @@ export class Player extends Entity {
     } else if( this.mode === 2 ) {
       //Try to remove block with Shovel
       if( this.pressingAttack === true ) {
+        this.pressingAttack = false;
         this.tryToRemoveBlock(server);
       }
     }//if( this.mode )
@@ -352,6 +353,13 @@ export class Player extends Entity {
     //If the player selection is not a block, ignore the request
     if( this.selGridX === -1 || this.selGridY === -1 ) {
       return;
+    }
+    //If the location is a block
+    if( server.grid[this.selGridY][this.selGridX].occupying === 2 ) {
+      server.grid[this.selGridY][this.selGridX].updateOccupying(GLOBALS.TILE_EMPTY);
+      if( this.blocks < this.maxBlocks ) {
+        this.blocks++;
+      }
     }
   } //Player.tryToRemoveBlock()
 
