@@ -504,12 +504,22 @@ const drawUI = () => {
 
   //Show where the block would be placed on the selected grid
   if( cGame.selGridX !== -1 && cGame.selGridY !== -1 ) {
-    if( cGame.isValidSelection === true ) {
-      //Can place === true
-      cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, true, cGame.canBuild);
-    } else {
-      //Can place === false
-      cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, false, cGame.canBuild);
+    if( cGame.localPlayer.mode === 1 ) {
+      if( cGame.isValidSelection === true ) {
+        //Can place the block
+        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, true, cGame.canBuild);
+      } else {
+        //Cannot place the block
+        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, false, cGame.canBuild);
+      }
+    } else if( cGame.localPlayer.mode === 2 ) {
+      if( cGame.isValidSelection === true ) {
+        //Can remove the block
+        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, true, cGame.canShovel);
+      } else {
+        //Cannot remove the block
+        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, false, cGame.canShovel);
+      }
     }
   }
 
