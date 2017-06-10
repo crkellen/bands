@@ -528,7 +528,6 @@ export class Player extends Entity {
     if( selGridY > this._gridY + 1  ) { //Out of range on BOTTOM
       selGridY = -1;
     }
-
     //Corners don't need to be checked, are handled already by the above checks
     //Bottom and Right deadzones don't need to be check, they are handled with > 0 check
     if( (selGridX !== -1 && selGridY !== -1) &&
@@ -622,6 +621,9 @@ export class Player extends Entity {
           this.mX = data.mousePos.x;
           this.mY = data.mousePos.y;
           if( this._mode === 1 ) {
+            this.camera = data.camera;
+            this.mustCheckBuildSelection = true;
+          } else if( this._mode === 2 ) {
             this.camera = data.camera;
             this.mustCheckBuildSelection = true;
           }
