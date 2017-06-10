@@ -177,6 +177,10 @@ $(document).ready( () => {
 
     switch( e.which ) {
       case 3: { //Right mouse button
+        //Mode will switch, so update the camera/mousePos for validateSelection
+        const mousePos = getMousePos(cGame.ctx, e);
+        const camera = { xView: GameCamera.xView, yView: GameCamera.yView };
+        socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos, camera: camera});
         socket.emit('keyPress', {inputID: 'switchMode'});
         if( cGame.localPlayer.mode === 0 ) {        //Gun to Build
           cGame.canBuild = false;
@@ -189,10 +193,6 @@ $(document).ready( () => {
             cGame.canShovel = true;
           }, 1000);
         }
-        //Mode will switch, so update the camera/mousePos for validateSelection
-        const mousePos = getMousePos(cGame.ctx, e);
-        const camera = { xView: GameCamera.xView, yView: GameCamera.yView };
-        socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos, camera: camera});
         break;
       }
     } //switch( e.which )
