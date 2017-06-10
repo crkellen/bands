@@ -72,8 +72,7 @@ export class Player extends Entity {
 
   update(server) {
     if( this.mustCheckBuildSelection === true ) {
-      //this.mustCheckBuildSelection = false;
-      this.checkBuildSelection(server, this.camera);
+      this.validateSelection(server, this.camera);
     }
 
     this.updateSpd();
@@ -405,7 +404,15 @@ export class Player extends Entity {
     // };
   } //Player.getUpdatePack()
 
-  checkBuildSelection(server, camera) {
+  validateSelection(server, camera) {
+    if( this.mode === 1 ) {
+      this.validateBuildSelection(server, camera);
+    } else if( this.mode === 2 ) {
+      this.validateShovelSelection(server, camera);
+    }
+  } //Player.validateSelection()
+
+  validateBuildSelection(server, camera) {
     let selGridX = -1;
     let selGridY = -1;
 
@@ -480,7 +487,19 @@ export class Player extends Entity {
       this.selGridX = selGridX;
       this.selGridY = selGridY;
     }
-  } //Player.checkBuildSelection()
+  } //Player.validateBuildSelection()
+
+  validateShovelSelection(server, camera) {
+    let selGridX = -1;
+    let selGridY = -1;
+
+    if( camera === null ) {
+      return;
+    }
+
+    this.selGridX = selGridX;
+    this.selGridY = selGridY;
+  } //Player.validateShovelSelection()
 
   onConnect(socket) {
     socket.on('keyPress', (data) => {
