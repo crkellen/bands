@@ -34,5 +34,6 @@ export class Game {
     //Mouseclick flags
     this.canShoot = true;
     this.canBuild = false;
+    this.canShovel = false;
   } //Game.constructor()
 } //class Game

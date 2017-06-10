@@ -166,6 +166,16 @@ $(document).ready( () => {
               cGame.canBuild = true;
             }, 1000);
           }
+        } else if( cGame.localPlayer.mode === 2 ) {  //Shovel mode
+          //Remove block
+          if(cGame.canShovel === true && cGame.isValidSelection === true ) {
+            cGame.canShovel = false;
+            //cGame.isValidSelection = false; //This will be set to false by the server, but locally we can assume false
+            socket.emit('keyPress', {inputID: 'attack', state: true});
+            setTimeout( () => {
+              cGame.canShovel = true;
+            }, 1000);
+          }
         }
         break;
     } //switch( e.which )
@@ -177,16 +187,20 @@ $(document).ready( () => {
 
     switch( e.which ) {
       case 3: { //Right mouse button
+        //Mode will switch, so update the camera/mousePos for validateSelection
+        const mousePos = getMousePos(cGame.ctx, e);
+        const camera = { xView: GameCamera.xView, yView: GameCamera.yView };
+        socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos, camera: camera});
         socket.emit('keyPress', {inputID: 'switchMode'});
-        if( cGame.localPlayer.mode === 0 ) {
+        if( cGame.localPlayer.mode === 0 ) {        //Gun to Build
           cGame.canBuild = false;
-          //Mode will switch from attack to build mode, so update the camera/mousePos
-          //Update mouse position
-          const mousePos = getMousePos(cGame.ctx, e);
-          const camera = { xView: GameCamera.xView, yView: GameCamera.yView };
-          socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos, camera: camera});
           setTimeout( () => {
             cGame.canBuild = true;
+          }, 1000);
+        } else if( cGame.localPlayer.mode === 1 ) { //Build to Shovel
+          cGame.canShovel = false;
+          setTimeout( () => {
+            cGame.canShovel = true;
           }, 1000);
         }
         break;
@@ -392,6 +406,13 @@ socket.on('buildSelection', (data) => {
   cGame.selGridY = data.selGridY;
 });
 
+socket.on('shovelSelection', (data) => {
+  cGame.isValidSelection = data.isValid;
+  cGame.selBlockID = data.selBlockID;
+  cGame.selGridX = data.selGridX;
+  cGame.selGridY = data.selGridY;
+});
+
 //END SOCKET FUNCTIONS ##########################################################
 
 //GAME LOGIC FUNCTIONS ##########################################################
@@ -493,12 +514,22 @@ const drawUI = () => {
 
   //Show where the block would be placed on the selected grid
   if( cGame.selGridX !== -1 && cGame.selGridY !== -1 ) {
-    if( cGame.isValidSelection === true ) {
-      //Can place === true
-      cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, true, cGame.canBuild);
-    } else {
-      //Can place === false
-      cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, false, cGame.canBuild);
+    if( cGame.localPlayer.mode === 1 ) {
+      if( cGame.isValidSelection === true ) {
+        //Can place the block
+        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, true, cGame.canBuild, 1);
+      } else {
+        //Cannot place the block
+        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, false, cGame.canBuild, 1);
+      }
+    } else if( cGame.localPlayer.mode === 2 ) {
+      if( cGame.isValidSelection === true ) {
+        //Can remove the block
+        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, true, cGame.canShovel, 2);
+      } else {
+        //Cannot remove the block
+        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, false, cGame.canShovel, 2);
+      }
     }
   }
 
