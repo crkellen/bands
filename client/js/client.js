@@ -166,6 +166,16 @@ $(document).ready( () => {
               cGame.canBuild = true;
             }, 1000);
           }
+        } else if( cGame.localPlayer.mode === 2 ) {  //Shovel mode
+          //Remove block
+          if(cGame.canShovel === true && cGame.isValidSelection === true ) {
+            cGame.canShovel = false;
+            //cGame.isValidSelection = false; //This will be set to false by the server, but locally we can assume false
+            socket.emit('keyPress', {inputID: 'attack', state: true});
+            setTimeout( () => {
+              cGame.canShovel = true;
+            }, 1000);
+          }
         }
         break;
     } //switch( e.which )
