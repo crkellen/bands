@@ -435,12 +435,6 @@ export class Player extends Entity {
       selGridY = ~~(this._mY / 80);
     }
 
-    //Check to see if selection is on top of player
-    if( selGridX === this._gridX && selGridY === this._gridY ) {
-      //selGridX = -1;
-      //selGridY = -1;
-    }
-
     //Check to see if selection is out of range (grid pos + 1)
     if( selGridX > this._gridX + 1  ) { //Out of range on LEFT
       selGridX = -1;
