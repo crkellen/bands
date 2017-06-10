@@ -17,7 +17,7 @@ export class Camera {
     //Object to be followed (player)
     this.followed = null;
 
-    let viewport = {
+    const viewport = {
       left: this.xView,
       top: this.yView,
       width: this.wView,
@@ -26,7 +26,7 @@ export class Camera {
 
     this.viewportRect = new Rectangle(viewport);
 
-    let world = {
+    const world = {
       left: 0,
       top: 0,
       width: params.worldWidth,
@@ -58,7 +58,7 @@ export class Camera {
       }
     }
     //Update Viewport Rect
-    let updateViewport = {
+    const updateViewport = {
       left: this.xView,
       top: this.yView
     };

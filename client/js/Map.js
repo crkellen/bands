@@ -19,10 +19,10 @@ export class Map {
     ctx.canvas.width = this.width;
     ctx.canvas.height = this.height;
 
-    let rows = this.width / 1600; //Width of grid image
-    let cols = this.height / 960; //Height of grid image
+    const rows = this.width / 1600; //Width of grid image
+    const cols = this.height / 960; //Height of grid image
 
-    let gridImage = new Image();
+    const gridImage = new Image();
     gridImage.src = Imgs.grid.src;
     //Layer the image four times larger
     ctx.save();
@@ -41,16 +41,13 @@ export class Map {
   } //Map.generate()
 
   draw(ctx, xView, yView) {
-    let sx, sy, dx, dy;
-    let sWidth, sHeight, dWidth, dHeight;
-
     //Offset point to crop the image
-    sx = xView;
-    sy = yView;
+    const sx = xView;
+    const sy = yView;
 
     //Dimensions of the cropped image
-    sWidth = ctx.canvas.width;
-    sHeight = ctx.canvas.height;
+    let sWidth = ctx.canvas.width;
+    let sHeight = ctx.canvas.height;
 
     //If cropped image is smaller than canvas we need to change the source dimensions
     if( this.image.width - sx < sWidth ) {
@@ -61,12 +58,12 @@ export class Map {
     }
 
     //Location on canvas to draw the cropped image
-    dx = 0;
-    dy = 0;
+    const dx = 0;
+    const dy = 0;
 
     //Match destination with source to not scale the image
-    dWidth = sWidth;
-    dHeight = sHeight;
+    const dWidth = sWidth;
+    const dHeight = sHeight;
 
     ctx.drawImage(this.image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
   } //Map.draw()

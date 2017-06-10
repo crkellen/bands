@@ -1,4 +1,4 @@
-# buildnshoot.io v0.4.5
+# buildnshoot.io v0.4.6
 An online multiplayer shooter game
 
 **Please post any bugs or feature requests on the [Issues page](https://github.com/crkellen/bands/issues)!**
@@ -11,15 +11,20 @@ An online multiplayer shooter game
 
 **Shooting:** Shoot by pressing the Left Mouse Button.
 
+**Reloading:** Reload by pressing R. This will reload 1 bullet at time and can be cancelled at any point during the reload. If you use all of your bullets, you will have to reload the clip, which takes longer than 1 bullet at a time!
+
 **Building:** Switch to Build Mode by pressing the Right Mouse Button. Then press the Left Mouse Button to build on a tile adjacent to you. **Note:** You cannot build if a player is occupying the tile!
+
+**Shoveling:** Switch to Shovel Mode by pressing the Right Mouse Button in Build Mode. Then press the Left Mouse Button on an active block to remove it. **Note:** Removing a block with a shovel places it in your inventory if you aren't full already!
 
 ### Goals:
 Currently the game is just a endless fighter, but soon there will be objectives for each team to compete for. I have not finalized the goals yet, and there may end up being multiple game modes.
 
 ### Tips:
-- Blocks can be destroyed by shooting them! (3 hits!)
+- Blocks can be destroyed by shooting them (3 hits), or by using the Shovel! 
 - You can see when the other players have to reload, use this to your advantage!
 - Players can't shoot when they don't have their gun out, attack them then!
+- Use the Shovel to gain more blocks. You can use this to repair or move defenses!
 
 ## Weapons:
 Currently there is only a single weapon implemented. More will be added later! Full stats will be added later once they are closer to being finalized.

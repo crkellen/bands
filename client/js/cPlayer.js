@@ -1,4 +1,4 @@
-import { GLOBALS } from './Globals';
+import { GLOBALS, LocalPlayerAnimationController } from './Globals';
 
 export class cPlayer {
   constructor(initPack) {
@@ -14,9 +14,13 @@ export class cPlayer {
     this.maxHP = initPack.maxHP;
     this.score = initPack.score;
     this.ammo = initPack.ammo;
-    this.maxAmmo = initPack.maxAmmo;
+    this.clipSize = initPack.clipSize;
     this.clips = initPack.clips;
     this.maxClips = initPack.clips;
+    this.heldAmmo = initPack.heldAmmo;
+    this.mustReloadClip = initPack.mustReloadClip;
+    this.mustReload = initPack.mustReload;
+    this.isReloading = initPack.isReloading;
     this.invincible = initPack.invincible;
     this.mode = initPack.mode;
     this.blocks = initPack.blocks;
@@ -24,11 +28,11 @@ export class cPlayer {
   } //cPlayer.constructor
 
   drawSelf(ctx, xView, yView, isLocalPlayer) {
-    let x = this.x - xView;
-    let y = this.y - yView;
+    const x = this.x - xView;
+    const y = this.y - yView;
 
     //Health bar
-    let HPWidth = 30 * this.HP / this.maxHP;
+    const HPWidth = 30 * this.HP / this.maxHP;
     ctx.fillStyle = 'red';
     ctx.fillRect(x - HPWidth/1.4, y + 22, HPWidth*1.4, 4);
 
@@ -89,35 +93,66 @@ export class cPlayer {
         targetY = this.mY - (this.y - (GLOBALS.WORLD_HEIGHT - ctx.canvas.height));
       }
 
-      let theta = Math.atan2(targetY, targetX);
+      const theta = Math.atan2(targetY, targetX);
+      const scaleByAmmo = 20 * (6 - this.ammo);
 
+      //Draw the Gun
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(theta);
-      ctx.translate(30, 0); //Move the gun to the outside of the player
+      ctx.translate(20, -5); //Move the gun to the outside of the player
       if( this.invincible === true ) {
-        ctx.fillStyle = 'rgba(65, 135, 255, 0.5)';
+        ctx.fillStyle = 'rgba(15, 135, 255, 0.5)';
       } else {
-        ctx.fillStyle = 'rgba(65, 135, 255, 1)';
+        ctx.fillStyle = `rgba(${15 + scaleByAmmo * 2}, ${135 + scaleByAmmo}, 255, 1)`;
       }
-      ctx.fillRect(19/2 * -1, 8/2 * -1, 19, 8);
+      ctx.fillRect(0, 0, 20, 10);
       ctx.restore();
+
+      //Draw the Aiming Guide
+      if( isLocalPlayer === true ) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(theta);
+        ctx.translate(40, -1);
+        ctx.globalAlpha = 0.5;
+        ctx.drawImage(GLOBALS.Imgs.aimingGuide, 0, LocalPlayerAnimationController.aimingGuideFrame*5, 200, 3, 0, 0, 200, 3);
+        ctx.restore();
+        LocalPlayerAnimationController.aimingGuideAnimationUpdate();
+      }
+
+      //PARTY HAT (A joke, but also a test for future implementations)
+      /*
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(theta);
+      ctx.translate(-28, 0);
+      ctx.fillStyle = 'rgba(200, 200, 0, 1)';
+      ctx.fillRect(4, -8, 4, 19);
+      ctx.fillStyle = 'rgba(0, 200, 0, 1)';
+      ctx.fillRect(0, -6, 4, 14);
+      ctx.fillStyle = 'rgba(0, 0, 200, 1)';
+      ctx.fillRect(-4, -4, 4, 9);
+      ctx.fillStyle = 'rgba(200, 0, 0, 1)';
+      ctx.fillRect(-8, -2, 4, 4);
+      ctx.restore();
+      */
     }
   } //cPlayer.drawSelf()
 
   drawName(ctx, xView, yView) {
-    let x = this.x - xView;
-    let y = this.y - yView;
+    const x = this.x - xView;
+    const y = this.y - yView;
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
     ctx.fillText(this.name, x - this.name.length * 2.5, y);
   } //cPlayer.drawName()
 
   drawAmmo(ctx, xView, yView) {
-    let x = this.x - xView;
-    let y = this.y - yView;
+    const x = this.x - xView;
+    const y = this.y - yView;
 
-    let ammoString = `${this.ammo}/${this.maxAmmo}`;
+    const ammoString = `${this.ammo}/${this.clipSize}`;
     ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
     ctx.fillText(ammoString, x - 8, y + 16);
   } //cPlayer.drawAmmo()

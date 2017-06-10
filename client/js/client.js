@@ -6,16 +6,16 @@ import { cBlock } from './cBlock.js';
 import { Camera } from './Camera.js';
 import { Map } from './Map.js';
 
-var io = require('socket.io-client');
-var socket = io();
+const io = require('socket.io-client');
+const socket = io();
 
-var cGame = new Game(GLOBALS.CTX, GLOBALS.CTX_UI);
-var playerName = '';
+const cGame = new Game(GLOBALS.CTX, GLOBALS.CTX_UI);
+let playerName = '';
 
-var GameMap = new Map(GLOBALS.WORLD_WIDTH, GLOBALS.WORLD_HEIGHT);
+const GameMap = new Map(GLOBALS.WORLD_WIDTH, GLOBALS.WORLD_HEIGHT);
 GameMap.generate(cGame.ctx);
 
-let cam = {
+const cam = {
   xView: 0,
   yView: 0,
   canvasWidth: cGame.ctx.canvas.width,
@@ -23,7 +23,7 @@ let cam = {
   worldWidth: GLOBALS.WORLD_WIDTH,
   worldHeight: GLOBALS.WORLD_HEIGHT
 };
-var GameCamera = new Camera(cam);
+const GameCamera = new Camera(cam);
 
 $(document).ready( () => {
   $('#play').click( () => {
@@ -33,7 +33,7 @@ $(document).ready( () => {
 
   $('#player-name').keyup( (e) => {
     playerName = $('#player-name').val();
-    let k = e.keyCode || e.which;
+    const k = e.keyCode || e.which;
     if( k == 13 ) {
       joinGame(playerName, socket);
     }
@@ -51,15 +51,9 @@ $(document).ready( () => {
     }
 
     //Update mouse position
-    let mousePos = getMousePos(cGame.ctx, e);
-    let camera = { xView: GameCamera.xView, yView: GameCamera.yView };
+    const mousePos = getMousePos(cGame.ctx, e);
+    const camera = { xView: GameCamera.xView, yView: GameCamera.yView };
     socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos, camera: camera});
-
-    //If player is in build mode
-    if( cGame.localPlayer.mode === 1 ) {
-      //Update Building Selection Highlight
-      //updateBuildHighlight(mousePos);
-    }
   });
 
   $(document).contextmenu( (e) => {
@@ -70,8 +64,7 @@ $(document).ready( () => {
     if( cGame.gameStarted !== true ) {
       return;
     }
-    let k = e.keyCode || e.which;
-
+    const k = e.keyCode || e.which;
     switch(k) {
       case 87: //W
         socket.emit('keyPress', {inputID: 'up', state: true});
@@ -91,7 +84,7 @@ $(document).ready( () => {
     if( cGame.gameStarted !== true ) {
       return;
     }
-    let k = e.keyCode || e.which;
+    const k = e.keyCode || e.which;
     switch(k) {
       case 87: //W
         socket.emit('keyPress', {inputID: 'up', state: false});
@@ -104,6 +97,11 @@ $(document).ready( () => {
         break;
       case 68: //D
         socket.emit('keyPress', {inputID: 'right', state: false});
+        break;
+      case 82: //R
+        if( cGame.localPlayer.ammo < 6 && cGame.localPlayer.heldAmmo > 0 && cGame.localPlayer.mode === 0) {
+          socket.emit('keyPress', {inputID: 'reload'});
+        }
         break;
       default: break;
     }
@@ -122,15 +120,15 @@ $(document).ready( () => {
       case 1: //Left mouse button
         if( cGame.localPlayer.mode === 0 ) {         //Weapon mode
           //Calculate the angle from player to mouse
-          let mouse = getMousePos(cGame.ctx, e);
+          const mouse = getMousePos(cGame.ctx, e);
           let x = -cGame.ctx.canvas.clientWidth/2 + e.clientX;
           let y = -cGame.ctx.canvas.clientHeight/2 + e.clientY;
 
           //Check if within the deadzones
           if( cGame.selfID !== null ) {
             //Offset the calculation if in a deadzone
-            let xOffset = cGame.localPlayer.x;
-            let yOffset = cGame.localPlayer.y;
+            const xOffset = cGame.localPlayer.x;
+            const yOffset = cGame.localPlayer.y;
 
             if( GameCamera.xView === 0 ) {      //LEFT
               x = mouse.x - xOffset;
@@ -146,7 +144,7 @@ $(document).ready( () => {
             }
           }
           //Update mouse angle
-          let angle = Math.atan2(y, x) / Math.PI * 180;
+          const angle = Math.atan2(y, x) / Math.PI * 180;
           socket.emit('keyPress', {inputID: 'mouseAngle', state: angle});
 
           //Shoot
@@ -157,14 +155,26 @@ $(document).ready( () => {
               cGame.canShoot = true;
             }, 500);
           }
+
         } else if( cGame.localPlayer.mode === 1 ) {  //Building mode
           //Place block
-          if(cGame.canBuild === true && cGame.localPlayer.blocks > 0 ) {
+          if(cGame.canBuild === true && cGame.localPlayer.blocks > 0 && cGame.isValidSelection === true ) {
             cGame.canBuild = false;
+            //cGame.isValidSelection = false; //This will be set to false by the server, but locally we can assume false
             socket.emit('keyPress', {inputID: 'attack', state: true});
             setTimeout( () => {
               cGame.canBuild = true;
-            }, 300);
+            }, 1000);
+          }
+        } else if( cGame.localPlayer.mode === 2 ) {  //Shovel mode
+          //Remove block
+          if(cGame.canShovel === true && cGame.isValidSelection === true ) {
+            cGame.canShovel = false;
+            //cGame.isValidSelection = false; //This will be set to false by the server, but locally we can assume false
+            socket.emit('keyPress', {inputID: 'attack', state: true});
+            setTimeout( () => {
+              cGame.canShovel = true;
+            }, 1000);
           }
         }
         break;
@@ -177,13 +187,21 @@ $(document).ready( () => {
 
     switch( e.which ) {
       case 3: { //Right mouse button
+        //Mode will switch, so update the camera/mousePos for validateSelection
+        const mousePos = getMousePos(cGame.ctx, e);
+        const camera = { xView: GameCamera.xView, yView: GameCamera.yView };
+        socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos, camera: camera});
         socket.emit('keyPress', {inputID: 'switchMode'});
-        if( cGame.localPlayer.mode === 0 ) {
-          //Mode will switch from attack to build mode, so update the camera/mousePos
-          //Update mouse position
-          let mousePos = getMousePos(cGame.ctx, e);
-          let camera = { xView: GameCamera.xView, yView: GameCamera.yView };
-          socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos, camera: camera});
+        if( cGame.localPlayer.mode === 0 ) {        //Gun to Build
+          cGame.canBuild = false;
+          setTimeout( () => {
+            cGame.canBuild = true;
+          }, 1000);
+        } else if( cGame.localPlayer.mode === 1 ) { //Build to Shovel
+          cGame.canShovel = false;
+          setTimeout( () => {
+            cGame.canShovel = true;
+          }, 1000);
         }
         break;
       }
@@ -237,12 +255,12 @@ socket.on('init', (data) => {
 socket.on('update', (data) => {
   //For all players, if there is data, update it
   for( let i = 0; i < data.player.length; i++ ) {
-    let pack = data.player[i];
+    const pack = data.player[i];
     //If there is no data to update, don't update at all
     if( Object.keys(pack).length === 1 ) {
       continue;
     }
-    let p = cGame.cPlayers[pack.ID];
+    const p = cGame.cPlayers[pack.ID];
 
     if( p !== undefined ) {
       if( pack.gridX !== undefined ) {
@@ -281,6 +299,44 @@ socket.on('update', (data) => {
       if( pack.clips !== undefined ) {
         p.clips = pack.clips;
       }
+      if( pack.heldAmmo !== undefined ) {
+        p.heldAmmo = pack.heldAmmo;
+        if( cGame.localPlayer.ID === p.ID ) {
+          if( cGame.localPlayer.isReloading === true ) {
+            cGame.reloadTimeLeft = GLOBALS.RIFLE_RELOAD_TIME;
+          }
+        }
+      }
+      //TODO: mustReloadClip/mustReload/isReloading only needed for localplayer
+      if( pack.mustReloadClip !== undefined ) {
+        if( cGame.localPlayer.ID === p.ID ) {
+          if( pack.mustReloadClip === true) {
+            //Local player is now reloading
+            cGame.ctxUI.canvas.style.cursor = 'none';
+            cGame.reloadTimeLeft = GLOBALS.RIFLE_CLIP_RELOAD_TIME;
+          } else {
+            cGame.ctxUI.canvas.style.cursor = 'crosshair';
+            cGame.UIUpdate = true;
+          }
+        }
+        p.mustReloadClip = pack.mustReloadClip;
+      }
+      if( pack.mustReload !== undefined ) {
+        if( cGame.localPlayer.ID === p.ID ) {
+          if( pack.mustReload === true) {
+            //Local player is now reloading
+            cGame.ctxUI.canvas.style.cursor = 'none';
+            cGame.reloadTimeLeft = GLOBALS.RIFLE_RELOAD_TIME;
+          } else {
+            cGame.ctxUI.canvas.style.cursor = 'crosshair';
+            cGame.UIUpdate = true;
+          }
+        }
+        p.mustReload = pack.mustReload;
+      }
+      if( pack.isReloading !== undefined ) {
+        p.isReloading = pack.isReloading;
+      }
       if( pack.invincible !== undefined ) {
         p.invincible = pack.invincible;
       }
@@ -295,12 +351,12 @@ socket.on('update', (data) => {
 
   //For all bullets, if there is data, update it
   for( let j = 0; j < data.bullet.length; j++ ) {
-    let pack = data.bullet[j];
+    const pack = data.bullet[j];
     //If there is no data to update, don't update at all
     if( Object.keys(pack).length === 1 ) {
       continue;
     }
-    let b = cGame.cBullets[data.bullet[j].ID];
+    const b = cGame.cBullets[data.bullet[j].ID];
     
     if( b !== undefined ) {
       if( pack.x !== undefined ) {
@@ -314,12 +370,12 @@ socket.on('update', (data) => {
 
   //For all blocks, if there is data, update it
   for( let k = 0; k < data.block.length; k++ ) {
-    let pack = data.block[k];
+    const pack = data.block[k];
     //If there is no data to update, don't update at all
     if( Object.keys(pack).length === 1 ) {
       continue;
     }
-    let bl = cGame.cBlocks[data.block[k].ID];
+    const bl = cGame.cBlocks[data.block[k].ID];
 
     if( bl !== undefined ) {
       if( pack.HP !== undefined ) {
@@ -348,14 +404,20 @@ socket.on('buildSelection', (data) => {
   cGame.selBlockID = data.selBlockID;
   cGame.selGridX = data.selGridX;
   cGame.selGridY = data.selGridY;
-  cGame.UIUpdate = true;
+});
+
+socket.on('shovelSelection', (data) => {
+  cGame.isValidSelection = data.isValid;
+  cGame.selBlockID = data.selBlockID;
+  cGame.selGridX = data.selGridX;
+  cGame.selGridY = data.selGridY;
 });
 
 //END SOCKET FUNCTIONS ##########################################################
 
 //GAME LOGIC FUNCTIONS ##########################################################
 
-var joinGame = (playerName, socket) => {
+const joinGame = (playerName, socket) => {
   if( playerName !== '' && playerName.length < 10 ) {
     $('#prompt').hide();
     $('#errorMessage').hide();
@@ -366,10 +428,10 @@ var joinGame = (playerName, socket) => {
   }
 }; //joingame()
 
-var getMousePos = (ctx, e) => {
-  let rect = ctx.canvas.getBoundingClientRect();
-  let mouseX = e.clientX - rect.left;
-  let mouseY = e.clientY - rect.top;
+const getMousePos = (ctx, e) => {
+  const rect = ctx.canvas.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
   return {
     x: mouseX,
     y: mouseY
@@ -380,7 +442,7 @@ var getMousePos = (ctx, e) => {
 
 //RENDER FUNCTIONS ##############################################################
 
-var renderLoop = () => {
+const renderLoop = () => {
   if( cGame.selfID === null ) {
     requestAnimationFrame(renderLoop);
     return;
@@ -396,11 +458,11 @@ var renderLoop = () => {
   requestAnimationFrame(renderLoop);
 }; //renderLoop()
 
-var drawEntities = () => {
+const drawEntities = () => {
   //Each player object draws itself
   for( let p in cGame.cPlayers ) {
     let isLocalPlayer = false;
-    if( cGame.localPlayer === cGame.cPlayers[p] ) {
+    if( cGame.localPlayer.ID === cGame.cPlayers[p].ID ) {
       isLocalPlayer = true;
     }
     cGame.cPlayers[p].drawSelf(cGame.ctx, GameCamera.xView, GameCamera.yView, isLocalPlayer);
@@ -415,7 +477,7 @@ var drawEntities = () => {
   }
 }; //drawEntities()
 
-var drawUI = () => {
+const drawUI = () => {
   //All players names and ammo
   //Note: To prevent excessive drawing for unchanged values, name and ammo
   //are drawn on the main canvas, and the UI canvas only updates when needed
@@ -424,13 +486,9 @@ var drawUI = () => {
     cGame.cPlayers[p].drawAmmo(cGame.ctx, GameCamera.xView, GameCamera.yView);
   }
 
-  //#TODO: TEMPORARY USER FEEDBACK ON RELOADING
-  if( cGame.localPlayer.ammo <= 0 && cGame.reloading === false ) {
-    cGame.reloading = true;
-    cGame.ctxUI.canvas.style.cursor = 'wait';
-  } else if( cGame.localPlayer.ammo > 0 && cGame.reloading === true ) {
-    cGame.reloading = false;
-    cGame.ctxUI.canvas.style.cursor = 'crosshair';
+  if( cGame.localPlayer.isReloading === true ) {
+    cGame.reloadTimeLeft -= 17;
+    cGame.UIUpdate = true;
   }
 
   //Low-changing Values
@@ -439,14 +497,40 @@ var drawUI = () => {
     cGame.UIUpdate = true;
   }
 
+  //Player HeldAmmoaa
+  if( cGame.prevHeldAmmo !== cGame.localPlayer.heldAmmo ) {
+    cGame.UIUpdate = true;
+  }
+
   //Player Clips
   if( cGame.prevClipCount !== cGame.localPlayer.clips ) {
     cGame.UIUpdate = true;
   }
 
-  //Player Clips
+  //Player BlockCount
   if( cGame.prevBlockCount !== cGame.localPlayer.blocks ) {
     cGame.UIUpdate = true;
+  }
+
+  //Show where the block would be placed on the selected grid
+  if( cGame.selGridX !== -1 && cGame.selGridY !== -1 ) {
+    if( cGame.localPlayer.mode === 1 ) {
+      if( cGame.isValidSelection === true ) {
+        //Can place the block
+        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, true, cGame.canBuild, 1);
+      } else {
+        //Cannot place the block
+        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, false, cGame.canBuild, 1);
+      }
+    } else if( cGame.localPlayer.mode === 2 ) {
+      if( cGame.isValidSelection === true ) {
+        //Can remove the block
+        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, true, cGame.canShovel, 2);
+      } else {
+        //Cannot remove the block
+        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, false, cGame.canShovel, 2);
+      }
+    }
   }
 
   if( cGame.UIUpdate === true ) {
@@ -457,35 +541,45 @@ var drawUI = () => {
 
     //Background
     cGame.ctxUI.fillStyle = 'rgba(200, 200, 200, 0.3)';
-    cGame.ctxUI.fillRect(0, 0, 330, 40);
+    cGame.ctxUI.fillRect(0, 0, 500, 40);
 
     cGame.ctxUI.fillStyle = 'rgba(255, 255, 255, 0.5)';
 
     //Player Score
     cGame.prevScore = cGame.localPlayer.score;
-    let scoreString = `Score: ${cGame.prevScore}`;
+    const scoreString = `Score: ${cGame.prevScore}`;
     cGame.ctxUI.fillText(scoreString, 15, 30);
+
+    //Player HeldAmmo
+    cGame.prevHeldAmmo = cGame.localPlayer.heldAmmo;
+    const heldAmmoString = `Ammo: ${cGame.prevHeldAmmo}`;
+    cGame.ctxUI.fillText(heldAmmoString, 120, 30);
 
     //Player Clips
     cGame.prevClipCount = cGame.localPlayer.clips;
-    let clipString = `Clips: ${cGame.prevClipCount}/${cGame.localPlayer.maxClips}`;
-    cGame.ctxUI.fillText(clipString, 100, 30);
+    const clipString = `Clips: ${cGame.prevClipCount}/${cGame.localPlayer.maxClips}`;
+    cGame.ctxUI.fillText(clipString, 240, 30);
 
     //Player Blocks
     cGame.prevBlockCount = cGame.localPlayer.blocks;
-    let blockString = `Blocks: ${cGame.prevBlockCount}/${cGame.localPlayer.maxBlocks}`;
-    cGame.ctxUI.fillText(blockString, 200, 30);
+    const blockString = `Blocks: ${cGame.prevBlockCount}/${cGame.localPlayer.maxBlocks}`;
+    cGame.ctxUI.fillText(blockString, 360, 30);
 
-    //Show where the block would be placed on the selected grid
-    if( cGame.selGridX !== -1 && cGame.selGridY !== -1 ) {
-      //console.info('DJASKLKL');
-      if( cGame.isValidSelection === true ) {
-        //Can place === true
-        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctxUI, GameCamera.xView, GameCamera.yView, true);
+    if( cGame.localPlayer.isReloading === true ) {
+      let reloadBar = 0;
+      if( cGame.localPlayer.mustReloadClip === true ) {
+        reloadBar = 30 * cGame.reloadTimeLeft / GLOBALS.RIFLE_CLIP_RELOAD_TIME;
       } else {
-        //Can place === false
-        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctxUI, GameCamera.xView, GameCamera.yView, false);
+        reloadBar = 30 * cGame.reloadTimeLeft / GLOBALS.RIFLE_RELOAD_TIME;
       }
+
+      const reloadPosX = cGame.localPlayer.mX - 15;
+      const reloadPosY = cGame.localPlayer.mY + 15;
+      cGame.ctxUI.fillRect(reloadPosX+2, reloadPosY-17, 24, 2); //crosshair horiz
+      cGame.ctxUI.fillRect(reloadPosX+13, reloadPosY-28, 2, 24);//crosshair vert
+      cGame.ctxUI.fillRect(reloadPosX, reloadPosY, 30, 4);
+      cGame.ctxUI.fillStyle = 'black';
+      cGame.ctxUI.fillRect(reloadPosX, reloadPosY, reloadBar, 4);
     }
   }
 }; //drawUI()

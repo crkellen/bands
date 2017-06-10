@@ -27,7 +27,7 @@ export class GameServer {
       this.grid.push([]);
       //Inside each row, create as many empty grid tiles as map's width
       for( let j = 0; j < this.mapWidth; j++ ) {
-        let gt = new GridTile({
+        const gt = new GridTile({
           gridX: j,
           gridY: i,
           server: this
@@ -61,7 +61,7 @@ export class GameServer {
     //Loop through every player, update their current grid position to have a 1
     //If they are overlapping, update the overlap to have a 1 as well
     for( let p in this.players ) {
-      let player = this.players[p];
+      const player = this.players[p];
 
       //Update current grid position to be a 1
       if( this.grid[player.gridY][player.gridX].occupying !== 1 ) {
@@ -125,11 +125,11 @@ export class GameServer {
     //Player world position (player.x, player.y) has been updated to current values already
 
     //Player's current gridX and gridY
-    let oldGridX = player.gridX;
-    let oldGridY = player.gridY;
+    const oldGridX = player.gridX;
+    const oldGridY = player.gridY;
     //Get the (possibly) updated player gridX and gridY (~~ = Math.floor())
-    let newGridX = ~~(player.x / GLOBALS.TILE_WIDTH);
-    let newGridY = ~~(player.y / GLOBALS.TILE_HEIGHT);
+    const newGridX = ~~(player.x / GLOBALS.TILE_WIDTH);
+    const newGridY = ~~(player.y / GLOBALS.TILE_HEIGHT);
 
     //If the player has just been spawned his values have not been set
     if( player.gridX === -1 ) { //#TODO: replace this check with a variable (player.isInitialized)
@@ -160,8 +160,8 @@ export class GameServer {
 
     //Get the player's position inside the grid tile he is in
     //Center of tile is 40,40. Top left is 0,0. Bottom left is 80,80.
-    let innerGridX = player.x - player.gridX * GLOBALS.TILE_WIDTH;
-    let innerGridY = player.y - player.gridY * GLOBALS.TILE_HEIGHT;
+    const innerGridX = player.x - player.gridX * GLOBALS.TILE_WIDTH;
+    const innerGridY = player.y - player.gridY * GLOBALS.TILE_HEIGHT;
 
     //If the player's position inside of the tile is overlapping with another tile
     //These values are currently hardcoded.
@@ -292,9 +292,9 @@ export class GameServer {
   } //GameServer.checkPlayerGridPos()
 
   playerUpdate() {
-    var pack = [];
+    const pack = [];
     for( let p in this.players ) {
-      let player = this.players[p];
+      const player = this.players[p];
       player.update(this);
       this.checkPlayerGridPos(player);
       pack.push(player.getUpdatePack());
@@ -306,9 +306,9 @@ export class GameServer {
   } //GameServer.playerUpdate()
 
   bulletUpdate() {
-    var pack = [];
+    const pack = [];
     for( let b in this.bullets ) {
-      let bullet = this.bullets[b];
+      const bullet = this.bullets[b];
       bullet.update(this);
       if( bullet.toRemove === true ) {
         delete this.bullets[b];
@@ -324,9 +324,9 @@ export class GameServer {
   } //GameServer.bulletUpdate()
 
   blockUpdate() {
-    var pack = [];
+    const pack = [];
     for( let bl in this.blocks ) {
-      let block = this.blocks[bl];
+      const block = this.blocks[bl];
       pack.push(block.getUpdatePack());
       block.updatePack = {
         ID: block.ID
@@ -336,7 +336,7 @@ export class GameServer {
   } //GameServer.blockUpdate()
 
   getFrameUpdateData() {
-    let pack = {
+    const pack = {
       initPack: {
         player: this.initPack.player,
         bullet: this.initPack.bullet,
@@ -364,7 +364,7 @@ export class GameServer {
   } //GameServer.getFrameUpdateData()
 
   getAllInitPacksForPlayer() {
-    let players = [];
+    const players = [];
     for( let p in this.players ) {
       players.push(this.players[p].getInitPack());
     }
@@ -372,7 +372,7 @@ export class GameServer {
   } //GameServer.getAllInitPacksForPlayer()
 
   getAllInitPacksForBullet() {
-    let bullets = [];
+    const bullets = [];
     for( let b in this.bullets ) {
       bullets.push(this.bullets[b].getInitPack());
     }
@@ -380,7 +380,7 @@ export class GameServer {
   } //GameServer.getAllInitPacksForBullet()
 
   getAllInitPacksForBlock() {
-    let blocks = [];
+    const blocks = [];
     for( let bl in this.blocks ) {
       blocks.push(this.blocks[bl].getInitPack());
     }
@@ -388,8 +388,8 @@ export class GameServer {
   } //GameServer.getAllInitPacksForPlayer()
 
   addPlayer(socket, playerName, x, y) {
-    let player = new Player({
-      socket: socket, //#TODO: I DONT LIKE THIS RESPONSE THING IM DOING
+    const player = new Player({
+      socket: socket,
       ID: socket.ID,
       name: playerName,
       x: x,

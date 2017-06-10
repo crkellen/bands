@@ -44,17 +44,27 @@ export class Player extends Entity {
     this._HP = 10;
     this.maxHP = 10;
     this._score = 0;
+
+    this.gunType = 0; //0, 1, 2 --- Rifle, SMG, Shotgun
+
     this._ammo = 6;
-    this.maxAmmo = 6;
+    this.clipSize = 6;
     this._clips = 99; //FIXME: temp for SGX
     this.maxClips = 99; //FIXME: temp for SGX
-    this.reloading = false;
+    this._heldAmmo = this._ammo * this._clips; //Total ammo in gun and clips
+    this._mustReloadClip = false; //True if player has no ammo in gun
+    this._mustReload = false; //True if player is attempting to manually reload
+    this._isReloading = false; //True if player is currently loading a bullet
+    this.activeReloadRequests = []; //A collection of identifiers to reload setTimeouts
+
     this._invincible = false;
-    this._mode = 0; //0 for weapon, 1 for block
+
+    this._mode = 0; //0, 1, 2 --- Gun, Build, Shovel
     this._blocks = 20; //# of blocks held //FIXME: temp for SGX
     this.maxBlocks = 20; //FIXME: temp for SGX
 
     //Collision checks
+    //TODO: Player is actually a 20radius circle, from top left corner he is 40 pixels wide/tall
     this.width = 15;
     this.height = 15;
     this.respawnTries = 0;
@@ -62,11 +72,11 @@ export class Player extends Entity {
 
   update(server) {
     if( this.mustCheckBuildSelection === true ) {
-      //this.mustCheckBuildSelection = false;
-      this.checkBuildSelection(server, this.camera);
+      this.validateSelection(server, this.camera);
     }
 
     this.updateSpd();
+    this.checkCollisions(server);
     super.update();
 
     //Boundries check
@@ -91,8 +101,9 @@ export class Player extends Entity {
         this.ammo--;
         if( this.ammo <= 0 ) {
           this.ammo = 0;
-          if( this.clips > 0 ) {
-            this.reload();
+          if( this.clips > 0 && this.heldAmmo >= this.clipSize ) {
+            this.mustReloadClip = true;
+            this.reloadClip();
           }
         }
       } //Shoot
@@ -100,21 +111,37 @@ export class Player extends Entity {
       //Place block
       if( this.pressingAttack === true && this.blocks > 0 ) {
         this.pressingAttack = false;
-        this.placeBlock(server);
+        this.tryToPlaceBlock(server);
         if( this.blocks <= 0 ) {
           this.blocks = 0;
         }
       } //Place block
-    } //if( this.mode )
+    } else if( this.mode === 2 ) {
+      //Try to remove block with Shovel
+      if( this.pressingAttack === true ) {
+        this.pressingAttack = false;
+        this.tryToRemoveBlock(server);
+      }
+    }//if( this.mode )
 
+    //If player canceled clipReload, call it again
+    if( this.mustReloadClip === true && this.isReloading === false && this.heldAmmo >= this.clipSize ) {
+      this.reloadClip();
+    }
+    //If the player is manually reloading, call reload
+    if( this.mustReload === true && this.isReloading === false && this.heldAmmo > 0 ) {
+      this.reload();
+    }
+  } //Player.update()
+
+  checkCollisions(server) {
     //COLLISION CHECK - Blocks
-    //#TODO: Optimize this because if there is a player, there can't be a block
     if( this.gridX === -1 ) {
       //Player is not initialized, return
       return;
     }
     //The 9 blocks surrounding the player
-    let surrBlocks = {};
+    const surrBlocks = {};
     //surrBlocks[5] = server.grid[this.gridY][this.gridX].block;     //CENTER
     if( this.gridX !== 0 ) {
       surrBlocks[4] = server.grid[this.gridY][this.gridX-1].block;   //LEFT
@@ -141,37 +168,36 @@ export class Player extends Entity {
       surrBlocks[3] = server.grid[this.gridY+1][this.gridX+1].block; //BOTTOMRIGHT
     }
 
-    for( var i in surrBlocks ) {
-      var bl = surrBlocks[i];
+    for( let i in surrBlocks ) {
+      const bl = surrBlocks[i];
 
       //If the block is turned off, skip collision detection
       if( bl.isActive === false ) {
         continue;
       }
 
-      let other = {
+      const other = {
         x: bl.x,
         y: bl.y,
         width: 95,
         height: 95
       };
 
-      if( this.isColliding(other) ) {
-        if( this.pressingRight === true ) {
-          this.x -= this.spdX;
-        }
-        if( this.pressingLeft === true ) {
-          this.x -= this.spdX;
-        }
-        if( this.pressingDown === true ) {
-          this.y -= this.spdY;
-        }
-        if( this.pressingUp === true ) {
-          this.y -= this.spdY;
-        }
+      //Offset for the direction prevents 'sticky walls'
+      if( this.pressingLeft && this.isColliding(other, -this.spdX, 0) ) {
+        this.spdX = 0;
       }
-    } //for( var i in surrBlocks ) --- Block Collision Check
-  } //Player.update()
+      if( this.pressingRight && this.isColliding(other, -this.spdX, 0) ) {
+        this.spdX = 0;
+      }
+      if( this.pressingUp && this.isColliding(other, 0, -this.spdY) ) {
+        this.spdY = 0;
+      }
+      if( this.pressingDown && this.isColliding(other, 0, -this.spdY) ) {
+        this.spdY = 0;
+      }
+    } //for( let i in surrBlocks ) --- Block Collision Check
+  } //Player.checkCollisions()
 
   updateSpd() {
     if( this.pressingLeft === true ) {
@@ -191,32 +217,75 @@ export class Player extends Entity {
     }
   } //Player.updateSpd()
 
-  isColliding(other) {
-    return !( other.x + other.width < this.x
-      || this.x + this.width < other.x
-      || other.y + other.height < this.y
-      || this.y + this.height < other.y );
+  isColliding(other, dirOffsetX, dirOffsetY) {
+    return !( other.x + dirOffsetX + other.width < this.x
+      || this.x + this.width < other.x + dirOffsetX
+      || other.y + dirOffsetY + other.height < this.y
+      || this.y + this.height < other.y + dirOffsetY );
   } //Player.isColliding()
 
   shoot(server) {
-    let b = new Bullet({
+    const b = new Bullet({
       parent: this.ID,
       angle: this.mouseAngle,
       x: this.x,
       y: this.y
     });
-    let bulletID = Math.random(); //#TODO replace with a real ID system
+    const bulletID = Math.random(); //#TODO replace with a real ID system
     server.bullets[bulletID] = b;
     server.initPack.bullet.push(server.bullets[bulletID].getInitPack());
   } //Player.shoot()
 
-  reload() {
-    setTimeout(() => {
-      this.ammo = this.maxAmmo;
-      this.clips--;
-      this.reloading = false;
+  reloadClip() {
+    this.isReloading = true;
+    this.mustReloadClip = true;
+    const timeoutID = setTimeout(() => {
+      this.isReloading = false;
+      if( this.mustReloadClip === false ) {
+        //Reloading has been cancelled, do not reload
+        return;
+      }
+      this.mustReloadClip = false;
+      this.ammo = this.clipSize;
+      this.heldAmmo -= this.clipSize;
+      this.updateClipCount();
     }, 3000);
+
+    this.activeReloadRequests.push(timeoutID);
+  } //Player.reloadClip()
+
+  reload() {
+    this.isReloading = true;
+    const timeoutID = setTimeout(() => {
+      if( this.mustReload === false ) {
+        //Reloading has been cancelled, do not reload
+        return;
+      }
+      this.isReloading = false;
+      if( this._ammo < this.clipSize ) {
+        this.ammo++;
+        this.heldAmmo--;
+        if( this.ammo === this.clipSize ) {
+          this.mustReload = false;
+        }
+      } else {
+        this.mustReload = false;
+      }
+      this.updateClipCount();
+    }, 1000);
+
+    this.activeReloadRequests.push(timeoutID);
   } //Player.reload()
+
+  updateClipCount() {
+    this.clips = ~~(this.heldAmmo / this.clipSize);
+  } //Player.updateClipCount()
+
+  cancelActiveReloadRequests() {
+    for( let id in this.activeReloadRequests ) {
+      clearTimeout(this.activeReloadRequests.pop(id));
+    }
+  } //Player.cancelActiveReloadRequests()
 
   respawn(server) {
     //#TODO: Make it so they respawn after a short time, and at their team base
@@ -240,18 +309,23 @@ export class Player extends Entity {
     }
 
     this.HP = this.maxHP;
-    this.ammo = this.maxAmmo;
+    this.ammo = this.clipSize;
     this.clips = this.maxClips;
+    this.heldAmmo = this.ammo * this.clips;
+    this.mustReloadClip = false;
+    this.mustReload = false;
+    this.isReloading = false;
     this.blocks = this.maxBlocks;
     this.invincible = true;
     setTimeout(() => {
       this.invincible = false;
     }, 3000);
+    this.cancelActiveReloadRequests();
   } //Player.respawn()
 
   respawnPositionOccupied(server) {
-    let newGridX = ~~(this.x / GLOBALS.TILE_WIDTH);
-    let newGridY = ~~(this.y / GLOBALS.TILE_HEIGHT);
+    const newGridX = ~~(this.x / GLOBALS.TILE_WIDTH);
+    const newGridY = ~~(this.y / GLOBALS.TILE_HEIGHT);
     if( server.grid[newGridY][newGridX].occupying === 2 ) {
       this.respawnTries++;
       this.respawn(server);
@@ -262,7 +336,7 @@ export class Player extends Entity {
     }
   } //Player.respawnPositionOccupied()
 
-  placeBlock(server) {
+  tryToPlaceBlock(server) {
     //If the player selection is out of bounds, ignore the request
     if( this.selGridX === -1 || this.selGridY === -1 ) {
       return;
@@ -273,7 +347,22 @@ export class Player extends Entity {
       server.grid[this.selGridY][this.selGridX].updateOccupying(GLOBALS.TILE_BLOCK);
       this.blocks--;
     }
-  } //Player.placeBlock
+  } //Player.tryToPlaceBlock
+
+  tryToRemoveBlock(server) {
+    //If the player selection is not a block, ignore the request
+    if( this.selGridX === -1 || this.selGridY === -1 ) {
+      return;
+    }
+    //If the location is a block
+    if( server.grid[this.selGridY][this.selGridX].occupying === 2 ) {
+      //HP setter handles isActive and updating the grid
+      server.grid[this.selGridY][this.selGridX].block.HP = 0;
+      if( this.blocks < this.maxBlocks ) {
+        this.blocks++;
+      }
+    }
+  } //Player.tryToRemoveBlock()
 
   getInitPack() {
     return {
@@ -288,10 +377,15 @@ export class Player extends Entity {
       mY: this.mouseY,
       maxHP: this.maxHP,
       score: this.score,
+      gunType: this.gunType,
       ammo: this.ammo,
-      maxAmmo: this.maxAmmo,
+      clipSize: this.clipSize,
       clips: this.clips,
       maxClips: this.maxClips,
+      heldAmmo: this.heldAmmo,
+      mustReloadClip: this.mustReloadClip,
+      mustReload: this.mustReload,
+      isReloading: this.isReloading,
       invincible: this.invincible,
       mode: this.mode,
       blocks: this.blocks,
@@ -319,29 +413,35 @@ export class Player extends Entity {
     // };
   } //Player.getUpdatePack()
 
-  checkBuildSelection(server, camera) {
+  validateSelection(server, camera) {
+    if( this.mode === 1 ) {
+      this.validateBuildSelection(server, camera);
+    } else if( this.mode === 2 ) {
+      this.validateShovelSelection(server, camera);
+    }
+  } //Player.validateSelection()
+
+  validateBuildSelection(server, camera) {
     let selGridX = -1;
     let selGridY = -1;
 
+    if( camera === null ) {
+      return;
+    }
+
     //If we are outside of left deadzone, need to offset the tile calculation
     if( camera.xView > 0 ) {
-      let xOffset = camera.xView;
+      const xOffset = camera.xView;
       selGridX = ~~((this._mX + xOffset) / 80);
     } else {
       selGridX = ~~(this._mX / 80);
     }
     //If we are outside of top deadzone, need to offset the tile calculation
     if( camera.yView > 0 ) {
-      let yOffset = camera.yView;
+      const yOffset = camera.yView;
       selGridY = ~~((this._mY + yOffset) / 80);
     } else {
       selGridY = ~~(this._mY / 80);
-    }
-
-    //Check to see if selection is on top of player
-    if( selGridX === this._gridX && selGridY === this._gridY ) {
-      //selGridX = -1;
-      //selGridY = -1;
     }
 
     //Check to see if selection is out of range (grid pos + 1)
@@ -390,7 +490,79 @@ export class Player extends Entity {
       this.selGridX = selGridX;
       this.selGridY = selGridY;
     }
-  } //Player.checkBuildSelection()
+  } //Player.validateBuildSelection()
+
+  validateShovelSelection(server, camera) {
+    let selGridX = -1;
+    let selGridY = -1;
+
+    if( camera === null ) {
+      return;
+    }
+
+    //If we are outside of left deadzone, need to offset the tile calculation
+    if( camera.xView > 0 ) {
+      const xOffset = camera.xView;
+      selGridX = ~~((this._mX + xOffset) / 80);
+    } else {
+      selGridX = ~~(this._mX / 80);
+    }
+    //If we are outside of top deadzone, need to offset the tile calculation
+    if( camera.yView > 0 ) {
+      const yOffset = camera.yView;
+      selGridY = ~~((this._mY + yOffset) / 80);
+    } else {
+      selGridY = ~~(this._mY / 80);
+    }
+
+    //Check to see if selection is out of range (grid pos + 1)
+    if( selGridX > this._gridX + 1  ) { //Out of range on LEFT
+      selGridX = -1;
+    }
+    if( selGridX < this._gridX - 1  ) { //Out of range on RIGHT
+      selGridX = -1;
+    }
+    if( selGridY < this._gridY - 1  ) { //Out of range on TOP
+      selGridY = -1;
+    }
+    if( selGridY > this._gridY + 1  ) { //Out of range on BOTTOM
+      selGridY = -1;
+    }
+
+    //Corners don't need to be checked, are handled already by the above checks
+    //Bottom and Right deadzones don't need to be check, they are handled with > 0 check
+    if( (selGridX !== -1 && selGridY !== -1) &&
+        server.grid[selGridY][selGridX].occupying === 2 ) {
+      //Tell client selection is valid
+      this.socket.emit('shovelSelection', {
+        isValid:  true,
+        selBlockID: server.grid[selGridY][selGridX].block.ID,
+        selGridX: selGridX,
+        selGridY: selGridY
+      });
+      this.selGridX = selGridX;
+      this.selGridY = selGridY;
+    } else {
+      //Tell client selection is invalid
+      if( selGridX !== -1 && selGridY !== -1 ) {
+        this.socket.emit('shovelSelection', {
+          isValid:  false,
+          selBlockID: server.grid[selGridY][selGridX].block.ID,
+          selGridX: selGridX,
+          selGridY: selGridY
+        });
+      } else {
+        this.socket.emit('shovelSelection', {
+          isValid:  false,
+          selBlockID: -1,
+          selGridX: selGridX,
+          selGridY: selGridY
+        });
+      }
+    }
+    this.selGridX = selGridX;
+    this.selGridY = selGridY;
+  } //Player.validateShovelSelection()
 
   onConnect(socket) {
     socket.on('keyPress', (data) => {
@@ -409,11 +581,21 @@ export class Player extends Entity {
           break;
         case 'attack':
           this.pressingAttack = data.state;
+          this.mustReload = false;
+          this.isReloading = false;
+          this.cancelActiveReloadRequests();
+          break;
+        case 'reload':
+          if( this.ammo === 0 && this.mustReloadClip === false ) {
+            this.mustReloadClip = true;
+          } else if( this.heldAmmo > 0 && this.mustReloadClip === false ) {
+            this.mustReload = true;
+          }
           break;
         case 'switchMode':
-          //Swap mode from 0 to 1 or 1 to 0 (this.mode ^= 1;)
-          this.mode = 1 - this._mode;
-          if( this._mode === 0 ) {
+          //Swap the mode, increasing by 1
+          this.mode = (this.mode + 1) % 3;
+          if( this._mode === 0 ) {        //Weapon
             this.mustCheckBuildSelection = false;
             this.socket.emit('buildSelection', {
               isValid:  false,
@@ -423,8 +605,14 @@ export class Player extends Entity {
             });
             this.selGridX = -1;
             this.selGridY = -1;
-          } else {
+          } else if( this._mode === 1 ) { //Build
             this.mustCheckBuildSelection = true;
+            this.mustReloadClip = false;
+            this.mustReload = false;
+            this.isReloading = false;
+            this.cancelActiveReloadRequests();
+          } else {                        //Shovel
+
           }
           break;
         case 'mouseAngle':
@@ -536,6 +724,50 @@ export class Player extends Entity {
     if( this._clips !== newClips ) {
       this._clips = newClips;
       this.updatePack.clips = this._clips;
+    }
+  }
+
+  get heldAmmo() {
+    return this._heldAmmo;
+  }
+
+  set heldAmmo(newHeldAmmo) {
+    if( this._heldAmmo !== newHeldAmmo ) {
+      this._heldAmmo = newHeldAmmo;
+      this.updatePack.heldAmmo = this._heldAmmo;
+    }
+  }
+
+  get mustReloadClip() {
+    return this._mustReloadClip;
+  }
+
+  set mustReloadClip(newMustReloadClip) {
+    if( this._mustReloadClip !== newMustReloadClip ) {
+      this._mustReloadClip = newMustReloadClip;
+      this.updatePack.mustReloadClip = this._mustReloadClip;
+    }
+  }
+
+  get mustReload() {
+    return this._mustReload;
+  }
+
+  set mustReload(newMustReload) {
+    if( this._mustReload !== newMustReload ) {
+      this._mustReload = newMustReload;
+      this.updatePack.mustReload = this._mustReload;
+    }
+  }
+
+  get isReloading() {
+    return this._isReloading;
+  }
+
+  set isReloading(newIsReloading) {
+    if( this._isReloading !== newIsReloading ) {
+      this._isReloading = newIsReloading;
+      this.updatePack.isReloading = this._isReloading;
     }
   }
 
