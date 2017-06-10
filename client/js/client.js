@@ -396,6 +396,13 @@ socket.on('buildSelection', (data) => {
   cGame.selGridY = data.selGridY;
 });
 
+socket.on('shovelSelection', (data) => {
+  cGame.isValidSelection = data.isValid;
+  cGame.selBlockID = data.selBlockID;
+  cGame.selGridX = data.selGridX;
+  cGame.selGridY = data.selGridY;
+});
+
 //END SOCKET FUNCTIONS ##########################################################
 
 //GAME LOGIC FUNCTIONS ##########################################################
