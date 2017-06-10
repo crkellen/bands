@@ -497,6 +497,66 @@ export class Player extends Entity {
       return;
     }
 
+    //If we are outside of left deadzone, need to offset the tile calculation
+    if( camera.xView > 0 ) {
+      const xOffset = camera.xView;
+      selGridX = ~~((this._mX + xOffset) / 80);
+    } else {
+      selGridX = ~~(this._mX / 80);
+    }
+    //If we are outside of top deadzone, need to offset the tile calculation
+    if( camera.yView > 0 ) {
+      const yOffset = camera.yView;
+      selGridY = ~~((this._mY + yOffset) / 80);
+    } else {
+      selGridY = ~~(this._mY / 80);
+    }
+
+    //Check to see if selection is out of range (grid pos + 1)
+    if( selGridX > this._gridX + 1  ) { //Out of range on LEFT
+      selGridX = -1;
+    }
+    if( selGridX < this._gridX - 1  ) { //Out of range on RIGHT
+      selGridX = -1;
+    }
+    if( selGridY < this._gridY - 1  ) { //Out of range on TOP
+      selGridY = -1;
+    }
+    if( selGridY > this._gridY + 1  ) { //Out of range on BOTTOM
+      selGridY = -1;
+    }
+
+    //Corners don't need to be checked, are handled already by the above checks
+    //Bottom and Right deadzones don't need to be check, they are handled with > 0 check
+    if( (selGridX !== -1 && selGridY !== -1) &&
+        server.grid[selGridY][selGridX].occupying === 2 ) {
+      //Tell client selection is valid
+      this.socket.emit('shovelSelection', {
+        isValid:  true,
+        selBlockID: server.grid[selGridY][selGridX].block.ID,
+        selGridX: selGridX,
+        selGridY: selGridY
+      });
+      this.selGridX = selGridX;
+      this.selGridY = selGridY;
+    } else {
+      //Tell client selection is invalid
+      if( selGridX !== -1 && selGridY !== -1 ) {
+        this.socket.emit('shovelSelection', {
+          isValid:  false,
+          selBlockID: server.grid[selGridY][selGridX].block.ID,
+          selGridX: selGridX,
+          selGridY: selGridY
+        });
+      } else {
+        this.socket.emit('shovelSelection', {
+          isValid:  false,
+          selBlockID: -1,
+          selGridX: selGridX,
+          selGridY: selGridY
+        });
+      }
+    }
     this.selGridX = selGridX;
     this.selGridY = selGridY;
   } //Player.validateShovelSelection()
