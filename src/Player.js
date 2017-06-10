@@ -612,7 +612,7 @@ export class Player extends Entity {
             this.isReloading = false;
             this.cancelActiveReloadRequests();
           } else {                        //Shovel
-
+            this.mustCheckBuildSelection = true;
           }
           break;
         case 'mouseAngle':
