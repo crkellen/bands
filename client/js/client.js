@@ -42,16 +42,16 @@ $(document).ready( () => {
   }); //#player-name.keyup()
 
   $('#greenTeam').click( () => {
-    playerName = 0;
+    playerTeam = 0;
     document.getElementById('greenTeam').className = 'btn btn-primary';
     document.getElementById('blueTeam').className = 'btn btn-secondary';
   }); //#greenTeam.click()
 
   $('#blueTeam').click( () => {
-    playerName = 1;
+    playerTeam = 1;
     document.getElementById('greenTeam').className = 'btn btn-secondary';
     document.getElementById('blueTeam').className = 'btn btn-primary';
-  }); //#greenTeam.click()
+  }); //#blueTeam.click()
 //END PRE-GAME LISTENERS
   //canvas-ui is above canvas-game so check that for movement
   $('#canvas-ui').mousemove( (e) => {
