@@ -369,6 +369,7 @@ export class Player extends Entity {
     return {
       ID: this.ID,
       name: this.name,
+      team: this.team,
       gridX: this.gridX,
       gridY: this.gridY,
       x: this.x,
