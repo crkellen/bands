@@ -155,7 +155,7 @@ export class cPlayer {
     const x = this.x - xView;
     const y = this.y - yView;
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
     ctx.fillText(this.name, x - this.name.length * 2.5, y);
   } //cPlayer.drawName()
 
@@ -164,7 +164,7 @@ export class cPlayer {
     const y = this.y - yView;
 
     const ammoString = `${this.ammo}/${this.clipSize}`;
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
     ctx.fillText(ammoString, x - 8, y + 16);
   } //cPlayer.drawAmmo()
 } //class cPlayer
