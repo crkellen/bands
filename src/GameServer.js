@@ -387,11 +387,12 @@ export class GameServer {
     return blocks;
   } //GameServer.getAllInitPacksForPlayer()
 
-  addPlayer(socket, playerName, x, y) {
+  addPlayer(socket, playerName, playerTeam, x, y) {
     const player = new Player({
       socket: socket,
       ID: socket.ID,
       name: playerName,
+      team: playerTeam,
       x: x,
       y: y,
     });
@@ -404,6 +405,10 @@ export class GameServer {
       bullet: this.getAllInitPacksForBullet(),
       block: this.getAllInitPacksForBlock()
     });
-    console.info(`${getTimestamp()} - ${player.name} has joined the game.`);
+    let playerTeamString = 'Green';
+    if( playerTeam === 1 ) {
+      playerTeamString = 'Blue';
+    }
+    console.info(`${getTimestamp()} - ${player.name} (${playerTeamString} team) has joined the game.`);
   } //GameServer.addPlayer()
 } //class GameServer
