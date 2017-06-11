@@ -4,6 +4,7 @@ export class cPlayer {
   constructor(initPack) {
     this.ID = initPack.ID;
     this.name = initPack.name;
+    this.team = initPack.team;
     this.gridX = initPack.gridX;
     this.gridY = initPack.gridY;
     this.x = initPack.x;
@@ -39,11 +40,21 @@ export class cPlayer {
     //Player
     //User feedback for respawn invincibility
     if( this.invincible === true ) {
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      if( this.team === 0 ) {
+        ctx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
+        ctx.fillStyle = 'rgba(0, 255, 0, 0.5)';
+      } else {
+        ctx.strokeStyle = 'rgba(0, 0, 255, 0.5)';
+        ctx.fillStyle = 'rgba(0, 0, 255, 0.5)';
+      }
     } else {
-      ctx.strokeStyle = 'black'; //#TODO: This will change to team color later
-      ctx.fillStyle = 'black';
+      if( this.team === 0 ) {
+        ctx.strokeStyle = 'rgba(0, 255, 0, 1.0)';
+        ctx.fillStyle = 'rgba(0, 255, 0, 1.0)';
+      } else {
+        ctx.strokeStyle = 'rgba(0, 0, 255, 1.0)';
+        ctx.fillStyle = 'rgba(0, 0, 255, 1.0)';
+      }
     }
 
     ctx.beginPath();
