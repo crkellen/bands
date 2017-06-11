@@ -43,10 +43,14 @@ $(document).ready( () => {
 
   $('#greenTeam').click( () => {
     playerName = 0;
+    document.getElementById('greenTeam').className = 'btn btn-primary';
+    document.getElementById('blueTeam').className = 'btn btn-secondary';
   }); //#greenTeam.click()
 
   $('#blueTeam').click( () => {
     playerName = 1;
+    document.getElementById('greenTeam').className = 'btn btn-secondary';
+    document.getElementById('blueTeam').className = 'btn btn-primary';
   }); //#greenTeam.click()
 //END PRE-GAME LISTENERS
   //canvas-ui is above canvas-game so check that for movement
