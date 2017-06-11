@@ -228,6 +228,7 @@ export class Player extends Entity {
   shoot(server) {
     const b = new Bullet({
       parent: this.ID,
+      parentTeam: this.team,
       angle: this.mouseAngle,
       x: this.x,
       y: this.y
