@@ -7,6 +7,7 @@ export class Player extends Entity {
     super(params);
     this.socket = params.socket;
     this.name = params.name;
+    this.team = params.team;
 
     //Grid variables
     this._gridX = -1;
