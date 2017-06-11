@@ -5,6 +5,7 @@ export class Bullet extends Entity {
   constructor(params) {
     super(params);
     this.parent = params.parent;
+    this.parentTeam = params.parentTeam;
     this.angle = params.angle;
 
     this.spdX = Math.cos(params.angle/180*Math.PI) * 40;
@@ -81,7 +82,8 @@ export class Bullet extends Entity {
           y: (this.y-5) + (u * (newY - this.y))
         };
 
-        if( this.parent !== p.ID && p.invincible !== true && this.isCollidingPoint(other, point) ) {
+        if( this.parent !== p.ID && p.invincible !== true && (p.team !== this.parentTeam)
+          && this.isCollidingPoint(other, point) ) {
           p.HP -= 5;
           if( p.HP <= 0 ) {
             const shooter = server.players[this.parent];
