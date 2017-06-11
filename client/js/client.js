@@ -481,6 +481,8 @@ const drawEntities = () => {
     }
     cGame.cPlayers[p].drawSelf(cGame.ctx, GameCamera.xView, GameCamera.yView, isLocalPlayer);
   }
+
+  cGame.ctx.fillStyle = 'black';
   //Each bullet object draws itself
   for( let b in cGame.cBullets ) {
     cGame.cBullets[b].drawSelf(cGame.ctx, GameCamera.xView, GameCamera.yView);
