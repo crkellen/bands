@@ -11,6 +11,7 @@ const socket = io();
 
 const cGame = new Game(GLOBALS.CTX, GLOBALS.CTX_UI);
 let playerName = '';
+let playerTeam = 0; //0, 1 - Green, Blue
 
 const GameMap = new Map(GLOBALS.WORLD_WIDTH, GLOBALS.WORLD_HEIGHT);
 GameMap.generate(cGame.ctx);
@@ -26,6 +27,7 @@ const cam = {
 const GameCamera = new Camera(cam);
 
 $(document).ready( () => {
+//PRE-GAME LISTENERS
   $('#play').click( () => {
     playerName = $('#player-name').val();
     joinGame(playerName, socket);
@@ -39,6 +41,14 @@ $(document).ready( () => {
     }
   }); //#player-name.keyup()
 
+  $('#greenTeam').click( () => {
+    playerName = 0;
+  }); //#greenTeam.click()
+
+  $('#blueTeam').click( () => {
+    playerName = 1;
+  }); //#greenTeam.click()
+//END PRE-GAME LISTENERS
   //canvas-ui is above canvas-game so check that for movement
   $('#canvas-ui').mousemove( (e) => {
     if( cGame.gameStarted !== true ) {
@@ -421,7 +431,7 @@ const joinGame = (playerName, socket) => {
   if( playerName !== '' && playerName.length < 10 ) {
     $('#prompt').hide();
     $('#errorMessage').hide();
-    socket.emit('joinGame', {name: playerName});
+    socket.emit('joinGame', {name: playerName, team: playerTeam});
     cGame.gameStarted = true;
   } else {
     $('#errorMessage').show();
