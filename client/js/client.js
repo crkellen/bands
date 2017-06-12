@@ -91,7 +91,7 @@ $(document).ready( () => {
       default: break;
     }
   }).keyup( (e) => {
-    if( cGame.gameStarted !== true ) {
+    if( cGame.gameStarted !== true || cGame.localPlayer.HP <= 0 ) {
       return;
     }
     const k = e.keyCode || e.which;
