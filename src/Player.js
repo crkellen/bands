@@ -14,10 +14,10 @@ export class Player extends Entity {
     this.teamRespawnYMax = 3;
 
     if( this.team === 1 ) {
-      this.teamRespawnXMin = GLOBALS.TILE_WIDTH - 3;
-      this.teamRespawnXMax = GLOBALS.TILE_WIDTH;
-      this.teamRespawnYMin = GLOBALS.TILE_HEIGHT - 3;
-      this.teamRespawnYMax = GLOBALS.TILE_HEIGHT;
+      this.teamRespawnXMin = (GLOBALS.WORLD_WIDTH_IN_TILES - 3) * 2;
+      this.teamRespawnXMax = GLOBALS.WORLD_WIDTH_IN_TILES * 2;
+      this.teamRespawnYMin = (GLOBALS.WORLD_HEIGHT_IN_TILES - 3) * 2;
+      this.teamRespawnYMax = GLOBALS.WORLD_HEIGHT_IN_TILES * 2;
     }
 
     //Grid variables
@@ -302,8 +302,8 @@ export class Player extends Entity {
 
   respawn(server) {
     //#TODO: Make it so they respawn after a short time
-    this.x = (getRandomInt(1, 39) * 40);
-    this.y = (getRandomInt(1, 20) * 40);
+    this.x = (getRandomInt(this.teamRespawnXMin, this.teamRespawnXMax) * 40);
+    this.y = (getRandomInt(this.teamRespawnYMin, this.teamRespawnYMax) * 40);
     if( this.x % 80 === 0 ) {
       this.x += 40;
     }
