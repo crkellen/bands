@@ -4,7 +4,7 @@ Known Bugs can be found at the issues page on GitHub here: https://github.com/cr
 
 ####################################################################################################################
 
-v0.4.7 --- Released: Not Yet!
+v0.4.7 --- Released: 6-12-2017
 
 	Additions:
 		Gameplay:
