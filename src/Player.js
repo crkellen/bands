@@ -83,6 +83,9 @@ export class Player extends Entity {
   } //Player.constructor()
 
   update(server) {
+    if( this.HP <= 0 ) {
+      return;
+    }
     if( this.mustCheckBuildSelection === true ) {
       this.validateSelection(server, this.camera);
     }
@@ -302,13 +305,13 @@ export class Player extends Entity {
 
   respawn(server) {
     //#TODO: Make it so they respawn after a short time
-    this.x = (getRandomInt(this.teamRespawnXMin, this.teamRespawnXMax) * 40);
-    this.y = (getRandomInt(this.teamRespawnYMin, this.teamRespawnYMax) * 40);
-    if( this.x % 80 === 0 ) {
-      this.x += 40;
+    let respawnX = (getRandomInt(this.teamRespawnXMin, this.teamRespawnXMax) * 40);
+    let respawnY = (getRandomInt(this.teamRespawnYMin, this.teamRespawnYMax) * 40);
+    if( respawnX % 80 === 0 ) {
+      respawnX += 40;
     }
-    if( this.y % 80 === 0 ) {
-      this.y += 40;
+    if( respawnY % 80 === 0 ) {
+      respawnY += 40;
     }
     if( this.respawnTries >= 10 ) {
       this.respawnTries = 0;
@@ -321,18 +324,22 @@ export class Player extends Entity {
       }
     }
 
-    this.HP = this.maxHP;
-    this.ammo = this.clipSize;
-    this.clips = this.maxClips;
-    this.heldAmmo = this.ammo * this.clips;
-    this.mustReloadClip = false;
-    this.mustReload = false;
-    this.isReloading = false;
-    this.blocks = this.maxBlocks;
-    this.invincible = true;
     setTimeout(() => {
-      this.invincible = false;
-    }, 3000);
+      this.x = respawnX;
+      this.y = respawnY;
+      this.HP = this.maxHP;
+      this.ammo = this.clipSize;
+      this.clips = this.maxClips;
+      this.heldAmmo = this.ammo * this.clips;
+      this.mustReloadClip = false;
+      this.mustReload = false;
+      this.isReloading = false;
+      this.blocks = this.maxBlocks;
+      this.invincible = true;
+      setTimeout(() => {
+        this.invincible = false;
+      }, 3000);
+    }, 2000);
     this.cancelActiveReloadRequests();
   } //Player.respawn()
 
@@ -579,6 +586,9 @@ export class Player extends Entity {
 
   onConnect(socket) {
     socket.on('keyPress', (data) => {
+      if( this.HP <= 0 ) {
+        return;
+      }
       switch( data.inputID ) {
         case 'left':
           this.pressingLeft = data.state;
