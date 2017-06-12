@@ -141,7 +141,7 @@ export class cPlayer {
     const x = this.x - xView;
     const y = this.y - yView;
 
-    ctx.fillStyle = this.team ? 'white' : 'black';
+    ctx.fillStyle = 'white';
     ctx.fillText(this.name, x - this.name.length * 2.5, y - 22);
   } //cPlayer.drawName()
 
