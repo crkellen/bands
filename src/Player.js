@@ -8,6 +8,17 @@ export class Player extends Entity {
     this.socket = params.socket;
     this.name = params.name;
     this.team = params.team;
+    this.teamRespawnXMin = 0;
+    this.teamRespawnXMax = 3;
+    this.teamRespawnYMin = 0;
+    this.teamRespawnYMax = 3;
+
+    if( this.team === 1 ) {
+      this.teamRespawnXMin = GLOBALS.TILE_WIDTH - 3;
+      this.teamRespawnXMax = GLOBALS.TILE_WIDTH;
+      this.teamRespawnYMin = GLOBALS.TILE_HEIGHT - 3;
+      this.teamRespawnYMax = GLOBALS.TILE_HEIGHT;
+    }
 
     //Grid variables
     this._gridX = -1;
@@ -290,7 +301,7 @@ export class Player extends Entity {
   } //Player.cancelActiveReloadRequests()
 
   respawn(server) {
-    //#TODO: Make it so they respawn after a short time, and at their team base
+    //#TODO: Make it so they respawn after a short time
     this.x = (getRandomInt(1, 39) * 40);
     this.y = (getRandomInt(1, 20) * 40);
     if( this.x % 80 === 0 ) {
