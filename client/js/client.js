@@ -481,7 +481,11 @@ const drawEntities = () => {
     if( cGame.localPlayer.ID === cGame.cPlayers[p].ID ) {
       isLocalPlayer = true;
     }
-    cGame.cPlayers[p].drawName(cGame.ctx, GameCamera.xView, GameCamera.yView);
+
+    if( cGame.showPlayerName === true ) {
+      cGame.cPlayers[p].drawName(cGame.ctx, GameCamera.xView, GameCamera.yView);
+    }
+    
     cGame.cPlayers[p].drawSelf(cGame.ctx, GameCamera.xView, GameCamera.yView, isLocalPlayer);
   }
 
