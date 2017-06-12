@@ -45,7 +45,7 @@ export class cPlayer {
         ctx.fillStyle = 'rgba(0, 200, 0, 0.5)';
       } else {
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-        ctx.fillStyle = 'rgba(0, 0, 200, 0.5)';
+        ctx.fillStyle = 'rgba(35, 75, 175, 0.5)';
       }
     } else {
       if( this.team === 0 ) {
@@ -53,7 +53,7 @@ export class cPlayer {
         ctx.fillStyle = 'rgba(0, 200, 0, 1.0)';
       } else {
         ctx.strokeStyle = 'black';
-        ctx.fillStyle = 'rgba(0, 0, 200, 1.0)';
+        ctx.fillStyle = 'rgba(35, 75, 175, 1.0)';
       }
     }
 
