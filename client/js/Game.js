@@ -3,9 +3,9 @@ import { GLOBALS } from './Globals';
 export class Game {
   constructor(ctx, ctxUI) {
     this.ctx = ctx;
-    this.ctx.font = '12px Callibri';
+    this.ctx.font = '12px Calibri';
     this.ctxUI = ctxUI;
-    this.ctxUI.font = '20px Callibri';
+    this.ctxUI.font = '20px Calibri';
     this.UIUpdate = true; //Flag to update low-changing UI
 
     //Game is started after player enters name
