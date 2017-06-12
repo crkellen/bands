@@ -1,4 +1,4 @@
-# buildnshoot.io v0.4.6
+# buildnshoot.io v0.4.7
 An online multiplayer shooter game
 
 **Please post any bugs or feature requests on the [Issues page](https://github.com/crkellen/bands/issues)!**
@@ -25,6 +25,7 @@ Currently the game is just a endless fighter, but soon there will be objectives 
 - You can see when the other players have to reload, use this to your advantage!
 - Players can't shoot when they don't have their gun out, attack them then!
 - Use the Shovel to gain more blocks. You can use this to repair or move defenses!
+- You cannot hurt your teammates, feel free to shoot through them as a human shield!
 
 ## Weapons:
 Currently there is only a single weapon implemented. More will be added later! Full stats will be added later once they are closer to being finalized.
@@ -43,7 +44,7 @@ High Damage, Average Fire Rate, Short Reload Time, Small Clip Size, Average Proj
 **Please check the [CHANGELOG.txt](CHANGELOG.txt) for a list of current updates**
 
 ### Planned Features:
-- Two teams, players will join either team (with balancing)
+- Team load balancing to prevent everyone from joining one team
 - Objectives, this may be a Capture the Flag objective or capture zones, or something else entirely
 - At least two other weapons, SMG and Shotgun listed above
 - Images for the players, weapons, bullets, blocks
