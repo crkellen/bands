@@ -421,6 +421,12 @@ socket.on('shovelSelection', (data) => {
 socket.on('respawnTimer', (data) => {
   cGame.UIUpdate = true;
   cGame.respawnTimer = data;
+  if( data === 0 ) {
+    cGame.localPlayer.showPlayerName = true;
+    setTimeout(() => {
+      cGame.localPlayer.showPlayerName = false;
+    }, 10000);
+  }
 });
 
 //END SOCKET FUNCTIONS ##########################################################
@@ -433,7 +439,7 @@ const joinGame = (playerName, socket) => {
     $('#errorMessage').hide();
     socket.emit('joinGame', {name: playerName, team: playerTeam});
     setTimeout(() => {
-      cGame.showPlayerName = false;
+      cGame.localPlayer.showPlayerName = false;
     }, 10000);
     cGame.gameStarted = true;
   } else {
@@ -482,7 +488,7 @@ const drawEntities = () => {
       isLocalPlayer = true;
     }
 
-    if( cGame.showPlayerName === true ) {
+    if( cGame.cPlayers[p].showPlayerName === true ) {
       cGame.cPlayers[p].drawName(cGame.ctx, GameCamera.xView, GameCamera.yView);
     }
     
