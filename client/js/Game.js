@@ -23,6 +23,7 @@ export class Game {
     this.prevHeldAmmo = 0;    
     this.prevClipCount = 0;
     this.prevBlockCount = 0;
+    this.respawnTimer = 0;
 
     this.isValidSelection = false;
     this.selBlockID = -1;
