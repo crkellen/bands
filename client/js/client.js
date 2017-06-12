@@ -418,6 +418,11 @@ socket.on('shovelSelection', (data) => {
   cGame.selGridY = data.selGridY;
 });
 
+socket.on('respawnTimer', (data) => {
+  cGame.UIUpdate = true;
+  cGame.respawnTimer = data;
+});
+
 //END SOCKET FUNCTIONS ##########################################################
 
 //GAME LOGIC FUNCTIONS ##########################################################
@@ -555,7 +560,8 @@ const drawUI = () => {
     //Background
     cGame.ctxUI.fillStyle = 'rgba(200, 200, 200, 0.3)';
     cGame.ctxUI.fillRect(0, 0, 500, 40);
-
+    
+    cGame.ctxUI.font = '20px Calibri';
     cGame.ctxUI.fillStyle = 'rgba(255, 255, 255, 0.5)';
 
     //Player Score
@@ -593,6 +599,13 @@ const drawUI = () => {
       cGame.ctxUI.fillRect(reloadPosX, reloadPosY, 30, 4);
       cGame.ctxUI.fillStyle = 'black';
       cGame.ctxUI.fillRect(reloadPosX, reloadPosY, reloadBar, 4);
+    }
+
+    //Respawn Timer
+    if( cGame.respawnTimer > 0 ) {
+      cGame.ctxUI.font = '30px Calibri';
+      cGame.ctxUI.fillText('Respawning in:', 700, 370);
+      cGame.ctxUI.fillText(`${cGame.respawnTimer} seconds`, 740, 399);
     }
   }
 }; //drawUI()
