@@ -150,7 +150,7 @@ export class cPlayer {
     const y = this.y - yView;
 
     const ammoString = `${this.ammo}/${this.clipSize}`;
-    ctx.fillStyle = this.team ? 'white' : 'black';
+    ctx.fillStyle = 'white';
     ctx.fillText(ammoString, x - 8, y + 16);
   } //cPlayer.drawAmmo()
 } //class cPlayer
