@@ -478,6 +478,7 @@ const drawEntities = () => {
     if( cGame.localPlayer.ID === cGame.cPlayers[p].ID ) {
       isLocalPlayer = true;
     }
+    cGame.cPlayers[p].drawName(cGame.ctx, GameCamera.xView, GameCamera.yView);
     cGame.cPlayers[p].drawSelf(cGame.ctx, GameCamera.xView, GameCamera.yView, isLocalPlayer);
   }
 
@@ -500,7 +501,6 @@ const drawUI = () => {
     if( cGame.cPlayers[p].HP <= 0 ) {
       continue;
     }
-    cGame.cPlayers[p].drawName(cGame.ctx, GameCamera.xView, GameCamera.yView);
     cGame.cPlayers[p].drawAmmo(cGame.ctx, GameCamera.xView, GameCamera.yView);
   }
 
