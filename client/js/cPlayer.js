@@ -40,19 +40,17 @@ export class cPlayer {
     //Player
     //User feedback for respawn invincibility
     if( this.invincible === true ) {
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
       if( this.team === 0 ) {
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
         ctx.fillStyle = 'rgba(35, 175, 75, 0.5)';
       } else {
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
         ctx.fillStyle = 'rgba(35, 75, 175, 0.5)';
       }
     } else {
+      ctx.strokeStyle = 'black';
       if( this.team === 0 ) {
-        ctx.strokeStyle = 'black';
         ctx.fillStyle = 'rgba(35, 175, 75, 1.0)';
       } else {
-        ctx.strokeStyle = 'black';
         ctx.fillStyle = 'rgba(35, 75, 175, 1.0)';
       }
     }
