@@ -19,6 +19,8 @@ v0.4.7 --- Released: Not Yet!
 				- Players cannot hurt others on their team
 		UI:
 			- Made text on players different colors to be more readable with team colors
+			- Added a black border to HP bar
+			- Made HP empty from right to left with a black rectangle where missing health is
 
 	Changes:
 		- Modified the background grid image to have team base colors in the corners
