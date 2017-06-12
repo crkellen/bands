@@ -112,11 +112,7 @@ export class cPlayer {
       ctx.translate(x, y);
       ctx.rotate(theta);
       ctx.translate(20, -5); //Move the gun to the outside of the player
-      if( this.invincible === true ) {
-        ctx.fillStyle = 'rgba(15, 135, 255, 0.5)';
-      } else {
-        ctx.fillStyle = `rgba(${15 + scaleByAmmo * 2}, ${135 + scaleByAmmo}, 255, 1)`;
-      }
+      ctx.fillStyle = this.invincible ? 'rgba(15, 135, 255, 0.5)' : `rgba(${15 + scaleByAmmo * 2}, ${135 + scaleByAmmo}, 255, 1)`;
       ctx.fillRect(0, 0, 20, 10);
       ctx.restore();
 
