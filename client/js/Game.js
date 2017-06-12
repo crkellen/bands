@@ -18,7 +18,8 @@ export class Game {
     this.localPlayer = null;
 
     //UI Updaters
-    //TODO: Update this so it uses getters and setters instead of prevScore === curScore
+    //TODO: Possibly update this so it uses getters and setters instead of prevScore === curScore
+    this.showPlayerName = true;
     this.prevScore = 0;
     this.prevHeldAmmo = 0;    
     this.prevClipCount = 0;
