@@ -324,6 +324,15 @@ export class Player extends Entity {
       }
     }
 
+    //TODO: Investigate better ways to implement this, lag could cause clientside prediction to be off
+    setTimeout(() => {
+      setTimeout(() => {
+        this.socket.emit('respawnTimer', 1);
+      }, 1000);
+      this.socket.emit('respawnTimer', 2);
+    }, 1000);
+    this.socket.emit('respawnTimer', 3);
+
     setTimeout(() => {
       this.x = respawnX;
       this.y = respawnY;
@@ -339,7 +348,7 @@ export class Player extends Entity {
       setTimeout(() => {
         this.invincible = false;
       }, 3000);
-    }, 2000);
+    }, 3000); //TODO: Variable-based respawn time
     this.cancelActiveReloadRequests();
   } //Player.respawn()
 
