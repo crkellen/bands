@@ -28,6 +28,7 @@ export class cPlayer {
     this.maxBlocks = initPack.maxBlocks;
 
     this.showPlayerName = true; //Only exists on client
+    this.activePlayerNameRequests = []; //A collection of identifiers to showPlayerName setTimeouts
   } //cPlayer.constructor
 
   drawSelf(ctx, xView, yView, isLocalPlayer) {
@@ -159,4 +160,10 @@ export class cPlayer {
     ctx.fillStyle = 'white';
     ctx.fillText(ammoString, x - 8, y + 5);
   } //cPlayer.drawAmmo()
+
+  cancelActivePlayerNameRequests() {
+    for( let id in this.activePlayerNameRequests ) {
+      clearTimeout(this.activePlayerNameRequests.pop(id));
+    }
+  }
 } //class cPlayer
