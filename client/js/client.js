@@ -421,7 +421,7 @@ socket.on('shovelSelection', (data) => {
 socket.on('respawnTimer', (data) => {
   cGame.UIUpdate = true;
   cGame.respawnTimer = data;
-  if( data === 0 ) {
+  if( data.time === 0 ) {
     cGame.cPlayers[data.ID].showPlayerName = true;
     setTimeout(() => {
       cGame.cPlayers[data.ID].showPlayerName = false;
