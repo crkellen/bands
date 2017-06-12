@@ -475,6 +475,9 @@ const renderLoop = () => {
 const drawEntities = () => {
   //Each player object draws itself
   for( let p in cGame.cPlayers ) {
+    if( cGame.cPlayers[p].HP <= 0 ) {
+      continue;
+    }
     let isLocalPlayer = false;
     if( cGame.localPlayer.ID === cGame.cPlayers[p].ID ) {
       isLocalPlayer = true;
@@ -498,6 +501,9 @@ const drawUI = () => {
   //Note: To prevent excessive drawing for unchanged values, name and ammo
   //are drawn on the main canvas, and the UI canvas only updates when needed
   for( let p in cGame.cPlayers ) {
+    if( cGame.cPlayers[p].HP <= 0 ) {
+      continue;
+    }
     cGame.cPlayers[p].drawName(cGame.ctx, GameCamera.xView, GameCamera.yView);
     cGame.cPlayers[p].drawAmmo(cGame.ctx, GameCamera.xView, GameCamera.yView);
   }
