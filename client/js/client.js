@@ -116,7 +116,7 @@ $(document).ready( () => {
       default: break;
     }
   }).click( (e) => {
-    if( cGame.gameStarted !== true || cGame.localPlayer === null ) {
+    if( cGame.gameStarted !== true || cGame.localPlayer === null || cGame.localPlayer.HP <= 0  ) {
       return;
     }
 
