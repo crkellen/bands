@@ -151,6 +151,6 @@ export class cPlayer {
 
     const ammoString = `${this.ammo}/${this.clipSize}`;
     ctx.fillStyle = 'white';
-    ctx.fillText(ammoString, x - 8, y + 16);
+    ctx.fillText(ammoString, x - 8, y + 5);
   } //cPlayer.drawAmmo()
 } //class cPlayer
