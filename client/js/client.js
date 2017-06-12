@@ -422,9 +422,9 @@ socket.on('respawnTimer', (data) => {
   cGame.UIUpdate = true;
   cGame.respawnTimer = data;
   if( data === 0 ) {
-    cGame.localPlayer.showPlayerName = true;
+    cGame.cPlayers[data.ID].showPlayerName = true;
     setTimeout(() => {
-      cGame.localPlayer.showPlayerName = false;
+      cGame.cPlayers[data.ID].showPlayerName = false;
     }, 10000);
   }
 });
