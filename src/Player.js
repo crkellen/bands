@@ -327,6 +327,9 @@ export class Player extends Entity {
     //TODO: Investigate better ways to implement this, lag could cause clientside prediction to be off
     setTimeout(() => {
       setTimeout(() => {
+        setTimeout(() => {
+          this.socket.emit('respawnTimer', 0);
+        }, 1000);
         this.socket.emit('respawnTimer', 1);
       }, 1000);
       this.socket.emit('respawnTimer', 2);
