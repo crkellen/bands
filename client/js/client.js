@@ -440,7 +440,7 @@ socket.on('respawnTimer', (data) => {
     const timeoutID = setTimeout(() => {
       cGame.localPlayer.showPlayerName = false;
     }, 10000);
-    cGame.cPlayers.activePlayerNameRequests.push(timeoutID);
+    cGame.localPlayer.activePlayerNameRequests.push(timeoutID);
   }
 });
 
