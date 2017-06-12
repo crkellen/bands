@@ -290,6 +290,13 @@ socket.on('update', (data) => {
         }
       }
       if( pack.HP !== undefined ) {
+        if( p.HP === 0 && pack.HP === p.maxHP ) {
+          //Player has respawned, turn their name back on
+          p.showPlayerName = true;
+          setTimeout(() => {
+            p.showPlayerName = false;
+          }, 10000);
+        }
         p.HP = pack.HP;
       }
       if( pack.mX !== undefined ) {
