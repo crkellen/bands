@@ -240,9 +240,10 @@ socket.on('init', (data) => {
   //Players
   for( let i = 0; i < data.player.length; i++ ) {
     cGame.cPlayers[data.player[i].ID] = new cPlayer(data.player[i]);
-    setTimeout(() => {
+    const timeoutID = setTimeout(() => {
       cGame.cPlayers[data.player[i].ID].showPlayerName = false;
     }, 10000);
+    cGame.cPlayers[data.player[i].ID].activePlayerNameRequests.push(timeoutID);
   }
   if( makeCamera ) {
     cGame.localPlayer = cGame.cPlayers[cGame.selfID];
@@ -292,10 +293,12 @@ socket.on('update', (data) => {
       if( pack.HP !== undefined ) {
         if( p.HP === 0 && pack.HP === p.maxHP ) {
           //Player has respawned, turn their name back on
+          p.cancelActivePlayerNameRequests();
           p.showPlayerName = true;
-          setTimeout(() => {
+          const timeoutID = setTimeout(() => {
             p.showPlayerName = false;
           }, 10000);
+          p.activePlayerNameRequests.push(timeoutID);
         }
         p.HP = pack.HP;
       }
@@ -432,10 +435,12 @@ socket.on('respawnTimer', (data) => {
   cGame.UIUpdate = true;
   cGame.respawnTimer = data;
   if( data.time === 0 ) {
+    cGame.localPlayer.cancelActivePlayerNameRequests();
     cGame.localPlayer.showPlayerName = true;
-    setTimeout(() => {
+    const timeoutID = setTimeout(() => {
       cGame.localPlayer.showPlayerName = false;
     }, 10000);
+    cGame.cPlayers.activePlayerNameRequests.push(timeoutID);
   }
 });
 
