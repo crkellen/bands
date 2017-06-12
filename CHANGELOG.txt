@@ -4,6 +4,37 @@ Known Bugs can be found at the issues page on GitHub here: https://github.com/cr
 
 ####################################################################################################################
 
+v0.4.7 --- Released: Not Yet!
+
+	Additions:
+		Gameplay:
+			- Implemented a respawn timer - Implements #86
+				- Respawn after 3 seconds
+				- Inputs are disabled while dead
+				- Player drawing is turned off while dead
+			- Implemented teams - Implements #73, #74, #78, #79
+				- Players can currently choose to join either the Green or Blue team
+				- Green base is in top left, Blue base in bottom right
+				- Players will be the same color as their color
+				- Players cannot hurt others on their team
+		UI:
+			- Made text on players different colors to be more readable with team colors
+
+	Changes:
+		- Modified the background grid image to have team base colors in the corners
+
+	Fixes:
+		- Font is now 'Calibri', was misspelled as 'Callibri'
+
+	Other:
+		- 
+
+	SPECIAL THANKS:
+	Testers:
+		
+
+####################################################################################################################
+
 v0.4.6 --- Released: 6-10-2017
 
 	Additions:
@@ -17,7 +48,7 @@ v0.4.6 --- Released: 6-10-2017
 			- Rifle will reload entire clip if you run out of bullets from shooting, this takes 3 seconds
 				- If the player still has ammo, but no clips, the player must manually reload
 				- If the player cancels the automatic clip reload, it must be restarted manually
-			- Implemented the Shovel
+			- Implemented the Shovel - Implements #68
 				- Enter Shovel mode by right clicking while in Build mode, enter Gun mode by right clicking in Shovel mode
 				- If player is in range and selecting a placed block, they can remove it when off cooldown
 					- Shovel cooldown is 1 second
@@ -26,6 +57,7 @@ v0.4.6 --- Released: 6-10-2017
 			- Selection highlight will now be yellow if you are in block placement cooldown
 			- Feedback on how long until reload is finished, small bar at mouse position when reloading
 				- This is based off of the reload time for the task, clip is longer than manual reload
+			-
 
 	Changes:
 		- Increased wait time before placing another block from 300ms to 1000ms
