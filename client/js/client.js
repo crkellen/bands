@@ -71,7 +71,7 @@ $(document).ready( () => {
   }); //$(document).contextmenu()
 
   $(document).keydown( (e) => {
-    if( cGame.gameStarted !== true || cGame.localPlayer.HP <= 0 ) {
+    if( cGame.gameStarted !== true || cGame.localPlayer === null || cGame.localPlayer.HP <= 0 ) {
       return;
     }
     const k = e.keyCode || e.which;
@@ -91,7 +91,7 @@ $(document).ready( () => {
       default: break;
     }
   }).keyup( (e) => {
-    if( cGame.gameStarted !== true || cGame.localPlayer.HP <= 0 ) {
+    if( cGame.gameStarted !== true || cGame.localPlayer === null || cGame.localPlayer.HP <= 0 ) {
       return;
     }
     const k = e.keyCode || e.which;
@@ -186,7 +186,7 @@ $(document).ready( () => {
     } //switch( e.which )
   }).mousedown( (e) => {
     //This exists to fix issue #42 (RMB does not work outside of firefox)
-    if( cGame.gameStarted !== true || cGame.localPlayer.HP <= 0 ) {
+    if( cGame.gameStarted !== true || cGame.localPlayer === null || cGame.localPlayer.HP <= 0 ) {
       return;
     }
 
