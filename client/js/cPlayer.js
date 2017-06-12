@@ -42,7 +42,7 @@ export class cPlayer {
     if( this.invincible === true ) {
       if( this.team === 0 ) {
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-        ctx.fillStyle = 'rgba(0, 200, 0, 0.5)';
+        ctx.fillStyle = 'rgba(35, 175, 75, 0.5)';
       } else {
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
         ctx.fillStyle = 'rgba(35, 75, 175, 0.5)';
@@ -50,7 +50,7 @@ export class cPlayer {
     } else {
       if( this.team === 0 ) {
         ctx.strokeStyle = 'black';
-        ctx.fillStyle = 'rgba(0, 200, 0, 1.0)';
+        ctx.fillStyle = 'rgba(35, 175, 75, 1.0)';
       } else {
         ctx.strokeStyle = 'black';
         ctx.fillStyle = 'rgba(35, 75, 175, 1.0)';
