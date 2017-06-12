@@ -432,6 +432,9 @@ const joinGame = (playerName, socket) => {
     $('#prompt').hide();
     $('#errorMessage').hide();
     socket.emit('joinGame', {name: playerName, team: playerTeam});
+    setTimeout(() => {
+      cGame.showPlayerName = false;
+    }, 10000);
     cGame.gameStarted = true;
   } else {
     $('#errorMessage').show();
