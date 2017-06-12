@@ -142,7 +142,7 @@ export class cPlayer {
     const y = this.y - yView;
 
     ctx.fillStyle = this.team ? 'white' : 'black';
-    ctx.fillText(this.name, x - this.name.length * 2.5, y);
+    ctx.fillText(this.name, x - this.name.length * 2.5, y - 22);
   } //cPlayer.drawName()
 
   drawAmmo(ctx, xView, yView) {
