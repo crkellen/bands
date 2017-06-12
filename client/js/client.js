@@ -116,12 +116,7 @@ $(document).ready( () => {
       default: break;
     }
   }).click( (e) => {
-    if( cGame.gameStarted !== true ) {
-      return;
-    }
-
-    //If there is a significant lag, this can be undefined
-    if( cGame.localPlayer === null ) {
+    if( cGame.gameStarted !== true || cGame.localPlayer === null ) {
       return;
     }
 
