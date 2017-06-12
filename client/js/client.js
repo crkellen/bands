@@ -56,7 +56,7 @@ $(document).ready( () => {
   //canvas-ui is above canvas-game so check that for movement
   $('#canvas-ui').mousemove( (e) => {
     //If there is a significant lag, localPlayer will be null
-    if( cGame.gameStarted !== true || cGame.localPlayer === null ) {
+    if( cGame.gameStarted !== true || cGame.localPlayer === null || cGame.localPlayer.HP <= 0 ) {
       return;
     }
 
