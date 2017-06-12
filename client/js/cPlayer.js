@@ -26,6 +26,8 @@ export class cPlayer {
     this.mode = initPack.mode;
     this.blocks = initPack.blocks;
     this.maxBlocks = initPack.maxBlocks;
+
+    this.showPlayerName = true; //Only exists on client
   } //cPlayer.constructor
 
   drawSelf(ctx, xView, yView, isLocalPlayer) {
