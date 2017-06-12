@@ -40,7 +40,6 @@ export class cPlayer {
     ctx.fillRect(x - HPOutlineXOff - 2.5, y + 21.5, HPOutlineWidth, 5);
     ctx.fillStyle = 'red';
     ctx.fillRect(x - HPOutlineXOff - 2, y + 22, HPWidth, 4);
-    //ctx.fillRect(x - HPWidth/1.4, y + 22, HPWidth*1.4, 4);
 
     //Player
     //User feedback for respawn invincibility
