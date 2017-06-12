@@ -240,6 +240,9 @@ socket.on('init', (data) => {
   //Players
   for( let i = 0; i < data.player.length; i++ ) {
     cGame.cPlayers[data.player[i].ID] = new cPlayer(data.player[i]);
+    setTimeout(() => {
+      cGame.cPlayers[data.player[i].ID].showPlayerName = false;
+    }, 10000);
   }
   if( makeCamera ) {
     cGame.localPlayer = cGame.cPlayers[cGame.selfID];
