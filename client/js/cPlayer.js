@@ -34,8 +34,13 @@ export class cPlayer {
 
     //Health bar
     const HPWidth = 30 * this.HP / this.maxHP;
+    const HPOutlineXOff = (this.maxHP * 2);
+    const HPOutlineWidth = (this.maxHP * 4) + 3;
+    ctx.rect(x - HPOutlineXOff - 2, y + 22, HPOutlineWidth, 4);
+    ctx.stroke();
     ctx.fillStyle = 'red';
     ctx.fillRect(x - HPWidth/1.4, y + 22, HPWidth*1.4, 4);
+    
 
     //Player
     //User feedback for respawn invincibility
