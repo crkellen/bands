@@ -328,13 +328,13 @@ export class Player extends Entity {
     setTimeout(() => {
       setTimeout(() => {
         setTimeout(() => {
-          this.socket.emit('respawnTimer', 0);
+          this.socket.emit('respawnTimer', {ID: this.ID, time: 0});
         }, 1000);
-        this.socket.emit('respawnTimer', 1);
+        this.socket.emit('respawnTimer', {ID: this.ID, time: 1});
       }, 1000);
-      this.socket.emit('respawnTimer', 2);
+      this.socket.emit('respawnTimer', {ID: this.ID, time: 2});
     }, 1000);
-    this.socket.emit('respawnTimer', 3);
+    this.socket.emit('respawnTimer', {ID: this.ID, time: 3});
 
     setTimeout(() => {
       this.x = respawnX;
