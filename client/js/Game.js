@@ -3,9 +3,9 @@ import { GLOBALS } from './Globals';
 export class Game {
   constructor(ctx, ctxUI) {
     this.ctx = ctx;
-    this.ctx.font = '12px Callibri';
+    this.ctx.font = '12px Calibri';
     this.ctxUI = ctxUI;
-    this.ctxUI.font = '20px Callibri';
+    this.ctxUI.font = '20px Calibri';
     this.UIUpdate = true; //Flag to update low-changing UI
 
     //Game is started after player enters name
@@ -18,11 +18,12 @@ export class Game {
     this.localPlayer = null;
 
     //UI Updaters
-    //TODO: Update this so it uses getters and setters instead of prevScore === curScore
+    //TODO: Possibly update this so it uses getters and setters instead of prevScore === curScore
     this.prevScore = 0;
     this.prevHeldAmmo = 0;    
     this.prevClipCount = 0;
     this.prevBlockCount = 0;
+    this.respawnTimer = 0;
 
     this.isValidSelection = false;
     this.selBlockID = -1;

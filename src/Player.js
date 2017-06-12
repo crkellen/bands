@@ -7,6 +7,18 @@ export class Player extends Entity {
     super(params);
     this.socket = params.socket;
     this.name = params.name;
+    this.team = params.team;
+    this.teamRespawnXMin = 0;
+    this.teamRespawnXMax = 3;
+    this.teamRespawnYMin = 0;
+    this.teamRespawnYMax = 3;
+
+    if( this.team === 1 ) {
+      this.teamRespawnXMin = (GLOBALS.WORLD_WIDTH_IN_TILES - 3) * 2;
+      this.teamRespawnXMax = GLOBALS.WORLD_WIDTH_IN_TILES * 2;
+      this.teamRespawnYMin = (GLOBALS.WORLD_HEIGHT_IN_TILES - 3) * 2;
+      this.teamRespawnYMax = GLOBALS.WORLD_HEIGHT_IN_TILES * 2;
+    }
 
     //Grid variables
     this._gridX = -1;
@@ -71,6 +83,9 @@ export class Player extends Entity {
   } //Player.constructor()
 
   update(server) {
+    if( this.HP <= 0 ) {
+      return;
+    }
     if( this.mustCheckBuildSelection === true ) {
       this.validateSelection(server, this.camera);
     }
@@ -227,6 +242,7 @@ export class Player extends Entity {
   shoot(server) {
     const b = new Bullet({
       parent: this.ID,
+      parentTeam: this.team,
       angle: this.mouseAngle,
       x: this.x,
       y: this.y
@@ -288,14 +304,14 @@ export class Player extends Entity {
   } //Player.cancelActiveReloadRequests()
 
   respawn(server) {
-    //#TODO: Make it so they respawn after a short time, and at their team base
-    this.x = (getRandomInt(1, 39) * 40);
-    this.y = (getRandomInt(1, 20) * 40);
-    if( this.x % 80 === 0 ) {
-      this.x += 40;
+    //#TODO: Make it so they respawn after a short time
+    let respawnX = (getRandomInt(this.teamRespawnXMin, this.teamRespawnXMax) * 40);
+    let respawnY = (getRandomInt(this.teamRespawnYMin, this.teamRespawnYMax) * 40);
+    if( respawnX % 80 === 0 ) {
+      respawnX += 40;
     }
-    if( this.y % 80 === 0 ) {
-      this.y += 40;
+    if( respawnY % 80 === 0 ) {
+      respawnY += 40;
     }
     if( this.respawnTries >= 10 ) {
       this.respawnTries = 0;
@@ -308,18 +324,34 @@ export class Player extends Entity {
       }
     }
 
-    this.HP = this.maxHP;
-    this.ammo = this.clipSize;
-    this.clips = this.maxClips;
-    this.heldAmmo = this.ammo * this.clips;
-    this.mustReloadClip = false;
-    this.mustReload = false;
-    this.isReloading = false;
-    this.blocks = this.maxBlocks;
-    this.invincible = true;
+    //TODO: Investigate better ways to implement this, lag could cause clientside prediction to be off
     setTimeout(() => {
-      this.invincible = false;
-    }, 3000);
+      setTimeout(() => {
+        setTimeout(() => {
+          this.socket.emit('respawnTimer', {ID: this.ID, time: 0});
+        }, 1000);
+        this.socket.emit('respawnTimer', {ID: this.ID, time: 1});
+      }, 1000);
+      this.socket.emit('respawnTimer', {ID: this.ID, time: 2});
+    }, 1000);
+    this.socket.emit('respawnTimer', {ID: this.ID, time: 3});
+
+    setTimeout(() => {
+      this.x = respawnX;
+      this.y = respawnY;
+      this.HP = this.maxHP;
+      this.ammo = this.clipSize;
+      this.clips = this.maxClips;
+      this.heldAmmo = this.ammo * this.clips;
+      this.mustReloadClip = false;
+      this.mustReload = false;
+      this.isReloading = false;
+      this.blocks = this.maxBlocks;
+      this.invincible = true;
+      setTimeout(() => {
+        this.invincible = false;
+      }, 3000);
+    }, 3000); //TODO: Variable-based respawn time
     this.cancelActiveReloadRequests();
   } //Player.respawn()
 
@@ -368,6 +400,7 @@ export class Player extends Entity {
     return {
       ID: this.ID,
       name: this.name,
+      team: this.team,
       gridX: this.gridX,
       gridY: this.gridY,
       x: this.x,
@@ -528,7 +561,6 @@ export class Player extends Entity {
     if( selGridY > this._gridY + 1  ) { //Out of range on BOTTOM
       selGridY = -1;
     }
-
     //Corners don't need to be checked, are handled already by the above checks
     //Bottom and Right deadzones don't need to be check, they are handled with > 0 check
     if( (selGridX !== -1 && selGridY !== -1) &&
@@ -559,13 +591,16 @@ export class Player extends Entity {
           selGridY: selGridY
         });
       }
+      this.selGridX = selGridX;
+      this.selGridY = selGridY;
     }
-    this.selGridX = selGridX;
-    this.selGridY = selGridY;
   } //Player.validateShovelSelection()
 
   onConnect(socket) {
     socket.on('keyPress', (data) => {
+      if( this.HP <= 0 ) {
+        return;
+      }
       switch( data.inputID ) {
         case 'left':
           this.pressingLeft = data.state;
@@ -612,7 +647,7 @@ export class Player extends Entity {
             this.isReloading = false;
             this.cancelActiveReloadRequests();
           } else {                        //Shovel
-
+            this.mustCheckBuildSelection = true;
           }
           break;
         case 'mouseAngle':
@@ -622,6 +657,9 @@ export class Player extends Entity {
           this.mX = data.mousePos.x;
           this.mY = data.mousePos.y;
           if( this._mode === 1 ) {
+            this.camera = data.camera;
+            this.mustCheckBuildSelection = true;
+          } else if( this._mode === 2 ) {
             this.camera = data.camera;
             this.mustCheckBuildSelection = true;
           }
