@@ -186,7 +186,7 @@ $(document).ready( () => {
     } //switch( e.which )
   }).mousedown( (e) => {
     //This exists to fix issue #42 (RMB does not work outside of firefox)
-    if( cGame.gameStarted !== true ) {
+    if( cGame.gameStarted !== true || cGame.localPlayer.HP <= 0 ) {
       return;
     }
 
