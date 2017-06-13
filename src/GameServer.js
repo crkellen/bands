@@ -81,8 +81,6 @@ export class GameServer {
       }
     }
 
-    console.info(this.grid[0][0].occupying);
-
     //Loop through every player, update their current grid position to have a 1
     //If they are overlapping, update the overlap to have a 1 as well
     for( let p in this.players ) {
