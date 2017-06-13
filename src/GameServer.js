@@ -14,8 +14,8 @@ export class GameServer {
     this.grid = []; //0, 1, 2 --- Empty, Player, Wall
     this.worldWidth = GLOBALS.WORLD_WIDTH;
     this.worldHeight = GLOBALS.WORLD_HEIGHT;
-    this.mapWidth = this.worldWidth / GLOBALS.TILE_WIDTH;
-    this.mapHeight = this.worldHeight / GLOBALS.TILE_HEIGHT;
+    this.mapWidth = GLOBALS.WORLD_WIDTH_IN_TILES;
+    this.mapHeight = GLOBALS.WORLD_HEIGHT_IN_TILES;
     this.mustUpdateGrid = false;
 
     this.initializeGrid();
