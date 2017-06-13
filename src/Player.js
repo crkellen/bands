@@ -337,6 +337,13 @@ export class Player extends Entity {
     this.socket.emit('respawnTimer', {ID: this.ID, time: 3});
 
     setTimeout(() => {
+      //Reset inputs
+      this.pressingLeft = false;
+      this.pressingRight = false;
+      this.pressingUp = false;
+      this.pressingDown = false;
+      this.pressingAttack = false;
+
       this.x = respawnX;
       this.y = respawnY;
       this.HP = this.maxHP;
