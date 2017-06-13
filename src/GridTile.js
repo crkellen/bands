@@ -45,6 +45,10 @@ export class GridTile {
           this.occupying = 0;
           this.block.HP = 3;
           this.block.isActive = false;
+        } else if( this.occupying === 3 ) {
+          //Player is in Green Base, dont do anything
+        } else if( this.occupying === 4 ) {
+          //Player is in Blue Base, dont do anything
         } else {
           //Do not update the grid if the player is inside a block
           this.occupying = 1;
@@ -57,6 +61,12 @@ export class GridTile {
           this.block.isActive = true;
         }
         this.occupying = 2;
+        break;
+      case 3: //New occupant is Green Base
+        this.occupying = 3;
+        break;
+      case 4: //New occupant is Blue Base
+        this.occupying = 4;
         break;
     } //switch( newOccupant )
   } //GridTile.updateOccupying()
