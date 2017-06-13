@@ -36,12 +36,35 @@ export class GameServer {
       }
     }
 
+    //Manually add bases TODO: Add a function to load premade maps
+    //Green Base
+    this.grid[0][0] = 3;
+    this.grid[0][1] = 3;
+    this.grid[0][2] = 3;
+    this.grid[1][0] = 3;
+    this.grid[1][1] = 3;
+    this.grid[1][2] = 3;
+    this.grid[2][0] = 3;
+    this.grid[2][1] = 3;
+    this.grid[2][2] = 3;
+
+    //Blue Base
+    this.grid[this.mapHeight][this.mapWidth] = 4;
+    this.grid[this.mapHeight][this.mapWidth - 1] = 4;
+    this.grid[this.mapHeight][this.mapWidth - 2] = 4;
+    this.grid[this.mapHeight - 1][this.mapWidth] = 4;
+    this.grid[this.mapHeight - 1][this.mapWidth - 1] = 4;
+    this.grid[this.mapHeight - 1][this.mapWidth - 2] = 4;
+    this.grid[this.mapHeight - 2][this.mapWidth] = 4;
+    this.grid[this.mapHeight - 2][this.mapWidth - 1] = 4;
+    this.grid[this.mapHeight - 2][this.mapWidth - 2] = 4;
+
     /*Example of what it looks like after init:
     [
-			[0,0,0,0,0,0,...0],
-			[0,0,0,0,0,0,...0],
+			[3,3,3,0,0,0,...0],
+			[3,3,3,0,0,0,...0],
 			...,
-			[0,0,0,0,0,0,...0]
+			[0,0,0,0,0,0,...4]
 		]
     */
   } //GameServer.initializeGrid()
