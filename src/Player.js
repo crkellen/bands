@@ -304,7 +304,6 @@ export class Player extends Entity {
   } //Player.cancelActiveReloadRequests()
 
   respawn(server) {
-    //#TODO: Make it so they respawn after a short time
     let respawnX = (getRandomInt(this.teamRespawnXMin, this.teamRespawnXMax) * 40);
     let respawnY = (getRandomInt(this.teamRespawnYMin, this.teamRespawnYMax) * 40);
     if( respawnX % 80 === 0 ) {
