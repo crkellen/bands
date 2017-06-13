@@ -72,7 +72,7 @@ export class GameServer {
   updateGrid() {
     //At least one player has a new position on the grid, update the grid
 
-    //Empty the grid of all instances of Players (1) leave blocks alone (2)
+    //Empty the grid of all instances of Players (1) leave everything else alone
     for( let i = 0; i < this.mapHeight; i++ ) {
       for( let j = 0; j < this.mapWidth; j++ ) {
         if( this.grid[i][j].occupying === 1 ) {
@@ -86,49 +86,58 @@ export class GameServer {
     for( let p in this.players ) {
       const player = this.players[p];
 
-      //Update current grid position to be a 1
-      if( this.grid[player.gridY][player.gridX].occupying !== 1 ) {
+      //Update current grid position to be a 1 if it is not already a 1, or a base
+      if( this.grid[player.gridY][player.gridX].occupying !== 1 || this.grid[player.gridY][player.gridX].occupying !== 3
+          || this.grid[player.gridY][player.gridX].occupying !== 4 ) {
         this.grid[player.gridY][player.gridX].updateOccupying(GLOBALS.TILE_PLAYER);
       }
 
       //Check every overlap case, if there is an overlap, update that grid tile
       if( player.isOverlapping.left === true ) {        //OVERLAP ON LEFT
-        if( this.grid[player.gridY][player.gridX-1].occupying !== 1 ) {
+        if( this.grid[player.gridY][player.gridX-1].occupying !== 1 || this.grid[player.gridY][player.gridX].occupying !== 3
+            || this.grid[player.gridY][player.gridX].occupying !== 4 ) {
           this.grid[player.gridY][player.gridX-1].updateOccupying(GLOBALS.TILE_PLAYER);
         }
       }
       if( player.isOverlapping.right === true ) {       //OVERLAP ON RIGHT
-        if( this.grid[player.gridY][player.gridX+1].occupying !== 1 ) {
+        if( this.grid[player.gridY][player.gridX+1].occupying !== 1 || this.grid[player.gridY][player.gridX].occupying !== 3
+            || this.grid[player.gridY][player.gridX].occupying !== 4 ) {
           this.grid[player.gridY][player.gridX+1].updateOccupying(GLOBALS.TILE_PLAYER);
         }
       }
       if( player.isOverlapping.top === true ) {         //OVERLAP ON TOP
-        if( this.grid[player.gridY-1][player.gridX].occupying !== 1 ) {
+        if( this.grid[player.gridY-1][player.gridX].occupying !== 1 || this.grid[player.gridY][player.gridX].occupying !== 3
+            || this.grid[player.gridY][player.gridX].occupying !== 4 ) {
           this.grid[player.gridY-1][player.gridX].updateOccupying(GLOBALS.TILE_PLAYER);
         }
       }
       if( player.isOverlapping.bottom === true ) {      //OVERLAP ON BOTTOM
-        if( this.grid[player.gridY+1][player.gridX].occupying !== 1 ) {
+        if( this.grid[player.gridY+1][player.gridX].occupying !== 1 || this.grid[player.gridY][player.gridX].occupying !== 3
+            || this.grid[player.gridY][player.gridX].occupying !== 4 ) {
           this.grid[player.gridY+1][player.gridX].updateOccupying(GLOBALS.TILE_PLAYER);
         }
       }
       if( player.isOverlapping.topLeft === true ) {     //OVERLAP ON TOPLEFT
-        if( this.grid[player.gridY-1][player.gridX-1].occupying !== 1 ) {
+        if( this.grid[player.gridY-1][player.gridX-1].occupying !== 1 || this.grid[player.gridY][player.gridX].occupying !== 3
+            || this.grid[player.gridY][player.gridX].occupying !== 4 ) {
           this.grid[player.gridY-1][player.gridX-1].updateOccupying(GLOBALS.TILE_PLAYER);
         }
       }
       if( player.isOverlapping.topRight === true ) {    //OVERLAP ON TOPRIGHT
-        if( this.grid[player.gridY-1][player.gridX+1].occupying !== 1 ) {
+        if( this.grid[player.gridY-1][player.gridX+1].occupying !== 1 || this.grid[player.gridY][player.gridX].occupying !== 3
+            || this.grid[player.gridY][player.gridX].occupying !== 4 ) {
           this.grid[player.gridY-1][player.gridX+1].updateOccupying(GLOBALS.TILE_PLAYER);
         }
       }
       if( player.isOverlapping.bottomLeft === true ) {  //OVERLAP ON BOTTOMLEFT
-        if( this.grid[player.gridY+1][player.gridX-1].occupying !== 1 ) {
+        if( this.grid[player.gridY+1][player.gridX-1].occupying !== 1 || this.grid[player.gridY][player.gridX].occupying !== 3
+            || this.grid[player.gridY][player.gridX].occupying !== 4 ) {
           this.grid[player.gridY+1][player.gridX-1].updateOccupying(GLOBALS.TILE_PLAYER);
         }
       }
       if( player.isOverlapping.bottomRight === true ) { //OVERLAP ON BOTTOMRIGHT
-        if( this.grid[player.gridY+1][player.gridX+1].occupying !== 1 ) {
+        if( this.grid[player.gridY+1][player.gridX+1].occupying !== 1 || this.grid[player.gridY][player.gridX].occupying !== 3
+            || this.grid[player.gridY][player.gridX].occupying !== 4 ) {
           this.grid[player.gridY+1][player.gridX+1].updateOccupying(GLOBALS.TILE_PLAYER);
         }
       }
