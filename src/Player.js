@@ -80,6 +80,10 @@ export class Player extends Entity {
     this.width = 15;
     this.height = 15;
     this.respawnTries = 0;
+
+    //Restocking counters
+    this.restockCounter = 0;
+    this.restockCounterMax = 100;
   } //Player.constructor()
 
   update(server) {
@@ -146,6 +150,10 @@ export class Player extends Entity {
     //If the player is manually reloading, call reload
     if( this.mustReload === true && this.isReloading === false && this.heldAmmo > 0 ) {
       this.reload();
+    }
+
+    if( this.gridX !== -1 || this.gridY !== -1 ) {
+      this.checkIfPlayerInBase(server);
     }
   } //Player.update()
 
@@ -601,6 +609,28 @@ export class Player extends Entity {
       this.selGridY = selGridY;
     }
   } //Player.validateShovelSelection()
+
+  checkIfPlayerInBase(server) {
+    //If the player is in their base, restock ammo and blocks over time
+    //No need to restock if the player has full ammo and blocks
+    if( this.clips !== this.maxClips || this.blocks !== this.maxBlocks ) {
+      if( (this.team + 3) === server.grid[this.gridY][this.gridX].occupying ) {
+        this.restockCounter++;
+      } else {
+        this.restockCounter = 0;
+        return;
+      }
+      if( this.restockCounter >= this.restockCounterMax ) {
+        if( this.clips < this.maxClips ) {
+          this.clips++;
+        }
+        if( this.blocks < this.maxBlocks ) {
+          this.blocks++;
+        }
+        this.restockCounter = 0;
+      }
+    }
+  } //Player.checkIfPlayerInBase()
 
   onConnect(socket) {
     socket.on('keyPress', (data) => {
