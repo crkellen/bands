@@ -484,16 +484,16 @@ export class Player extends Entity {
     }
 
     //Check to see if selection is out of range (grid pos + 1)
-    if( selGridX > this._gridX + 1  ) { //Out of range on LEFT
+    if( selGridX > this._gridX + 1 ) { //Out of range on LEFT
       selGridX = -1;
     }
-    if( selGridX < this._gridX - 1  ) { //Out of range on RIGHT
+    if( selGridX < this._gridX - 1 ) { //Out of range on RIGHT
       selGridX = -1;
     }
-    if( selGridY < this._gridY - 1  ) { //Out of range on TOP
+    if( selGridY < this._gridY - 1 ) { //Out of range on TOP
       selGridY = -1;
     }
-    if( selGridY > this._gridY + 1  ) { //Out of range on BOTTOM
+    if( selGridY > this._gridY + 1 ) { //Out of range on BOTTOM
       selGridY = -1;
     }
     //Corners don't need to be checked, are handled already by the above checks
@@ -555,16 +555,16 @@ export class Player extends Entity {
     }
 
     //Check to see if selection is out of range (grid pos + 1)
-    if( selGridX > this._gridX + 1  ) { //Out of range on LEFT
+    if( selGridX > this._gridX + 1 ) { //Out of range on LEFT
       selGridX = -1;
     }
-    if( selGridX < this._gridX - 1  ) { //Out of range on RIGHT
+    if( selGridX < this._gridX - 1 ) { //Out of range on RIGHT
       selGridX = -1;
     }
-    if( selGridY < this._gridY - 1  ) { //Out of range on TOP
+    if( selGridY < this._gridY - 1 ) { //Out of range on TOP
       selGridY = -1;
     }
-    if( selGridY > this._gridY + 1  ) { //Out of range on BOTTOM
+    if( selGridY > this._gridY + 1 ) { //Out of range on BOTTOM
       selGridY = -1;
     }
     //Corners don't need to be checked, are handled already by the above checks
