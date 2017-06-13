@@ -14,8 +14,8 @@ export class GameServer {
     this.grid = []; //0, 1, 2 --- Empty, Player, Wall
     this.worldWidth = GLOBALS.WORLD_WIDTH;
     this.worldHeight = GLOBALS.WORLD_HEIGHT;
-    this.mapWidth = GLOBALS.WORLD_WIDTH_IN_TILES;
-    this.mapHeight = GLOBALS.WORLD_HEIGHT_IN_TILES;
+    this.mapWidth = ~~GLOBALS.WORLD_WIDTH_IN_TILES;
+    this.mapHeight = ~~GLOBALS.WORLD_HEIGHT_IN_TILES;
     this.mustUpdateGrid = false;
 
     this.initializeGrid();
@@ -38,26 +38,26 @@ export class GameServer {
 
     //Manually add bases TODO: Add a function to load premade maps
     //Green Base
-    this.grid[0][0] = 3;
-    this.grid[0][1] = 3;
-    this.grid[0][2] = 3;
-    this.grid[1][0] = 3;
-    this.grid[1][1] = 3;
-    this.grid[1][2] = 3;
-    this.grid[2][0] = 3;
-    this.grid[2][1] = 3;
-    this.grid[2][2] = 3;
+    this.grid[0][0].updateOccupying(GLOBALS.TILE_GREEN_BASE);
+    this.grid[0][1].updateOccupying(GLOBALS.TILE_GREEN_BASE);
+    this.grid[0][2].updateOccupying(GLOBALS.TILE_GREEN_BASE);
+    this.grid[1][0].updateOccupying(GLOBALS.TILE_GREEN_BASE);
+    this.grid[1][1].updateOccupying(GLOBALS.TILE_GREEN_BASE);
+    this.grid[1][2].updateOccupying(GLOBALS.TILE_GREEN_BASE);
+    this.grid[2][0].updateOccupying(GLOBALS.TILE_GREEN_BASE);
+    this.grid[2][1].updateOccupying(GLOBALS.TILE_GREEN_BASE);
+    this.grid[2][2].updateOccupying(GLOBALS.TILE_GREEN_BASE);
 
-    //Blue Base
-    this.grid[this.mapHeight][this.mapWidth] = 4;
-    this.grid[this.mapHeight][this.mapWidth - 1] = 4;
-    this.grid[this.mapHeight][this.mapWidth - 2] = 4;
-    this.grid[this.mapHeight - 1][this.mapWidth] = 4;
-    this.grid[this.mapHeight - 1][this.mapWidth - 1] = 4;
-    this.grid[this.mapHeight - 1][this.mapWidth - 2] = 4;
-    this.grid[this.mapHeight - 2][this.mapWidth] = 4;
-    this.grid[this.mapHeight - 2][this.mapWidth - 1] = 4;
-    this.grid[this.mapHeight - 2][this.mapWidth - 2] = 4;
+    //Blue Base TODO: The map is half size, which means the Y is not even
+    this.grid[this.mapHeight - 1][this.mapWidth - 1].updateOccupying(GLOBALS.TILE_BLUE_BASE);
+    this.grid[this.mapHeight - 1][this.mapWidth - 2].updateOccupying(GLOBALS.TILE_BLUE_BASE);
+    this.grid[this.mapHeight - 1][this.mapWidth - 3].updateOccupying(GLOBALS.TILE_BLUE_BASE);
+    this.grid[this.mapHeight - 2][this.mapWidth - 1].updateOccupying(GLOBALS.TILE_BLUE_BASE);
+    this.grid[this.mapHeight - 2][this.mapWidth - 2].updateOccupying(GLOBALS.TILE_BLUE_BASE);
+    this.grid[this.mapHeight - 2][this.mapWidth - 3].updateOccupying(GLOBALS.TILE_BLUE_BASE);
+    this.grid[this.mapHeight - 3][this.mapWidth - 1].updateOccupying(GLOBALS.TILE_BLUE_BASE);
+    this.grid[this.mapHeight - 3][this.mapWidth - 2].updateOccupying(GLOBALS.TILE_BLUE_BASE);
+    this.grid[this.mapHeight - 3][this.mapWidth - 3].updateOccupying(GLOBALS.TILE_BLUE_BASE);
 
     /*Example of what it looks like after init:
     [
@@ -80,6 +80,8 @@ export class GameServer {
         }
       }
     }
+
+    console.info(this.grid[0][0].occupying);
 
     //Loop through every player, update their current grid position to have a 1
     //If they are overlapping, update the overlap to have a 1 as well
