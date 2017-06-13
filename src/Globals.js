@@ -50,11 +50,11 @@ export class GLOBALS {
     return TILE_BLOCK;
   }
 
-  static get TIME_GREEN_BASE() {
+  static get TILE_GREEN_BASE() {
     return TILE_GREEN_BASE;
   }
 
-  static get TIME_BLUE_BASE() {
+  static get TILE_BLUE_BASE() {
     return TILE_BLUE_BASE;
   }
 } //class Globals
