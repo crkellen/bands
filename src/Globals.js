@@ -10,6 +10,8 @@ const WORLD_HEIGHT_IN_TILES = WORLD_HEIGHT / TILE_HEIGHT;
 const TILE_EMPTY   = 0;
 const TILE_PLAYER  = 1;
 const TILE_BLOCK   = 2;
+const TILE_GREEN_BASE = 3;
+const TILE_BLUE_BASE = 4;
 
 export class GLOBALS {
   static get WORLD_WIDTH() {
@@ -46,6 +48,14 @@ export class GLOBALS {
 
   static get TILE_BLOCK() {
     return TILE_BLOCK;
+  }
+
+  static get TIME_GREEN_BASE() {
+    return TILE_GREEN_BASE;
+  }
+
+  static get TIME_BLUE_BASE() {
+    return TILE_BLUE_BASE;
   }
 } //class Globals
 
