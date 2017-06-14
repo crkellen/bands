@@ -7,18 +7,19 @@
     <canvas id="canvas-ui" width="1600px" height="800px">Your browser does not support HTML 5 Canvas Tag</canvas>
     <div id="prompt" class="name-prompt">
        <input autofocus id="player-name" type="text" class="form-control" placeholder="Enter your Name" autocomplete="off">
+       <br>
        <span class="input-group-btn">
          <input id="play" class="btn btn-primary" type="submit" value="Join the battle">
+       </span>
+       <span class="input-group-btn">
+         <button id="greenTeam" class="btn btn-primary" style="border:1px solid;" type="button">Green Team</button>
+       </span>
+       <span class="input-group-btn">
+         <button id="blueTeam" class="btn btn-secondary" style="border:1px solid;" type="button">Blue Team</button>
        </span>
        <p id="errorMessage" style="display:none;"><br>Error: Name too long, limit it to 9 characters.</p>
      </div>
   </div>
-
-
-  <div id="arena" class="arena">
-
-  </div>
-
   <%- include('footer') %>
 </body>
 </html>

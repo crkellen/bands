@@ -4,9 +4,14 @@ const WORLD_HEIGHT  = 1800;
 const TILE_WIDTH   = 80;
 const TILE_HEIGHT  = 80;
 
+const WORLD_WIDTH_IN_TILES = WORLD_WIDTH / TILE_WIDTH;
+const WORLD_HEIGHT_IN_TILES = WORLD_HEIGHT / TILE_HEIGHT;
+
 const TILE_EMPTY   = 0;
 const TILE_PLAYER  = 1;
 const TILE_BLOCK   = 2;
+const TILE_GREEN_BASE = 3;
+const TILE_BLUE_BASE = 4;
 
 export class GLOBALS {
   static get WORLD_WIDTH() {
@@ -25,6 +30,14 @@ export class GLOBALS {
     return TILE_HEIGHT;
   }
 
+  static get WORLD_WIDTH_IN_TILES() {
+    return WORLD_WIDTH_IN_TILES;
+  }
+
+  static get WORLD_HEIGHT_IN_TILES() {
+    return WORLD_HEIGHT_IN_TILES;
+  }
+
   static get TILE_EMPTY() {
     return TILE_EMPTY;
   }
@@ -35,6 +48,14 @@ export class GLOBALS {
 
   static get TILE_BLOCK() {
     return TILE_BLOCK;
+  }
+
+  static get TILE_GREEN_BASE() {
+    return TILE_GREEN_BASE;
+  }
+
+  static get TILE_BLUE_BASE() {
+    return TILE_BLUE_BASE;
   }
 } //class Globals
 

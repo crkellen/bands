@@ -11,6 +11,7 @@ const socket = io();
 
 const cGame = new Game(GLOBALS.CTX, GLOBALS.CTX_UI);
 let playerName = '';
+let playerTeam = 0; //0, 1 - Green, Blue
 
 const GameMap = new Map(GLOBALS.WORLD_WIDTH, GLOBALS.WORLD_HEIGHT);
 GameMap.generate(cGame.ctx);
@@ -26,6 +27,7 @@ const cam = {
 const GameCamera = new Camera(cam);
 
 $(document).ready( () => {
+//PRE-GAME LISTENERS
   $('#play').click( () => {
     playerName = $('#player-name').val();
     joinGame(playerName, socket);
@@ -39,14 +41,22 @@ $(document).ready( () => {
     }
   }); //#player-name.keyup()
 
+  $('#greenTeam').click( () => {
+    playerTeam = 0;
+    document.getElementById('greenTeam').className = 'btn btn-primary';
+    document.getElementById('blueTeam').className = 'btn btn-secondary';
+  }); //#greenTeam.click()
+
+  $('#blueTeam').click( () => {
+    playerTeam = 1;
+    document.getElementById('greenTeam').className = 'btn btn-secondary';
+    document.getElementById('blueTeam').className = 'btn btn-primary';
+  }); //#blueTeam.click()
+//END PRE-GAME LISTENERS
   //canvas-ui is above canvas-game so check that for movement
   $('#canvas-ui').mousemove( (e) => {
-    if( cGame.gameStarted !== true ) {
-      return;
-    }
-
     //If there is a significant lag, localPlayer will be null
-    if( cGame.localPlayer === null ) {
+    if( cGame.gameStarted !== true || cGame.localPlayer === null || cGame.localPlayer.HP <= 0 ) {
       return;
     }
 
@@ -61,7 +71,7 @@ $(document).ready( () => {
   }); //$(document).contextmenu()
 
   $(document).keydown( (e) => {
-    if( cGame.gameStarted !== true ) {
+    if( cGame.gameStarted !== true || cGame.localPlayer === null || cGame.localPlayer.HP <= 0 ) {
       return;
     }
     const k = e.keyCode || e.which;
@@ -81,7 +91,7 @@ $(document).ready( () => {
       default: break;
     }
   }).keyup( (e) => {
-    if( cGame.gameStarted !== true ) {
+    if( cGame.gameStarted !== true || cGame.localPlayer === null || cGame.localPlayer.HP <= 0 ) {
       return;
     }
     const k = e.keyCode || e.which;
@@ -106,12 +116,7 @@ $(document).ready( () => {
       default: break;
     }
   }).click( (e) => {
-    if( cGame.gameStarted !== true ) {
-      return;
-    }
-
-    //If there is a significant lag, this can be undefined
-    if( cGame.localPlayer === null ) {
+    if( cGame.gameStarted !== true || cGame.localPlayer === null || cGame.localPlayer.HP <= 0  ) {
       return;
     }
 
@@ -166,27 +171,41 @@ $(document).ready( () => {
               cGame.canBuild = true;
             }, 1000);
           }
+        } else if( cGame.localPlayer.mode === 2 ) {  //Shovel mode
+          //Remove block
+          if(cGame.canShovel === true && cGame.isValidSelection === true ) {
+            cGame.canShovel = false;
+            //cGame.isValidSelection = false; //This will be set to false by the server, but locally we can assume false
+            socket.emit('keyPress', {inputID: 'attack', state: true});
+            setTimeout( () => {
+              cGame.canShovel = true;
+            }, 1000);
+          }
         }
         break;
     } //switch( e.which )
   }).mousedown( (e) => {
     //This exists to fix issue #42 (RMB does not work outside of firefox)
-    if( cGame.gameStarted !== true ) {
+    if( cGame.gameStarted !== true || cGame.localPlayer === null || cGame.localPlayer.HP <= 0 ) {
       return;
     }
 
     switch( e.which ) {
       case 3: { //Right mouse button
+        //Mode will switch, so update the camera/mousePos for validateSelection
+        const mousePos = getMousePos(cGame.ctx, e);
+        const camera = { xView: GameCamera.xView, yView: GameCamera.yView };
+        socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos, camera: camera});
         socket.emit('keyPress', {inputID: 'switchMode'});
-        if( cGame.localPlayer.mode === 0 ) {
+        if( cGame.localPlayer.mode === 0 ) {        //Gun to Build
           cGame.canBuild = false;
-          //Mode will switch from attack to build mode, so update the camera/mousePos
-          //Update mouse position
-          const mousePos = getMousePos(cGame.ctx, e);
-          const camera = { xView: GameCamera.xView, yView: GameCamera.yView };
-          socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos, camera: camera});
           setTimeout( () => {
             cGame.canBuild = true;
+          }, 1000);
+        } else if( cGame.localPlayer.mode === 1 ) { //Build to Shovel
+          cGame.canShovel = false;
+          setTimeout( () => {
+            cGame.canShovel = true;
           }, 1000);
         }
         break;
@@ -221,6 +240,10 @@ socket.on('init', (data) => {
   //Players
   for( let i = 0; i < data.player.length; i++ ) {
     cGame.cPlayers[data.player[i].ID] = new cPlayer(data.player[i]);
+    const timeoutID = setTimeout(() => {
+      cGame.cPlayers[data.player[i].ID].showPlayerName = false;
+    }, 10000);
+    cGame.cPlayers[data.player[i].ID].activePlayerNameRequests.push(timeoutID);
   }
   if( makeCamera ) {
     cGame.localPlayer = cGame.cPlayers[cGame.selfID];
@@ -268,6 +291,15 @@ socket.on('update', (data) => {
         }
       }
       if( pack.HP !== undefined ) {
+        if( p.HP === 0 && pack.HP === p.maxHP ) {
+          //Player has respawned, turn their name back on
+          p.cancelActivePlayerNameRequests();
+          p.showPlayerName = true;
+          const timeoutID = setTimeout(() => {
+            p.showPlayerName = false;
+          }, 10000);
+          p.activePlayerNameRequests.push(timeoutID);
+        }
         p.HP = pack.HP;
       }
       if( pack.mX !== undefined ) {
@@ -392,6 +424,26 @@ socket.on('buildSelection', (data) => {
   cGame.selGridY = data.selGridY;
 });
 
+socket.on('shovelSelection', (data) => {
+  cGame.isValidSelection = data.isValid;
+  cGame.selBlockID = data.selBlockID;
+  cGame.selGridX = data.selGridX;
+  cGame.selGridY = data.selGridY;
+});
+
+socket.on('respawnTimer', (data) => {
+  cGame.UIUpdate = true;
+  cGame.respawnTimer = data.time;
+  if( data.time === 0 ) {
+    cGame.localPlayer.cancelActivePlayerNameRequests();
+    cGame.localPlayer.showPlayerName = true;
+    const timeoutID = setTimeout(() => {
+      cGame.localPlayer.showPlayerName = false;
+    }, 10000);
+    cGame.localPlayer.activePlayerNameRequests.push(timeoutID);
+  }
+});
+
 //END SOCKET FUNCTIONS ##########################################################
 
 //GAME LOGIC FUNCTIONS ##########################################################
@@ -400,7 +452,10 @@ const joinGame = (playerName, socket) => {
   if( playerName !== '' && playerName.length < 10 ) {
     $('#prompt').hide();
     $('#errorMessage').hide();
-    socket.emit('joinGame', {name: playerName});
+    socket.emit('joinGame', {name: playerName, team: playerTeam});
+    setTimeout(() => {
+      cGame.localPlayer.showPlayerName = false;
+    }, 10000);
     cGame.gameStarted = true;
   } else {
     $('#errorMessage').show();
@@ -440,12 +495,22 @@ const renderLoop = () => {
 const drawEntities = () => {
   //Each player object draws itself
   for( let p in cGame.cPlayers ) {
+    if( cGame.cPlayers[p].HP <= 0 ) {
+      continue;
+    }
     let isLocalPlayer = false;
     if( cGame.localPlayer.ID === cGame.cPlayers[p].ID ) {
       isLocalPlayer = true;
     }
+
+    if( cGame.cPlayers[p].showPlayerName === true ) {
+      cGame.cPlayers[p].drawName(cGame.ctx, GameCamera.xView, GameCamera.yView);
+    }
+    
     cGame.cPlayers[p].drawSelf(cGame.ctx, GameCamera.xView, GameCamera.yView, isLocalPlayer);
   }
+
+  cGame.ctx.fillStyle = 'black';
   //Each bullet object draws itself
   for( let b in cGame.cBullets ) {
     cGame.cBullets[b].drawSelf(cGame.ctx, GameCamera.xView, GameCamera.yView);
@@ -461,7 +526,9 @@ const drawUI = () => {
   //Note: To prevent excessive drawing for unchanged values, name and ammo
   //are drawn on the main canvas, and the UI canvas only updates when needed
   for( let p in cGame.cPlayers ) {
-    cGame.cPlayers[p].drawName(cGame.ctx, GameCamera.xView, GameCamera.yView);
+    if( cGame.cPlayers[p].HP <= 0 ) {
+      continue;
+    }
     cGame.cPlayers[p].drawAmmo(cGame.ctx, GameCamera.xView, GameCamera.yView);
   }
 
@@ -493,12 +560,22 @@ const drawUI = () => {
 
   //Show where the block would be placed on the selected grid
   if( cGame.selGridX !== -1 && cGame.selGridY !== -1 ) {
-    if( cGame.isValidSelection === true ) {
-      //Can place === true
-      cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, true, cGame.canBuild);
-    } else {
-      //Can place === false
-      cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, false, cGame.canBuild);
+    if( cGame.localPlayer.mode === 1 ) {
+      if( cGame.isValidSelection === true ) {
+        //Can place the block
+        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, true, cGame.canBuild, 1);
+      } else {
+        //Cannot place the block
+        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, false, cGame.canBuild, 1);
+      }
+    } else if( cGame.localPlayer.mode === 2 ) {
+      if( cGame.isValidSelection === true ) {
+        //Can remove the block
+        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, true, cGame.canShovel, 2);
+      } else {
+        //Cannot remove the block
+        cGame.cBlocks[cGame.selBlockID].drawSelection(cGame.ctx, GameCamera.xView, GameCamera.yView, false, cGame.canShovel, 2);
+      }
     }
   }
 
@@ -511,7 +588,8 @@ const drawUI = () => {
     //Background
     cGame.ctxUI.fillStyle = 'rgba(200, 200, 200, 0.3)';
     cGame.ctxUI.fillRect(0, 0, 500, 40);
-
+    
+    cGame.ctxUI.font = '20px Calibri';
     cGame.ctxUI.fillStyle = 'rgba(255, 255, 255, 0.5)';
 
     //Player Score
@@ -549,6 +627,13 @@ const drawUI = () => {
       cGame.ctxUI.fillRect(reloadPosX, reloadPosY, 30, 4);
       cGame.ctxUI.fillStyle = 'black';
       cGame.ctxUI.fillRect(reloadPosX, reloadPosY, reloadBar, 4);
+    }
+
+    //Respawn Timer
+    if( cGame.respawnTimer > 0 ) {
+      cGame.ctxUI.font = '30px Calibri';
+      cGame.ctxUI.fillText('Respawning in:', 700, 370);
+      cGame.ctxUI.fillText(`${cGame.respawnTimer} seconds`, 740, 399);
     }
   }
 }; //drawUI()

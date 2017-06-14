@@ -7,6 +7,18 @@ export class Player extends Entity {
     super(params);
     this.socket = params.socket;
     this.name = params.name;
+    this.team = params.team;
+    this.teamRespawnXMin = 0;
+    this.teamRespawnXMax = 3;
+    this.teamRespawnYMin = 0;
+    this.teamRespawnYMax = 3;
+
+    if( this.team === 1 ) {
+      this.teamRespawnXMin = (GLOBALS.WORLD_WIDTH_IN_TILES - 3) * 2;
+      this.teamRespawnXMax = GLOBALS.WORLD_WIDTH_IN_TILES * 2;
+      this.teamRespawnYMin = (GLOBALS.WORLD_HEIGHT_IN_TILES - 3) * 2;
+      this.teamRespawnYMax = GLOBALS.WORLD_HEIGHT_IN_TILES * 2;
+    }
 
     //Grid variables
     this._gridX = -1;
@@ -68,12 +80,18 @@ export class Player extends Entity {
     this.width = 15;
     this.height = 15;
     this.respawnTries = 0;
+
+    //Restocking counters
+    this.restockCounter = 0;
+    this.restockCounterMax = 100;
   } //Player.constructor()
 
   update(server) {
+    if( this.HP <= 0 ) {
+      return;
+    }
     if( this.mustCheckBuildSelection === true ) {
-      //this.mustCheckBuildSelection = false;
-      this.checkBuildSelection(server, this.camera);
+      this.validateSelection(server, this.camera);
     }
 
     this.updateSpd();
@@ -112,12 +130,18 @@ export class Player extends Entity {
       //Place block
       if( this.pressingAttack === true && this.blocks > 0 ) {
         this.pressingAttack = false;
-        this.placeBlock(server);
+        this.tryToPlaceBlock(server);
         if( this.blocks <= 0 ) {
           this.blocks = 0;
         }
       } //Place block
-    } //if( this.mode )
+    } else if( this.mode === 2 ) {
+      //Try to remove block with Shovel
+      if( this.pressingAttack === true ) {
+        this.pressingAttack = false;
+        this.tryToRemoveBlock(server);
+      }
+    }//if( this.mode )
 
     //If player canceled clipReload, call it again
     if( this.mustReloadClip === true && this.isReloading === false && this.heldAmmo >= this.clipSize ) {
@@ -126,6 +150,10 @@ export class Player extends Entity {
     //If the player is manually reloading, call reload
     if( this.mustReload === true && this.isReloading === false && this.heldAmmo > 0 ) {
       this.reload();
+    }
+
+    if( this.gridX !== -1 || this.gridY !== -1 ) {
+      this.checkIfPlayerInBase(server);
     }
   } //Player.update()
 
@@ -222,6 +250,7 @@ export class Player extends Entity {
   shoot(server) {
     const b = new Bullet({
       parent: this.ID,
+      parentTeam: this.team,
       angle: this.mouseAngle,
       x: this.x,
       y: this.y
@@ -283,14 +312,13 @@ export class Player extends Entity {
   } //Player.cancelActiveReloadRequests()
 
   respawn(server) {
-    //#TODO: Make it so they respawn after a short time, and at their team base
-    this.x = (getRandomInt(1, 39) * 40);
-    this.y = (getRandomInt(1, 20) * 40);
-    if( this.x % 80 === 0 ) {
-      this.x += 40;
+    let respawnX = (getRandomInt(this.teamRespawnXMin, this.teamRespawnXMax) * 40);
+    let respawnY = (getRandomInt(this.teamRespawnYMin, this.teamRespawnYMax) * 40);
+    if( respawnX % 80 === 0 ) {
+      respawnX += 40;
     }
-    if( this.y % 80 === 0 ) {
-      this.y += 40;
+    if( respawnY % 80 === 0 ) {
+      respawnY += 40;
     }
     if( this.respawnTries >= 10 ) {
       this.respawnTries = 0;
@@ -303,18 +331,41 @@ export class Player extends Entity {
       }
     }
 
-    this.HP = this.maxHP;
-    this.ammo = this.clipSize;
-    this.clips = this.maxClips;
-    this.heldAmmo = this.ammo * this.clips;
-    this.mustReloadClip = false;
-    this.mustReload = false;
-    this.isReloading = false;
-    this.blocks = this.maxBlocks;
-    this.invincible = true;
+    //TODO: Investigate better ways to implement this, lag could cause clientside prediction to be off
     setTimeout(() => {
-      this.invincible = false;
-    }, 3000);
+      setTimeout(() => {
+        setTimeout(() => {
+          this.socket.emit('respawnTimer', {ID: this.ID, time: 0});
+        }, 1000);
+        this.socket.emit('respawnTimer', {ID: this.ID, time: 1});
+      }, 1000);
+      this.socket.emit('respawnTimer', {ID: this.ID, time: 2});
+    }, 1000);
+    this.socket.emit('respawnTimer', {ID: this.ID, time: 3});
+
+    setTimeout(() => {
+      //Reset inputs
+      this.pressingLeft = false;
+      this.pressingRight = false;
+      this.pressingUp = false;
+      this.pressingDown = false;
+      this.pressingAttack = false;
+
+      this.x = respawnX;
+      this.y = respawnY;
+      this.HP = this.maxHP;
+      this.ammo = this.clipSize;
+      this.clips = this.maxClips;
+      this.heldAmmo = this.ammo * this.clips;
+      this.mustReloadClip = false;
+      this.mustReload = false;
+      this.isReloading = false;
+      this.blocks = this.maxBlocks;
+      this.invincible = true;
+      setTimeout(() => {
+        this.invincible = false;
+      }, 3000);
+    }, 3000); //TODO: Variable-based respawn time
     this.cancelActiveReloadRequests();
   } //Player.respawn()
 
@@ -331,7 +382,7 @@ export class Player extends Entity {
     }
   } //Player.respawnPositionOccupied()
 
-  placeBlock(server) {
+  tryToPlaceBlock(server) {
     //If the player selection is out of bounds, ignore the request
     if( this.selGridX === -1 || this.selGridY === -1 ) {
       return;
@@ -342,12 +393,28 @@ export class Player extends Entity {
       server.grid[this.selGridY][this.selGridX].updateOccupying(GLOBALS.TILE_BLOCK);
       this.blocks--;
     }
-  } //Player.placeBlock
+  } //Player.tryToPlaceBlock
+
+  tryToRemoveBlock(server) {
+    //If the player selection is not a block, ignore the request
+    if( this.selGridX === -1 || this.selGridY === -1 ) {
+      return;
+    }
+    //If the location is a block
+    if( server.grid[this.selGridY][this.selGridX].occupying === 2 ) {
+      //HP setter handles isActive and updating the grid
+      server.grid[this.selGridY][this.selGridX].block.HP = 0;
+      if( this.blocks < this.maxBlocks ) {
+        this.blocks++;
+      }
+    }
+  } //Player.tryToRemoveBlock()
 
   getInitPack() {
     return {
       ID: this.ID,
       name: this.name,
+      team: this.team,
       gridX: this.gridX,
       gridY: this.gridY,
       x: this.x,
@@ -393,7 +460,15 @@ export class Player extends Entity {
     // };
   } //Player.getUpdatePack()
 
-  checkBuildSelection(server, camera) {
+  validateSelection(server, camera) {
+    if( this.mode === 1 ) {
+      this.validateBuildSelection(server, camera);
+    } else if( this.mode === 2 ) {
+      this.validateShovelSelection(server, camera);
+    }
+  } //Player.validateSelection()
+
+  validateBuildSelection(server, camera) {
     let selGridX = -1;
     let selGridY = -1;
 
@@ -416,23 +491,17 @@ export class Player extends Entity {
       selGridY = ~~(this._mY / 80);
     }
 
-    //Check to see if selection is on top of player
-    if( selGridX === this._gridX && selGridY === this._gridY ) {
-      //selGridX = -1;
-      //selGridY = -1;
-    }
-
     //Check to see if selection is out of range (grid pos + 1)
-    if( selGridX > this._gridX + 1  ) { //Out of range on LEFT
+    if( selGridX > this._gridX + 1 ) { //Out of range on LEFT
       selGridX = -1;
     }
-    if( selGridX < this._gridX - 1  ) { //Out of range on RIGHT
+    if( selGridX < this._gridX - 1 ) { //Out of range on RIGHT
       selGridX = -1;
     }
-    if( selGridY < this._gridY - 1  ) { //Out of range on TOP
+    if( selGridY < this._gridY - 1 ) { //Out of range on TOP
       selGridY = -1;
     }
-    if( selGridY > this._gridY + 1  ) { //Out of range on BOTTOM
+    if( selGridY > this._gridY + 1 ) { //Out of range on BOTTOM
       selGridY = -1;
     }
     //Corners don't need to be checked, are handled already by the above checks
@@ -468,10 +537,106 @@ export class Player extends Entity {
       this.selGridX = selGridX;
       this.selGridY = selGridY;
     }
-  } //Player.checkBuildSelection()
+  } //Player.validateBuildSelection()
+
+  validateShovelSelection(server, camera) {
+    let selGridX = -1;
+    let selGridY = -1;
+
+    if( camera === null ) {
+      return;
+    }
+
+    //If we are outside of left deadzone, need to offset the tile calculation
+    if( camera.xView > 0 ) {
+      const xOffset = camera.xView;
+      selGridX = ~~((this._mX + xOffset) / 80);
+    } else {
+      selGridX = ~~(this._mX / 80);
+    }
+    //If we are outside of top deadzone, need to offset the tile calculation
+    if( camera.yView > 0 ) {
+      const yOffset = camera.yView;
+      selGridY = ~~((this._mY + yOffset) / 80);
+    } else {
+      selGridY = ~~(this._mY / 80);
+    }
+
+    //Check to see if selection is out of range (grid pos + 1)
+    if( selGridX > this._gridX + 1 ) { //Out of range on LEFT
+      selGridX = -1;
+    }
+    if( selGridX < this._gridX - 1 ) { //Out of range on RIGHT
+      selGridX = -1;
+    }
+    if( selGridY < this._gridY - 1 ) { //Out of range on TOP
+      selGridY = -1;
+    }
+    if( selGridY > this._gridY + 1 ) { //Out of range on BOTTOM
+      selGridY = -1;
+    }
+    //Corners don't need to be checked, are handled already by the above checks
+    //Bottom and Right deadzones don't need to be check, they are handled with > 0 check
+    if( (selGridX !== -1 && selGridY !== -1) &&
+        server.grid[selGridY][selGridX].occupying === 2 ) {
+      //Tell client selection is valid
+      this.socket.emit('shovelSelection', {
+        isValid:  true,
+        selBlockID: server.grid[selGridY][selGridX].block.ID,
+        selGridX: selGridX,
+        selGridY: selGridY
+      });
+      this.selGridX = selGridX;
+      this.selGridY = selGridY;
+    } else {
+      //Tell client selection is invalid
+      if( selGridX !== -1 && selGridY !== -1 ) {
+        this.socket.emit('shovelSelection', {
+          isValid:  false,
+          selBlockID: server.grid[selGridY][selGridX].block.ID,
+          selGridX: selGridX,
+          selGridY: selGridY
+        });
+      } else {
+        this.socket.emit('shovelSelection', {
+          isValid:  false,
+          selBlockID: -1,
+          selGridX: selGridX,
+          selGridY: selGridY
+        });
+      }
+      this.selGridX = selGridX;
+      this.selGridY = selGridY;
+    }
+  } //Player.validateShovelSelection()
+
+  checkIfPlayerInBase(server) {
+    //If the player is in their base, restock ammo and blocks over time
+    //No need to restock if the player has full ammo and blocks
+    if( this.clips !== this.maxClips || this.blocks !== this.maxBlocks ) {
+      if( (this.team + 3) === server.grid[this.gridY][this.gridX].occupying ) {
+        this.restockCounter++;
+      } else {
+        this.restockCounter = 0;
+        return;
+      }
+      if( this.restockCounter >= this.restockCounterMax ) {
+        if( this.clips < this.maxClips ) {
+          this.clips++;
+        }
+        if( this.blocks < this.maxBlocks ) {
+          this.blocks++;
+        }
+        this.restockCounter = 0;
+      }
+    }
+  } //Player.checkIfPlayerInBase()
 
   onConnect(socket) {
     socket.on('keyPress', (data) => {
+      if( this.HP <= 0 ) {
+        return;
+      }
       switch( data.inputID ) {
         case 'left':
           this.pressingLeft = data.state;
@@ -499,9 +664,9 @@ export class Player extends Entity {
           }
           break;
         case 'switchMode':
-          //Swap mode from 0 to 1 or 1 to 0 (this.mode ^= 1;)
-          this.mode = 1 - this._mode;
-          if( this._mode === 0 ) {
+          //Swap the mode, increasing by 1
+          this.mode = (this.mode + 1) % 3;
+          if( this._mode === 0 ) {        //Weapon
             this.mustCheckBuildSelection = false;
             this.socket.emit('buildSelection', {
               isValid:  false,
@@ -511,12 +676,14 @@ export class Player extends Entity {
             });
             this.selGridX = -1;
             this.selGridY = -1;
-          } else {
+          } else if( this._mode === 1 ) { //Build
             this.mustCheckBuildSelection = true;
             this.mustReloadClip = false;
             this.mustReload = false;
             this.isReloading = false;
             this.cancelActiveReloadRequests();
+          } else {                        //Shovel
+            this.mustCheckBuildSelection = true;
           }
           break;
         case 'mouseAngle':
@@ -526,6 +693,9 @@ export class Player extends Entity {
           this.mX = data.mousePos.x;
           this.mY = data.mousePos.y;
           if( this._mode === 1 ) {
+            this.camera = data.camera;
+            this.mustCheckBuildSelection = true;
+          } else if( this._mode === 2 ) {
             this.camera = data.camera;
             this.mustCheckBuildSelection = true;
           }

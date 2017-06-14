@@ -12,12 +12,6 @@ export class cBullet {
     const x = this.x - xView;
     const y = this.y - yView;
 
-    /*
-    ctx.beginPath();
-    ctx.arc(x, y, 5, 0, 2*Math.PI);
-    ctx.fill();
-    ctx.stroke();
-    */
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate((this.angle * Math.PI)/180);

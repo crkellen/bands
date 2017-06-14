@@ -1,4 +1,4 @@
-import { getTimestamp } from './Globals.js';
+import { GLOBALS, getTimestamp } from './Globals.js';
 //########## BEGIN INIT SERVER
 import { GameServer } from './GameServer';
 const ServerGame = new GameServer;
@@ -45,7 +45,13 @@ io.on('connection', (socket) => {
   socket.on('joinGame', (playerData) => {
     isValidUsername(playerData, (res) => {
       if( res === true ) {
-        ServerGame.addPlayer(socket, playerData.name, 120, 120);
+        let playerX = 120;
+        let playerY = 120;
+        if( playerData.team === 1 ) {
+          playerX = GLOBALS.WORLD_WIDTH - 120;
+          playerY = GLOBALS.WORLD_HEIGHT - 120;
+        }
+        ServerGame.addPlayer(socket, playerData.name, playerData.team, playerX, playerY);
       } else {
         //Username was Invalid
       }

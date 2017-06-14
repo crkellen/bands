@@ -60,3 +60,7 @@ Sorted in no particular order other than type of assistance.
 ### Tony Dols
 
 ### Alex Meyer
+
+### Eekeros
+
+### Katageo

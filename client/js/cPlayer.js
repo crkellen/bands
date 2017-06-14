@@ -1,11 +1,10 @@
 import { GLOBALS, LocalPlayerAnimationController } from './Globals';
 
-//const AnimController = new AnimationController();
-
 export class cPlayer {
   constructor(initPack) {
     this.ID = initPack.ID;
     this.name = initPack.name;
+    this.team = initPack.team;
     this.gridX = initPack.gridX;
     this.gridY = initPack.gridY;
     this.x = initPack.x;
@@ -29,6 +28,9 @@ export class cPlayer {
     this.maxBlocks = initPack.maxBlocks;
 
     this.bulletTheta = 0;
+
+    this.showPlayerName = true; //Only exists on client
+    this.activePlayerNameRequests = []; //A collection of identifiers to showPlayerName setTimeouts
   } //cPlayer.constructor
 
   drawSelf(ctx, xView, yView, isLocalPlayer) {
@@ -36,18 +38,22 @@ export class cPlayer {
     const y = this.y - yView;
 
     //Health bar
-    const HPWidth = 30 * this.HP / this.maxHP;
+    const HPWidth = (30 * this.HP / this.maxHP) * 1.4;
+    const HPOutlineXOff = (this.maxHP * 2);
+    const HPOutlineWidth = (this.maxHP * 4) + 3;
+    ctx.fillStyle = 'black';
+    ctx.fillRect(x - HPOutlineXOff - 2.5, y + 21.5, HPOutlineWidth, 5);
     ctx.fillStyle = 'red';
-    ctx.fillRect(x - HPWidth/1.4, y + 22, HPWidth*1.4, 4);
+    ctx.fillRect(x - HPOutlineXOff - 2, y + 22, HPWidth, 4);
 
     //Player
     //User feedback for respawn invincibility
     if( this.invincible === true ) {
       ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fillStyle = this.team ? 'rgba(35, 75, 175, 0.5)' : 'rgba(35, 175, 75, 0.5)';
     } else {
-      ctx.strokeStyle = 'black'; //#TODO: This will change to team color later
-      ctx.fillStyle = 'black';
+      ctx.strokeStyle = 'black';
+      ctx.fillStyle = this.team ? 'rgba(35, 75, 175, 1.0)' : 'rgba(35, 175, 75, 1.0)';
     }
 
     /*
@@ -104,6 +110,7 @@ export class cPlayer {
       this.bulletTheta = theta;
       const scaleByAmmo = 20 * (6 - this.ammo);
 
+      //Draw the Gun
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(theta);
@@ -120,6 +127,14 @@ export class cPlayer {
       ctx.drawImage(GLOBALS.Imgs.gun, 0, 0, 80, 18);
       ctx.restore();
 
+      /*
+      ctx.translate(20, -5); //Move the gun to the outside of the player
+      ctx.fillStyle = this.invincible ? 'rgba(15, 135, 255, 0.5)' : `rgba(${15 + scaleByAmmo * 2}, ${135 + scaleByAmmo}, 255, 1)`;
+      ctx.fillRect(0, 0, 20, 10);
+      ctx.restore();
+      */
+
+      //Draw the Aiming Guide
       if( isLocalPlayer === true ) {
         ctx.save();
         ctx.translate(x, y);
@@ -155,8 +170,8 @@ export class cPlayer {
     const x = this.x - xView;
     const y = this.y - yView;
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.fillText(this.name, x - this.name.length * 2.5, y);
+    ctx.fillStyle = 'white';
+    ctx.fillText(this.name, x - this.name.length * 3, y - 22);
   } //cPlayer.drawName()
 
   drawAmmo(ctx, xView, yView) {
@@ -164,7 +179,13 @@ export class cPlayer {
     const y = this.y - yView;
 
     const ammoString = `${this.ammo}/${this.clipSize}`;
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.fillText(ammoString, x - 8, y + 16);
+    ctx.fillStyle = 'white';
+    ctx.fillText(ammoString, x - 8, y + 5);
   } //cPlayer.drawAmmo()
+
+  cancelActivePlayerNameRequests() {
+    for( let id in this.activePlayerNameRequests ) {
+      clearTimeout(this.activePlayerNameRequests.pop(id));
+    }
+  }
 } //class cPlayer
