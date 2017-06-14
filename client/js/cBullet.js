@@ -16,7 +16,7 @@ export class cBullet {
     ctx.translate(x, y);
     ctx.rotate((this.angle * Math.PI)/180);
     ctx.translate(0, -2);
-    ctx.drawImage(GLOBALS.Imgs.bullet, 0, 0, 17, 7);
+    ctx.drawImage(GLOBALS.Imgs.bullet, 0, 0, 10, 6);
     ctx.restore();
   } //cBullet.drawSelf()
 } //class cBullet

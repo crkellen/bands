@@ -8,14 +8,24 @@ const RIFLE_RELOAD_TIME = 1000;
 const RIFLE_CLIP_RELOAD_TIME = 3000;
 
 var Imgs = {};
-Imgs.player = new Image();
-Imgs.player.src = './../img/player.png';
+Imgs.greenPlayer = new Image();
+Imgs.greenPlayer.src = './../img/greenPlayer.png';
+Imgs.bluePlayer = new Image();
+Imgs.bluePlayer.src = './../img/bluePlayer.png';
+Imgs.greenPlayerBuild = new Image();
+Imgs.greenPlayerBuild.src = './../img/greenPlayerBuild.png';
+Imgs.bluePlayerBuild = new Image();
+Imgs.bluePlayerBuild.src = './../img/bluePlayerBuild.png';
+Imgs.greenPlayerShovel = new Image();
+Imgs.greenPlayerShovel.src = './../img/greenPlayerShovel.png';
+Imgs.bluePlayerShovel = new Image();
+Imgs.bluePlayerShovel.src = './../img/bluePlayerShovel.png';
 Imgs.bullet = new Image();
 Imgs.bullet.src = './../img/bullet.png';
-Imgs.gun = new Image();
-Imgs.gun.src = './../img/gun.png';
-Imgs.shovel = new Image();
-Imgs.shovel.src = './../img/shovel.png';
+// Imgs.gun = new Image();
+// Imgs.gun.src = './../img/gun.png';
+// Imgs.shovel = new Image();
+// Imgs.shovel.src = './../img/shovel.png';
 Imgs.grid = new Image();
 Imgs.grid.src = './../img/grid2x.png';
 Imgs.aimingGuide = new Image();
@@ -50,32 +60,6 @@ export class GLOBALS {
   static get Imgs() {
     return Imgs;
   }
-<<<<<<< HEAD
-
-} //class Globals
-
-//LocalPlayerAnimationController Static Variables
-//AIMING GUIDE ANIMATION VARIABLES
-var _aimingGuideFrame = 0;
-var _aimingGuideFrameTick = 0;
-var _aimingGuideAnimSpeed = 3;
-
-//The animation controller for only the local player. All accessed variables and functionality is static.
-export class LocalPlayerAnimationController {
-
-//AIMING GUIDE ANIMATION FUNCTIONS
-  static aimingGuideAnimationUpdate() {
-    if( _aimingGuideFrameTick === _aimingGuideAnimSpeed ) {
-      _aimingGuideFrame++;
-      if( _aimingGuideFrame >= 5 ) { //Image has 5 frames of animation
-        _aimingGuideFrame = 0;
-      }
-    }
-    _aimingGuideFrameTick++;
-    if( _aimingGuideFrameTick >= (_aimingGuideAnimSpeed + 1) ) {
-      _aimingGuideFrameTick = 0;
-    }
-=======
 } //class Globals
 
 //LocalPlayerAnimationController Static Variables
@@ -93,7 +77,6 @@ export class LocalPlayerAnimationController {
     }
     _aimingGuideFrameTick++;
     _aimingGuideFrameTick %= (_aimingGuideAnimSpeed + 1);
->>>>>>> dev
   } //GLOBALS.aimingGuideAnimationUpdate()
 
   static get aimingGuideFrame() {
@@ -106,8 +89,4 @@ export class LocalPlayerAnimationController {
 //The animation controller for any player, including the local player, but not the local only animations.
 export class PlayerAnimationController {
 
-<<<<<<< HEAD
-} //class PlayerAnimationController
-=======
 } //class PlayerAnimationController 
->>>>>>> dev
