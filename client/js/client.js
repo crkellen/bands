@@ -612,7 +612,7 @@ const drawUI = () => {
     const blockString = `Blocks: ${cGame.prevBlockCount}/${cGame.localPlayer.maxBlocks}`;
     cGame.ctxUI.fillText(blockString, 360, 30);
 
-    if( cGame.localPlayer.isReloading === true ) {
+    if( cGame.localPlayer.isReloading === true && cGame.localPlayer.HP > 0) {
       let reloadBar = 0;
       if( cGame.localPlayer.mustReloadClip === true ) {
         reloadBar = 30 * cGame.reloadTimeLeft / GLOBALS.RIFLE_CLIP_RELOAD_TIME;
