@@ -8,20 +8,31 @@ const RIFLE_RELOAD_TIME = 1000;
 const RIFLE_CLIP_RELOAD_TIME = 3000;
 
 var Imgs = {};
-//Imgs.player = new Image();
-//Imgs.player.src = './../img/player.png';
-//Imgs.bullet = new Image();
-//Imgs.bullet.src = './../img/bullet.png';
-//Imgs.gun = new Image();
-//Imgs.gun.src = './../img/gun.png';
-Imgs.shovel = new Image();
-Imgs.shovel.src = './../img/shovel.png';
+Imgs.greenPlayer = new Image();
+Imgs.greenPlayer.src = './../img/greenPlayer.png';
+Imgs.bluePlayer = new Image();
+Imgs.bluePlayer.src = './../img/bluePlayer.png';
+Imgs.greenPlayerBuild = new Image();
+Imgs.greenPlayerBuild.src = './../img/greenPlayerBuild.png';
+Imgs.bluePlayerBuild = new Image();
+Imgs.bluePlayerBuild.src = './../img/bluePlayerBuild.png';
+Imgs.greenPlayerShovel = new Image();
+Imgs.greenPlayerShovel.src = './../img/greenPlayerShovel.png';
+Imgs.bluePlayerShovel = new Image();
+Imgs.bluePlayerShovel.src = './../img/bluePlayerShovel.png';
+Imgs.bullet = new Image();
+Imgs.bullet.src = './../img/bullet.png';
+// Imgs.gun = new Image();
+// Imgs.gun.src = './../img/gun.png';
+// Imgs.shovel = new Image();
+// Imgs.shovel.src = './../img/shovel.png';
 Imgs.grid = new Image();
 Imgs.grid.src = './../img/grid2x.png';
 Imgs.aimingGuide = new Image();
 Imgs.aimingGuide.src = './../img/aimingGuide.png';
 
 export class GLOBALS {
+
   static get WORLD_WIDTH() {
     return WORLD_WIDTH;
   }

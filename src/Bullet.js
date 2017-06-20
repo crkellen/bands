@@ -10,6 +10,8 @@ export class Bullet extends Entity {
 
     this.spdX = Math.cos(params.angle/180*Math.PI) * 40;
     this.spdY = Math.sin(params.angle/180*Math.PI) * 40;
+    //this._x += this.spdX*1.5; //TODO: TEMPORARY REPOSITIONING WHILE USING IMGS
+    //this._y += this.spdY*1.5;
     this.ID = Math.random(); //#TODO replace with real ID system
     this.timer = 0;
     this.toRemove = false;
@@ -142,7 +144,8 @@ export class Bullet extends Entity {
     return {
       ID: this.ID,
       x: this.x,
-      y: this.y
+      y: this.y,
+      angle: this.angle
     };
   } //Bullet.getInitPack()
 
