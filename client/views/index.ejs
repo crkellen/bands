@@ -20,6 +20,16 @@
        <p id="errorMessage" style="display:none;"><br>Error: Name too long, limit it to 9 characters.</p>
      </div>
   </div>
+
+  <script type="text/javascript">
+    var type = "WebGL"
+    if(!PIXI.utils.isWebGLSupported()){
+      type = "canvas"
+    }
+
+    PIXI.utils.sayHello(type)
+  </script>
+
   <%- include('footer') %>
 </body>
 </html>
