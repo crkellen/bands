@@ -6,6 +6,16 @@ import { cBlock } from './cBlock.js';
 import { Camera } from './Camera.js';
 import { Map } from './Map.js';
 
+//PIXI.JS SETUP
+//TODO: Remove temp check
+var type = 'WebGL';
+if(!PIXI.utils.isWebGLSupported()){
+  type = 'canvas';
+}
+
+PIXI.utils.sayHello(type);
+//END PIXI.JS SETUP
+
 const io = require('socket.io-client');
 const socket = io();
 
