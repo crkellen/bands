@@ -2,6 +2,14 @@ import { GLOBALS } from './Globals';
 
 export class Game {
   constructor(ctx, ctxUI) {
+    //Pixi.js Variables
+    this.stage = null;
+    this.renderer = null;
+    this.scoreText = null;
+    this.heldAmmoText = null;
+    this.clipText = null;
+    this.blockText = null;
+
     this.ctx = ctx;
     this.ctx.font = '12px Calibri';
     this.ctxUI = ctxUI;

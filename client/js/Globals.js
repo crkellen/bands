@@ -7,7 +7,20 @@ const CTX_UI = document.getElementById('canvas-ui').getContext('2d');
 const RIFLE_RELOAD_TIME = 1000;
 const RIFLE_CLIP_RELOAD_TIME = 3000;
 
+const UI_TEXT_STYLE_OPTIONS = {fontFamily: 'Calibri', fontSize: 20, fill: 'white'};
+const PLAYER_TEXT_STYLE_OPTIONS = {fontFamily: 'Calibri', fontSize: 12, fill: 'white'};
+
 var Imgs = {};
+Imgs.IDs = [];
+Imgs.greenPlayer = null;
+Imgs.bluePlayer = null;
+Imgs.greenPlayerBuild = null;
+Imgs.bluePlayerBuild = null;
+Imgs.greenPlayerShovel = null;
+Imgs.bluePlayerShovel = null;
+Imgs.bullet = null;
+Imgs.grid = null;
+/*
 Imgs.greenPlayer = new Image();
 Imgs.greenPlayer.src = './../img/greenPlayer.png';
 Imgs.bluePlayer = new Image();
@@ -28,6 +41,7 @@ Imgs.bullet.src = './../img/bullet.png';
 // Imgs.shovel.src = './../img/shovel.png';
 Imgs.grid = new Image();
 Imgs.grid.src = './../img/grid2x.png';
+*/
 Imgs.aimingGuide = new Image();
 Imgs.aimingGuide.src = './../img/aimingGuide.png';
 
@@ -55,6 +69,14 @@ export class GLOBALS {
 
   static get RIFLE_CLIP_RELOAD_TIME() {
     return RIFLE_CLIP_RELOAD_TIME;
+  }
+
+  static get UI_TEXT_STYLE_OPTIONS() {
+    return UI_TEXT_STYLE_OPTIONS;
+  }
+
+  static get PLAYER_TEXT_STYLE_OPTIONS() {
+    return PLAYER_TEXT_STYLE_OPTIONS;
   }
 
   static get Imgs() {

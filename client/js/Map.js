@@ -5,13 +5,16 @@ export class Map {
     this.width = width;
     this.height = height;
 
+    //Pixi.js Sprite
+    this.sprite = null;
+
     //Map Texture
     this.image = null;
   } //Map.constructor()
 
   generate() {
-    this.image = new Image();
-    this.image.src = GLOBALS.Imgs.grid.src;
+    //this.image = new Image();
+    //this.image.src = GLOBALS.Imgs.grid.src;
 
     //#FIXME: ISSUE #48 FIXME: OPTIMIZE WORLD SIZE
     /*
@@ -40,31 +43,39 @@ export class Map {
     */
   } //Map.generate()
 
-  draw(ctx, xView, yView) {
-    //Offset point to crop the image
-    const sx = xView;
-    const sy = yView;
+  draw(renderer, xView, yView) {
+    if( this.sprite !== null ) {
+      //Offset point to crop the image
+      const sx = xView;
+      const sy = yView;
 
-    //Dimensions of the cropped image
-    let sWidth = ctx.canvas.width;
-    let sHeight = ctx.canvas.height;
+      //console.info(renderer.width);
+      //console.info(renderer.height);
+      /*
+      //Dimensions of the cropped image
+      let sWidth = renderer.width;
+      let sHeight = renderer.height;
 
-    //If cropped image is smaller than canvas we need to change the source dimensions
-    if( this.image.width - sx < sWidth ) {
-      sWidth = this.image.width - sx;
+      //If cropped image is smaller than canvas we need to change the source dimensions
+      if( this.width - sx < sWidth ) {
+        sWidth = this.width - sx;
+      }
+      if( this.height - sy < sHeight ) {
+        sHeight = this.height - sy;
+      }
+
+      //Location on canvas to draw the cropped image
+      const dx = 0;
+      const dy = 0;
+
+      //Match destination with source to not scale the image
+      const dWidth = sWidth;
+      const dHeight = sHeight;
+      */
+      this.sprite.x = -sx;
+      this.sprite.y = -sy;
+      
+      //ctx.drawImage(this.image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
     }
-    if( this.image.height - sy < sHeight ) {
-      sHeight = this.image.height - sy;
-    }
-
-    //Location on canvas to draw the cropped image
-    const dx = 0;
-    const dy = 0;
-
-    //Match destination with source to not scale the image
-    const dWidth = sWidth;
-    const dHeight = sHeight;
-
-    ctx.drawImage(this.image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
   } //Map.draw()
 } //class Map

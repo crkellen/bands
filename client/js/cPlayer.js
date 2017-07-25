@@ -1,4 +1,9 @@
-import { GLOBALS, LocalPlayerAnimationController } from './Globals';
+import * as Pixi from 'pixi.js';
+import { GLOBALS } from './Globals';
+var Sprite = Pixi.Sprite;
+var Text = Pixi.Text;
+var Graphics = Pixi.Graphics;
+var Container = Pixi.Container;
 
 export class cPlayer {
   constructor(initPack) {
@@ -27,182 +32,183 @@ export class cPlayer {
     this.blocks = initPack.blocks;
     this.maxBlocks = initPack.maxBlocks;
 
+    //Setup the sprites for the player
+    this.gunSprite = null;
+    this.buildSprite = null;
+    this.shovelSprite = null;
+    this.initializeSprites();
+
+    //Setup the text for the player
+    this.nameText = null;
+    this.ammoText = null;
+    this.initializeText();
+
+    //Setup the primitives for the player
+    this.HPBar = null;
+    this.initializePrimitives();
+
+    //Setup the Container for the player
+    this.sprite = null;
+    this.UI = null;
+    this.playerGraphics = null;
+    this.initializeContainer();
+
+    //Bullet rotation to match player rotation
     this.bulletTheta = 0;
 
     this.showPlayerName = true; //Only exists on client
     this.activePlayerNameRequests = []; //A collection of identifiers to showPlayerName setTimeouts
   } //cPlayer.constructor
 
-  drawSelf(ctx, xView, yView, isLocalPlayer) {
+  initializeSprites() {
+    //Gun Sprite
+    this.gunSprite = this.team ? new Sprite(GLOBALS.Imgs.IDs['bluePlayer.png']) : new Sprite(GLOBALS.Imgs.IDs['greenPlayer.png']);
+    this.gunSprite.anchor.x = 0.3;
+    this.gunSprite.anchor.y = 0.5;
+
+    //Build Sprite
+    this.buildSprite = this.team ? new Sprite(GLOBALS.Imgs.IDs['bluePlayerBuild.png']) : new Sprite(GLOBALS.Imgs.IDs['greenPlayerBuild.png']);
+    this.buildSprite.visible = false;
+    this.buildSprite.anchor.x = 0.49;
+    this.buildSprite.anchor.y = 0.5;
+
+    //Shovel Sprite
+    this.shovelSprite = this.team ? new Sprite(GLOBALS.Imgs.IDs['bluePlayerShovel.png']) : new Sprite(GLOBALS.Imgs.IDs['greenPlayerShovel.png']);
+    this.shovelSprite.visible = false;
+    this.shovelSprite.anchor.x = 0.45;
+    this.shovelSprite.anchor.y = 0.64;
+  } //cPlayer.initializeSprites()
+
+  initializeText() {
+    //Name Text
+    this.nameText = new Text(this.name, GLOBALS.PLAYER_TEXT_STYLE_OPTIONS);
+    //Ammo Text
+    this.ammoText = new Text(`${this.ammo}/${this.clipSize}`, GLOBALS.PLAYER_TEXT_STYLE_OPTIONS);
+
+    this.nameText.position.set(-(this.name.length * 3), -40);
+    this.ammoText.position.set(-10, 30);
+  } //cPlayer.initializeText()
+
+  initializePrimitives() {
+    const HPBarWidth = (30 * this.HP / this.maxHP) * 1.4;
+    const HPXOffset = (this.maxHP * 2);
+
+    //HP Bar
+    this.HPBar = new Graphics();
+    this.HPBar.beginFill(0xFF0000);
+    this.HPBar.lineStyle(1, 0x000000, 1);
+    this.HPBar.drawRect(0, 0, HPBarWidth, 5);
+    this.HPBar.endFill();
+    this.HPBar.position.set(HPXOffset - 40, 25);
+  } //cPlayer.initializePrimitives()
+
+  initializeContainer() {
+    //The ParticleContainer contains all of the sprites to be drawn
+    this.sprite = new Container();
+    this.UI = new Container();
+    this.playerGraphics = new Container();
+
+    //Sprites
+    this.sprite.addChild(this.gunSprite);
+    this.sprite.addChild(this.buildSprite);
+    this.sprite.addChild(this.shovelSprite);
+
+    //Text
+    this.UI.addChild(this.nameText);
+    this.UI.addChild(this.ammoText);
+    this.UI.addChild(this.HPBar);
+
+    //Final combined player graphics container
+    this.playerGraphics.addChild(this.sprite);
+    this.playerGraphics.addChild(this.UI);
+
+    if( this.team === 0 ) {
+      this.playerGraphics.position.set(this.x, this.y);
+    } else {
+      this.playerGraphics.position.set(this.x - 1600, this.y - 1000);
+    }
+  } //cPlayer.initializeContainer()
+
+  drawSelf(renderer, xView, yView, isLocalPlayer) {
+    let x = this.x - xView;
+    let y = this.y - yView;
+
+    //Calculate the rotation in radians while adjusting for deadzones
+    const playerTheta = this.calculatePlayerTheta(renderer, xView, yView, isLocalPlayer);
+    this.bulletTheta = playerTheta;
+    this.sprite.rotation = playerTheta;
+
+    //Update position
+    this.playerGraphics.position.set(x, y);
+  } //cPlayer.drawSelf()
+
+  calculatePlayerTheta(renderer, xView, yView, isLocalPlayer) {
     const x = this.x - xView;
     const y = this.y - yView;
 
-    //Health bar
-    const HPWidth = (30 * this.HP / this.maxHP) * 1.4;
-    const HPOutlineXOff = (this.maxHP * 2);
-    const HPOutlineWidth = (this.maxHP * 4) + 3;
-    ctx.fillStyle = 'black';
-    ctx.fillRect(x - HPOutlineXOff - 2.5, y + 21.5, HPOutlineWidth, 5);
-    ctx.fillStyle = 'red';
-    ctx.fillRect(x - HPOutlineXOff - 2, y + 22, HPWidth, 4);
-
-    // //Player
-    // //User feedback for respawn invincibility
-    // if( this.invincible === true ) {
-    //   ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-    //   ctx.fillStyle = this.team ? 'rgba(35, 75, 175, 0.5)' : 'rgba(35, 175, 75, 0.5)';
-    // } else {
-    //   ctx.strokeStyle = 'black';
-    //   ctx.fillStyle = this.team ? 'rgba(35, 75, 175, 1.0)' : 'rgba(35, 175, 75, 1.0)';
-    // }
-
-    /*
-    ctx.beginPath();
-    ctx.arc(x, y, 20, 0, 2*Math.PI);
-    ctx.fill();
-    ctx.stroke();
-    */
-    //ctx.drawImage(GLOBALS.Imgs.player, x-20, y-20, 40, 40);
-
-    //Gun
-    let targetX = this.mX - ctx.canvas.width*0.5;
-    let targetY = this.mY - ctx.canvas.height*0.5;
+    let targetX = this.mX - renderer.width*0.5;
+    let targetY = this.mY - renderer.height*0.5;
 
     //Check if within the deadzones
     if( isLocalPlayer === true && xView === 0 ) {     //LEFT
       //Local player is inside of left deadzone
       targetX = this.mX - this.x;
     }
-    if( isLocalPlayer !== true && this.x < ctx.canvas.width*0.5 ) {
+    if( isLocalPlayer !== true && this.x < renderer.width*0.5 ) {
       //Other player is inside of left deadzone
       targetX = this.mX - this.x;
     }
 
-    if( isLocalPlayer === true && xView === (GLOBALS.WORLD_WIDTH - ctx.canvas.width) ) {  //RIGHT
+    if( isLocalPlayer === true && xView === (GLOBALS.WORLD_WIDTH - renderer.width) ) {  //RIGHT
       //Local player is inside of right deadzone
       targetX = this.mX - x;
     }
-    if( isLocalPlayer !== true && this.x > (GLOBALS.WORLD_WIDTH - ctx.canvas.width*0.5) ) {
+    if( isLocalPlayer !== true && this.x > (GLOBALS.WORLD_WIDTH - renderer.width*0.5) ) {
       //Other player is inside of right deadzone
-      targetX = this.mX - (this.x - (GLOBALS.WORLD_WIDTH - ctx.canvas.width));
+      targetX = this.mX - (this.x - (GLOBALS.WORLD_WIDTH - renderer.width));
     } 
 
     if( isLocalPlayer === true && yView === 0 ) {     //TOP
       //Local player is inside of top deadzone
       targetY = this.mY - this.y;
     }
-    if( isLocalPlayer !== true && this.y < ctx.canvas.height*0.5 ) {
+    if( isLocalPlayer !== true && this.y < renderer.height*0.5 ) {
       //Other player is inside of top deadzone
       targetY = this.mY - this.y;
     }
 
-    if( isLocalPlayer === true && yView === (GLOBALS.WORLD_HEIGHT - ctx.canvas.height) ) {  //BOTTOM
+    if( isLocalPlayer === true && yView === (GLOBALS.WORLD_HEIGHT - renderer.height) ) {  //BOTTOM
       //Local player is inside of bottom deadzone
       targetY = this.mY - y;
     }
-    if( isLocalPlayer !== true && this.y > (GLOBALS.WORLD_HEIGHT - ctx.canvas.height*0.5) ) {
+    if( isLocalPlayer !== true && this.y > (GLOBALS.WORLD_HEIGHT - renderer.height*0.5) ) {
       //Other player is inside of bottom deadzone
-      targetY = this.mY - (this.y - (GLOBALS.WORLD_HEIGHT - ctx.canvas.height));
+      targetY = this.mY - (this.y - (GLOBALS.WORLD_HEIGHT - renderer.height));
     }
 
     const theta = Math.atan2(targetY, targetX);
-    this.bulletTheta = theta;
 
+    return theta;
+  } //cPlayer.calculatePlayerTheta()
 
-    if( this.mode === 0 ) { //If player is in weapon mode
-      
-      //const scaleByAmmo = 20 * (6 - this.ammo);
+  updateHPBarGraphics() {
+    //Delete the existing drawn Graphics, not the object
+    this.HPBar.clear();
 
-      //Draw the Gun
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(theta);
-      ctx.translate(-20, -24); //Move the gun to the outside of the player
-      /*
-      if( this.invincible === true ) {
-        ctx.fillStyle = 'rgba(15, 135, 255, 0.5)';
-      } else {
-        ctx.fillStyle = `rgba(${15 + scaleByAmmo * 2}, ${135 + scaleByAmmo}, 255, 1)`;
-      }
-      ctx.fillRect(19/2 * -1, 8/2 * -1, 19, 8);
-      */
-      //ctx.rotate(0);
-      this.team ? ctx.drawImage(GLOBALS.Imgs.bluePlayer, 0, 0, 82, 48) : ctx.drawImage(GLOBALS.Imgs.greenPlayer, 0, 0, 82, 48);
-      ctx.restore();
+    //Redraw the Graphics
+    const HPBarWidth = (30 * this.HP / this.maxHP) * 1.4;
+    const HPXOffset = (this.maxHP * 2);
 
-      /*
-      ctx.translate(20, -5); //Move the gun to the outside of the player
-      ctx.fillStyle = this.invincible ? 'rgba(15, 135, 255, 0.5)' : `rgba(${15 + scaleByAmmo * 2}, ${135 + scaleByAmmo}, 255, 1)`;
-      ctx.fillRect(0, 0, 20, 10);
-      ctx.restore();
-      */
-
-      //Draw the Aiming Guide
-      if( isLocalPlayer === true ) {
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(theta);
-        ctx.translate(60, 1);
-        //ctx.drawImage(this.aimingImg, 0, this.aimingFrame*5, 200, 3, 0, 0, 200, 3);
-        ctx.globalAlpha = 0.5;
-        ctx.drawImage(GLOBALS.Imgs.aimingGuide, 0, LocalPlayerAnimationController.aimingGuideFrame*6, 200, 3, 0, 0, 200, 3);
-        ctx.restore();
-        LocalPlayerAnimationController.aimingGuideAnimationUpdate();
-      }
-
-      //PARTY HAT (A joke, but also a test for future implementations)
-      /*
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(theta);
-      ctx.translate(-28, 0);
-      ctx.fillStyle = 'rgba(200, 200, 0, 1)';
-      ctx.fillRect(4, -8, 4, 19);
-      ctx.fillStyle = 'rgba(0, 200, 0, 1)';
-      ctx.fillRect(0, -6, 4, 14);
-      ctx.fillStyle = 'rgba(0, 0, 200, 1)';
-      ctx.fillRect(-4, -4, 4, 9);
-      ctx.fillStyle = 'rgba(200, 0, 0, 1)';
-      ctx.fillRect(-8, -2, 4, 4);
-      ctx.restore();
-      */
-    } else if( this.mode === 1 ) {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(theta);
-      ctx.translate(-20, -24);
-      this.team ? ctx.drawImage(GLOBALS.Imgs.bluePlayerBuild, 0, 0, 51, 48) : ctx.drawImage(GLOBALS.Imgs.greenPlayerBuild, 0, 0, 51, 48);
-      ctx.restore();
-    } else if( this.mode === 2 ) {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(theta);
-      ctx.translate(-20, -42);
-      this.team ? ctx.drawImage(GLOBALS.Imgs.bluePlayerShovel, 0, 0, 55, 66) : ctx.drawImage(GLOBALS.Imgs.greenPlayerShovel, 0, 0, 55, 66);
-      ctx.restore();
-    }
-  } //cPlayer.drawSelf()
-
-  drawName(ctx, xView, yView) {
-    const x = this.x - xView;
-    const y = this.y - yView;
-
-    ctx.fillStyle = 'white';
-    ctx.fillText(this.name, x - this.name.length * 3, y - 22);
-  } //cPlayer.drawName()
-
-  drawAmmo(ctx, xView, yView) {
-    const x = this.x - xView;
-    const y = this.y - yView;
-
-    const ammoString = `${this.ammo}/${this.clipSize}`;
-    ctx.fillStyle = 'white';
-    ctx.fillText(ammoString, x - 8, y + 5);
-  } //cPlayer.drawAmmo()
+    this.HPBar.beginFill(0xFF0000);
+    this.HPBar.lineStyle(1, 0x000000, 1);
+    this.HPBar.drawRect(0, 0, HPBarWidth, 5);
+    this.HPBar.endFill();
+    this.HPBar.position.set(HPXOffset - 40, 25);
+  } //cPlayer.updateHPBarGraphics()
 
   cancelActivePlayerNameRequests() {
     for( let id in this.activePlayerNameRequests ) {
       clearTimeout(this.activePlayerNameRequests.pop(id));
     }
-  }
+  } //cPlayer.cancelActivePlayerNameRequests()
 } //class cPlayer
