@@ -43,11 +43,11 @@ export class Map {
     */
   } //Map.generate()
 
-  draw(renderer, xView, yView) {
+  drawMap(xView, yView) {
     if( this.sprite !== null ) {
       //Offset point to crop the image
-      const sx = xView;
-      const sy = yView;
+      //const sx = xView;
+      //const sy = yView;
 
       //console.info(renderer.width);
       //console.info(renderer.height);
@@ -72,8 +72,8 @@ export class Map {
       const dWidth = sWidth;
       const dHeight = sHeight;
       */
-      this.sprite.x = -sx;
-      this.sprite.y = -sy;
+      this.sprite.x = -xView;
+      this.sprite.y = -yView;
       
       //ctx.drawImage(this.image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
     }

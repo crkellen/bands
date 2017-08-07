@@ -14,19 +14,19 @@ export class cBullet {
     this.sprite.anchor.y = 0.5;
   } //cBullet.constructor()
 
-  drawSelf(ctx, xView, yView) {
+  drawSelf(xView, yView) {
     const x = this.x - xView;
     const y = this.y - yView;
 
     this.sprite.rotation = (this.angle * Math.PI)/180;
-
+    this.sprite.position.set(x, y);
+    /*
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate((this.angle * Math.PI)/180);
     ctx.translate(0, -2);
-    this.sprite.x = x;
-    this.sprite.y = y;
     //ctx.drawImage(GLOBALS.Imgs.bullet, 0, 0, 10, 6);
     ctx.restore();
+    */
   } //cBullet.drawSelf()
 } //class cBullet

@@ -1,8 +1,8 @@
 const WORLD_WIDTH  = 3200;
 const WORLD_HEIGHT = 1800;
 
-const CTX    = document.getElementById('canvas-game').getContext('2d');
-const CTX_UI = document.getElementById('canvas-ui').getContext('2d');
+//const CTX    = document.getElementById('canvas-game').getContext('2d');
+//const CTX_UI = document.getElementById('canvas-ui').getContext('2d');
 
 const RIFLE_RELOAD_TIME = 1000;
 const RIFLE_CLIP_RELOAD_TIME = 3000;

@@ -7,7 +7,16 @@ import { cBlock } from './cBlock.js';
 import { Camera } from './Camera.js';
 import { Map } from './Map.js';
 
-//PIXI.JS SETUP
+const io = require('socket.io-client');
+const socket = io();
+
+const cGame = new Game();
+let playerName = '';
+let playerTeam = 0; //0, 1 - Green, Blue
+
+const GameMap = new Map(GLOBALS.WORLD_WIDTH, GLOBALS.WORLD_HEIGHT);
+//GameMap.generate(cGame.ctx);
+
 //TODO: Remove temp check
 var type = 'WebGL';
 if(!Pixi.utils.isWebGLSupported()){
@@ -25,54 +34,153 @@ var Sprite = Pixi.Sprite;
 var Text = Pixi.Text;
 var Graphics = Pixi.Graphics;
 
-/*
-//Create a Pixi stage and renderer and add the renderer.view to the DOM
-var stage = new Container(),
-  renderer = autoDetectRenderer(256, 256);
+const initializeRenderer = () => {
+  //Create stage
+  cGame.stage = new Container();
+  cGame.stage.interactive = true;
+  //Setup renderer
+  cGame.renderer = autoDetectRenderer(1600, 900);
+  cGame.renderer.view.style.position = 'absolute';
+  cGame.renderer.view.style.display = 'block';
+  cGame.renderer.autoResize = true;
+  cGame.renderer.resize(window.innerWidth, window.innerHeight);
+  //Add the canvas to the HTML document
+  document.body.appendChild(cGame.renderer.view);
 
-renderer.view.style.position = 'absolute';
-renderer.view.style.display = 'block';
-renderer.autoResize = true;
-renderer.resize(window.innerWidth, window.innerHeight);
+  loadImages();
+};
 
-//Add the canvas to the HTML document
-document.body.appendChild(renderer.view);
+const loadImages = () => {
+  loader
+    .add('./../img/bands.json')
+    .load(createImages);
+};
 
-loader
-  .add([
-    './../img/grid2x.png',
-    './../img/greenPlayer.png'
-  ])
-  .load(setup);
+const createImages = () => {
+  GLOBALS.Imgs.IDs = resources['./../img/bands.json'].textures;
+  GameMap.sprite = new Sprite(GLOBALS.Imgs.IDs['grid2x.png']);
+  cGame.stage.addChild(GameMap.sprite);
+  //GLOBALS.Imgs.grid = new Sprite(GLOBALS.Imgs.IDs['grid2x.png']);
+  //cGame.stage.addChild(GLOBALS.Imgs.grid);
+  /* List of possible Sprites and creation of those Sprites
+  GLOBALS.Imgs.greenPlayer = new Sprite(GLOBALS.Imgs.IDs['greenPlayer.png']);
+  GLOBALS.Imgs.bluePlayer = new Sprite(GLOBALS.Imgs.IDs['bluePlayer.png']);
+  GLOBALS.Imgs.greenPlayerBuild = new Sprite(GLOBALS.Imgs.IDs['greenPlayerBuild.png']);
+  GLOBALS.Imgs.bluePlayerBuild = new Sprite(GLOBALS.Imgs.IDs['bluePlayerBuild.png']);
+  GLOBALS.Imgs.greenPlayerShovel = new Sprite(GLOBALS.Imgs.IDs['greenPlayerShovel.png']);
+  GLOBALS.Imgs.bluePlayerShovel = new Sprite(GLOBALS.Imgs.IDs['bluePlayerShovel.png']);
+  GLOBALS.Imgs.bullet = new Sprite(GLOBALS.Imgs.IDs['bullet.png']);
+  GLOBALS.Imgs.grid = new Sprite(GLOBALS.Imgs.IDs['grid2x.png']);
+  */
+  createText();
+  createPrimitives();
+};
 
-function setup() {
-  var S_grid = new Sprite(resources['./../img/grid2x.png'].texture);
-  var S_greenPlayer = new Sprite(resources['./../img/greenPlayer.png'].texture);
+const createText = () => {
+  //UI Background
+  cGame.UIBackground = new Graphics();
+  cGame.UIBackground.alpha = 0.3;
+  cGame.UIBackground.beginFill(0xC8C8C8);
+  cGame.UIBackground.drawRect(0, 0, 500, 40);
+  cGame.UIBackground.endFill();
 
-  stage.addChild(S_grid);
+  //Player Score
+  const scoreString = `Score: ${cGame.prevScore}`;
+  cGame.scoreText = new Text(scoreString, GLOBALS.UI_TEXT_STYLE_OPTIONS);
+  cGame.scoreText.alpha = 0.5;
+  cGame.scoreText.position.set(15, 10);
 
-  //Tell the `renderer` to `render` the `stage`
-  renderer.render(stage);
-}
+  //Player HeldAmmo
+  const heldAmmoString = `Ammo: ${cGame.prevHeldAmmo}`;
+  cGame.heldAmmoText = new Text(heldAmmoString, GLOBALS.UI_TEXT_STYLE_OPTIONS);
+  cGame.heldAmmoText.alpha = 0.5;
+  cGame.heldAmmoText.position.set(120, 10);
 
-//END PIXI.JS SETUP
-*/
+  //Player Clips
+  const clipString = `Clips: ${cGame.prevClipCount}/3`;
+  cGame.clipText = new Text(clipString, GLOBALS.UI_TEXT_STYLE_OPTIONS);
+  cGame.clipText.alpha = 0.5;
+  cGame.clipText.position.set(240, 10);
 
-const io = require('socket.io-client');
-const socket = io();
+  //Player Blocks
+  const blockString = `Blocks: ${cGame.prevBlockCount}/10`;
+  cGame.blockText = new Text(blockString, GLOBALS.UI_TEXT_STYLE_OPTIONS);
+  cGame.blockText.alpha = 0.5;
+  cGame.blockText.position.set(360, 10);
 
-const cGame = new Game(GLOBALS.CTX, GLOBALS.CTX_UI);
-let playerName = '';
-let playerTeam = 0; //0, 1 - Green, Blue
+  //Player Respawn Timer
+  const respawnString = 'Respawning in:\n X seconds';
+  cGame.respawnText = new Text(respawnString, GLOBALS.UI_TEXT_STYLE_OPTIONS);
+  cGame.respawnText.alpha = 0.5;
+  cGame.respawnText.position.set(cGame.renderer.width*0.5 - 114, cGame.renderer.height*0.5 - 100);
+  cGame.respawnText.visible = false;
 
-const GameMap = new Map(GLOBALS.WORLD_WIDTH, GLOBALS.WORLD_HEIGHT);
-GameMap.generate(cGame.ctx);
+  cGame.textContainer = new Container();
+
+  cGame.textContainer.addChild(cGame.UIBackground);
+  cGame.textContainer.addChild(cGame.scoreText);
+  cGame.textContainer.addChild(cGame.heldAmmoText);
+  cGame.textContainer.addChild(cGame.clipText);
+  cGame.textContainer.addChild(cGame.blockText);
+  cGame.textContainer.addChild(cGame.respawnText);
+
+  cGame.stage.addChild(cGame.textContainer);
+};
+
+const createPrimitives = () => {
+  /*
+  let reloadBar = 0;
+      if( cGame.localPlayer.mustReloadClip === true ) {
+        reloadBar = 30 * cGame.reloadTimeLeft / GLOBALS.RIFLE_CLIP_RELOAD_TIME;
+      } else {
+        reloadBar = 30 * cGame.reloadTimeLeft / GLOBALS.RIFLE_RELOAD_TIME;
+      }
+
+      const reloadPosX = cGame.localPlayer.mX - 15;
+      const reloadPosY = cGame.localPlayer.mY + 15;
+      //cGame.ctxUI.fillRect(reloadPosX+2, reloadPosY-17, 24, 2); //crosshair horiz
+      //cGame.ctxUI.fillRect(reloadPosX+13, reloadPosY-28, 2, 24);//crosshair vert
+      //cGame.ctxUI.fillRect(reloadPosX, reloadPosY, 30, 4);
+      //cGame.ctxUI.fillStyle = 'black';
+      //cGame.ctxUI.fillRect(reloadPosX, reloadPosY, reloadBar, 4);
+  */
+
+  //const reloadPosX = cGame.localPlayer.mX - 15;
+  //const reloadPosY = cGame.localPlayer.mY + 15;
+
+
+  cGame.crosshairVert = new Graphics();
+  cGame.crosshairVert.beginFill(0xFFFFFF, 0.5);
+  cGame.crosshairVert.drawRect(0, 0, 2, 24);
+  cGame.crosshairVert.endFill();
+
+  cGame.crosshairHorz = new Graphics();
+  cGame.crosshairHorz.beginFill(0xFFFFFF, 0.5);
+  cGame.crosshairHorz.drawRect(0, 0, 24, 2);
+  cGame.crosshairHorz.endFill();
+
+  cGame.reloadBar = new Graphics();
+  cGame.reloadBar.beginFill(0xFFFFFF, 0.5);
+  cGame.reloadBar.drawRect(0, 0, 30, 4);
+  cGame.reloadBar.endFill();
+
+  cGame.reloadContainer = new Container();
+  cGame.reloadContainer.visible = false;
+
+  cGame.reloadContainer.addChild(cGame.crosshairVert);
+  cGame.reloadContainer.addChild(cGame.crosshairHorz);
+  cGame.reloadContainer.addChild(cGame.reloadBar);
+  
+  cGame.stage.addChild(cGame.reloadContainer);
+};
+
+initializeRenderer();
 
 const cam = {
   xView: 0,
   yView: 0,
-  canvasWidth: cGame.ctx.canvas.width,
-  canvasHeight: cGame.ctx.canvas.height,
+  canvasWidth: cGame.renderer.width,
+  canvasHeight: cGame.renderer.height,
   worldWidth: GLOBALS.WORLD_WIDTH,
   worldHeight: GLOBALS.WORLD_HEIGHT
 };
@@ -107,6 +215,7 @@ $(document).ready( () => {
 //END PRE-GAME LISTENERS
 
   //canvas-ui is above canvas-game so check that for movement
+  /*
   $('#canvas-ui').mousemove( (e) => {
     //If there is a significant lag, localPlayer will be null
     if( cGame.gameStarted !== true || cGame.localPlayer === null || cGame.localPlayer.HP <= 0 ) {
@@ -118,11 +227,14 @@ $(document).ready( () => {
     const camera = { xView: GameCamera.xView, yView: GameCamera.yView };
     socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos, camera: camera});
   });
+  */
 
+  //Prevent right-click context menu
   $(document).contextmenu( (e) => {
     e.preventDefault();
   }); //$(document).contextmenu()
 
+  //Resize the Pixi.js Renderer whenever the window size changes
   $(window).resize( () => {
     let windowWidth = $(window).width();
     let windowHeight = $(window).height();
@@ -184,9 +296,13 @@ $(document).ready( () => {
       case 1: //Left mouse button
         if( cGame.localPlayer.mode === 0 ) {         //Weapon mode
           //Calculate the angle from player to mouse
-          const mouse = getMousePos(cGame.ctx, e);
-          let x = -cGame.ctx.canvas.clientWidth/2 + e.clientX;
-          let y = -cGame.ctx.canvas.clientHeight/2 + e.clientY;
+          const mousePos = cGame.renderer.plugins.interaction.mouse.global;
+          let x = -cGame.renderer.width * 0.5 + e.clientX;
+          let y = -cGame.renderer.height * 0.5 + e.clientY;
+
+          //const mouse = getMousePos(cGame.ctx, e);
+          //let x = -cGame.ctx.canvas.clientWidth/2 + e.clientX;
+          //let y = -cGame.ctx.canvas.clientHeight/2 + e.clientY;
 
           //Check if within the deadzones
           if( cGame.selfID !== null ) {
@@ -195,16 +311,16 @@ $(document).ready( () => {
             const yOffset = cGame.localPlayer.y;
 
             if( GameCamera.xView === 0 ) {      //LEFT
-              x = mouse.x - xOffset;
+              x = mousePos.x - xOffset;
             }
-            if( GameCamera.xView === (GLOBALS.WORLD_WIDTH - cGame.ctx.canvas.width) ) {   //RIGHT
-              x = mouse.x - xOffset + GameCamera.xView;
+            if( GameCamera.xView === (GLOBALS.WORLD_WIDTH - cGame.renderer.width) ) {   //RIGHT
+              x = mousePos.x - xOffset + GameCamera.xView;
             }
             if( GameCamera.yView === 0 ) {      //TOP
-              y = mouse.y - yOffset;
+              y = mousePos.y - yOffset;
             }
-            if( GameCamera.yView === (GLOBALS.WORLD_HEIGHT - cGame.ctx.canvas.height) ) {   //BOTTOM
-              y = mouse.y - yOffset + GameCamera.yView;
+            if( GameCamera.yView === (GLOBALS.WORLD_HEIGHT - cGame.renderer.height) ) {   //BOTTOM
+              y = mousePos.y - yOffset + GameCamera.yView;
             }
           }
           //Update mouse angle
@@ -252,9 +368,12 @@ $(document).ready( () => {
     switch( e.which ) {
       case 3: { //Right mouse button
         //Mode will switch, so update the camera/mousePos for validateSelection
-        const mousePos = getMousePos(cGame.ctx, e);
+        const mousePos = cGame.renderer.plugins.interaction.mouse.global;
         const camera = { xView: GameCamera.xView, yView: GameCamera.yView };
         socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos, camera: camera});
+        //const mousePos = getMousePos(cGame.ctx, e);
+        //const camera = { xView: GameCamera.xView, yView: GameCamera.yView };
+        //socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos, camera: camera});
         socket.emit('keyPress', {inputID: 'switchMode'});
         if( cGame.localPlayer.mode === 0 ) {        //Gun to Build
           cGame.canBuild = false;
@@ -272,10 +391,6 @@ $(document).ready( () => {
     } //switch( e.which )
   }); //$(document).keydown().keyup().mousemove().click().onmousedown()
 
-  initializeRenderer();
-
-  //Draw the map once before the game starts
-  GameMap.draw(cGame.renderer, GameCamera.xView, GameCamera.yView);
   //Start the renderLoop
   requestAnimationFrame(renderLoop);
 }); //$(document).ready()
@@ -312,7 +427,7 @@ socket.on('init', (data) => {
   }
   if( makeCamera ) {
     cGame.localPlayer = cGame.cPlayers[cGame.selfID];
-    GameCamera.follow(cGame.localPlayer, cGame.ctx.canvas.width/2, cGame.ctx.canvas.height/2);
+    GameCamera.follow(cGame.localPlayer, cGame.renderer.width * 0.5, cGame.renderer.height * 0.5);
   }
 
   //Bullets
@@ -367,7 +482,9 @@ socket.on('update', (data) => {
       }
       if( pack.HP !== undefined ) {
         if( p.HP === 0 && pack.HP === p.maxHP ) {
-          //Player has respawned, turn their name back on
+          //Player has respawned, turn their graphics back on
+          p.playerGraphics.visible = true;
+
           p.cancelActivePlayerNameRequests();
           p.showPlayerName = true;
           const timeoutID = setTimeout(() => {
@@ -408,10 +525,12 @@ socket.on('update', (data) => {
         if( cGame.localPlayer.ID === p.ID ) {
           if( pack.mustReloadClip === true) {
             //Local player is now reloading
-            cGame.ctxUI.canvas.style.cursor = 'none';
+            //cGame.ctxUI.canvas.style.cursor = 'none';
+            cGame.stage.cursor = 'none';
             cGame.reloadTimeLeft = GLOBALS.RIFLE_CLIP_RELOAD_TIME;
           } else {
-            cGame.ctxUI.canvas.style.cursor = 'crosshair';
+            //cGame.ctxUI.canvas.style.cursor = 'crosshair';
+            cGame.stage.cursor = 'crosshair';
             cGame.UIUpdate = true;
           }
         }
@@ -421,16 +540,23 @@ socket.on('update', (data) => {
         if( cGame.localPlayer.ID === p.ID ) {
           if( pack.mustReload === true) {
             //Local player is now reloading
-            cGame.ctxUI.canvas.style.cursor = 'none';
+            //cGame.ctxUI.canvas.style.cursor = 'none';
+            cGame.stage.cursor = 'none';
             cGame.reloadTimeLeft = GLOBALS.RIFLE_RELOAD_TIME;
           } else {
-            cGame.ctxUI.canvas.style.cursor = 'crosshair';
+            //cGame.ctxUI.canvas.style.cursor = 'crosshair';
+            cGame.stage.cursor = 'crosshair';
             cGame.UIUpdate = true;
           }
         }
         p.mustReload = pack.mustReload;
       }
       if( pack.isReloading !== undefined ) {
+        if( p.isReloading === false && pack.isReloading === true ) {
+          cGame.reloadContainer.visible = true;
+        } else if( p.isReloading === true && pack.isReloading === false ) {
+          cGame.reloadContainer.visible = false;
+        }
         p.isReloading = pack.isReloading;
       }
       if( pack.invincible !== undefined ) {
@@ -554,8 +680,15 @@ socket.on('shovelSelection', (data) => {
 });
 
 socket.on('respawnTimer', (data) => {
+  if( cGame.respawnText.worldVisible === false ) {
+    cGame.respawnText.visible = true;
+  }
   cGame.UIUpdate = true;
   cGame.respawnTimer = data.time;
+  cGame.respawnText.text = 
+    `Respawning in:
+      ${data.time} seconds`;
+
   if( data.time === 0 ) {
     cGame.localPlayer.cancelActivePlayerNameRequests();
     cGame.localPlayer.showPlayerName = true;
@@ -563,6 +696,7 @@ socket.on('respawnTimer', (data) => {
       cGame.localPlayer.showPlayerName = false;
     }, 10000);
     cGame.localPlayer.activePlayerNameRequests.push(timeoutID);
+    cGame.respawnText.visible = false;
   }
 });
 
@@ -584,6 +718,7 @@ const joinGame = (playerName, socket) => {
   }
 }; //joingame()
 
+/*
 const getMousePos = (ctx, e) => {
   const rect = ctx.canvas.getBoundingClientRect();
   const mouseX = e.clientX - rect.left;
@@ -593,87 +728,7 @@ const getMousePos = (ctx, e) => {
     y: mouseY
   };
 }; //getMousePos()
-
-const initializeRenderer = () => {
-  //Create stage
-  cGame.stage = new Container();
-  cGame.stage.interactive = true;
-  //Setup renderer
-  cGame.renderer = autoDetectRenderer(1600, 900);
-  cGame.renderer.view.style.position = 'absolute';
-  cGame.renderer.view.style.display = 'block';
-  cGame.renderer.autoResize = true;
-  cGame.renderer.resize(window.innerWidth, window.innerHeight);
-  //Add the canvas to the HTML document
-  document.body.appendChild(cGame.renderer.view);
-
-  loadImages();
-};
-
-const loadImages = () => {
-  loader
-    .add('./../img/bands.json')
-    .load(createImages);
-};
-
-const createImages = () => {
-  GLOBALS.Imgs.IDs = resources['./../img/bands.json'].textures;
-  GameMap.sprite = new Sprite(GLOBALS.Imgs.IDs['grid2x.png']);
-  cGame.stage.addChild(GameMap.sprite);
-  //GLOBALS.Imgs.grid = new Sprite(GLOBALS.Imgs.IDs['grid2x.png']);
-  //cGame.stage.addChild(GLOBALS.Imgs.grid);
-  /* List of possible Sprites and creation of those Sprites
-  GLOBALS.Imgs.greenPlayer = new Sprite(GLOBALS.Imgs.IDs['greenPlayer.png']);
-  GLOBALS.Imgs.bluePlayer = new Sprite(GLOBALS.Imgs.IDs['bluePlayer.png']);
-  GLOBALS.Imgs.greenPlayerBuild = new Sprite(GLOBALS.Imgs.IDs['greenPlayerBuild.png']);
-  GLOBALS.Imgs.bluePlayerBuild = new Sprite(GLOBALS.Imgs.IDs['bluePlayerBuild.png']);
-  GLOBALS.Imgs.greenPlayerShovel = new Sprite(GLOBALS.Imgs.IDs['greenPlayerShovel.png']);
-  GLOBALS.Imgs.bluePlayerShovel = new Sprite(GLOBALS.Imgs.IDs['bluePlayerShovel.png']);
-  GLOBALS.Imgs.bullet = new Sprite(GLOBALS.Imgs.IDs['bullet.png']);
-  GLOBALS.Imgs.grid = new Sprite(GLOBALS.Imgs.IDs['grid2x.png']);
-  */
-  createText();
-};
-
-const createText = () => {
-  //UI Background
-  let UIBackground = new Graphics();
-  UIBackground.alpha = 0.3;
-  UIBackground.beginFill(0xC8C8C8);
-  UIBackground.drawRect(0, 0, 500, 40);
-  UIBackground.endFill();
-
-  cGame.stage.addChild(UIBackground);
-
-  //Player Score
-  const scoreString = `Score: ${cGame.prevScore}`;
-  cGame.scoreText = new Text(scoreString, GLOBALS.UI_TEXT_STYLE_OPTIONS);
-  cGame.scoreText.alpha = 0.5;
-  cGame.scoreText.position.set(15, 10);
-
-  //Player HeldAmmo
-  const heldAmmoString = `Ammo: ${cGame.prevHeldAmmo}`;
-  cGame.heldAmmoText = new Text(heldAmmoString, GLOBALS.UI_TEXT_STYLE_OPTIONS);
-  cGame.heldAmmoText.alpha = 0.5;
-  cGame.heldAmmoText.position.set(120, 10);
-
-  //Player Clips
-  const clipString = `Clips: ${cGame.prevClipCount}/3`;
-  cGame.clipText = new Text(clipString, GLOBALS.UI_TEXT_STYLE_OPTIONS);
-  cGame.clipText.alpha = 0.5;
-  cGame.clipText.position.set(240, 10);
-
-  //Player Blocks
-  const blockString = `Blocks: ${cGame.prevBlockCount}/10`;
-  cGame.blockText = new Text(blockString, GLOBALS.UI_TEXT_STYLE_OPTIONS);
-  cGame.blockText.alpha = 0.5;
-  cGame.blockText.position.set(360, 10);
-
-  cGame.stage.addChild(cGame.scoreText);
-  cGame.stage.addChild(cGame.heldAmmoText);
-  cGame.stage.addChild(cGame.clipText);
-  cGame.stage.addChild(cGame.blockText);
-};
+*/
 
 //END GAME LOGIC FUNCTIONS ######################################################
 
@@ -690,12 +745,13 @@ const renderLoop = () => {
   socket.emit('keyPress', {inputID: 'mousePos', mousePos: mousePos, camera: camera});
 
   //Clear the main game canvas
-  cGame.ctx.clearRect(0, 0, cGame.ctx.canvas.width, cGame.ctx.canvas.height);
+  //cGame.ctx.clearRect(0, 0, cGame.ctx.canvas.width, cGame.ctx.canvas.height);
   GameCamera.update();
-  GameMap.draw(cGame.renderer, GameCamera.xView, GameCamera.yView);
+  GameMap.drawMap(GameCamera.xView, GameCamera.yView);
   drawEntities(); //Draws only the Entities
   drawUI();       //Draws only the UI when it updates
-  //cGame.localPlayer.sprite.position.set(0, 10);
+
+  //Render Everything
   cGame.renderer.render(cGame.stage);
   cGame.localPlayer = cGame.cPlayers[cGame.selfID];
   requestAnimationFrame(renderLoop);
@@ -704,21 +760,29 @@ const renderLoop = () => {
 const drawEntities = () => {
   //Each player object draws itself
   for( let p in cGame.cPlayers ) {
-    if( cGame.cPlayers[p].HP <= 0 ) {
+    let player = cGame.cPlayers[p];
+    if( player.HP <= 0 ) {
+      player.playerGraphics.visible = false;
       continue;
     }
     let isLocalPlayer = false;
-    if( cGame.localPlayer.ID === cGame.cPlayers[p].ID ) {
+    if( player.ID === player.ID ) {
       isLocalPlayer = true;
     }
 
-    cGame.cPlayers[p].drawSelf(cGame.renderer, GameCamera.xView, GameCamera.yView, isLocalPlayer);
+    player.drawSelf(cGame.renderer, GameCamera.xView, GameCamera.yView, isLocalPlayer);
+
+    if( player.nameText.worldVisible === false && player.showPlayerName === true ) {
+      player.nameText.visible = true;
+    } else if( player.nameText.worldVisible === true && player.showPlayerName === false ) {
+      player.nameText.visible = false;
+    }
   }
 
-  cGame.ctx.fillStyle = 'black';
+  //cGame.ctx.fillStyle = 'black';
   //Each bullet object draws itself
   for( let b in cGame.cBullets ) {
-    cGame.cBullets[b].drawSelf(cGame.ctx, GameCamera.xView, GameCamera.yView);
+    cGame.cBullets[b].drawSelf(GameCamera.xView, GameCamera.yView);
   }
   //Each block object draws itself
   for( let bl in cGame.cBlocks ) {
@@ -791,27 +855,35 @@ const drawUI = () => {
     cGame.blockText.text = blockString;
 
     if( cGame.localPlayer.isReloading === true && cGame.localPlayer.HP > 0) {
-      let reloadBar = 0;
+      let reloadBarSize = 1;
       if( cGame.localPlayer.mustReloadClip === true ) {
-        reloadBar = 30 * cGame.reloadTimeLeft / GLOBALS.RIFLE_CLIP_RELOAD_TIME;
+        reloadBarSize = 30 * cGame.reloadTimeLeft / GLOBALS.RIFLE_CLIP_RELOAD_TIME;
       } else {
-        reloadBar = 30 * cGame.reloadTimeLeft / GLOBALS.RIFLE_RELOAD_TIME;
+        reloadBarSize = 30 * cGame.reloadTimeLeft / GLOBALS.RIFLE_RELOAD_TIME;
+      }
+
+      if( cGame.reloadTimeLeft <= 0 ) {
+        reloadBarSize = 1;
       }
 
       const reloadPosX = cGame.localPlayer.mX - 15;
       const reloadPosY = cGame.localPlayer.mY + 15;
-      cGame.ctxUI.fillRect(reloadPosX+2, reloadPosY-17, 24, 2); //crosshair horiz
-      cGame.ctxUI.fillRect(reloadPosX+13, reloadPosY-28, 2, 24);//crosshair vert
-      cGame.ctxUI.fillRect(reloadPosX, reloadPosY, 30, 4);
-      cGame.ctxUI.fillStyle = 'black';
-      cGame.ctxUI.fillRect(reloadPosX, reloadPosY, reloadBar, 4);
+
+      cGame.crosshairVert.position.set(reloadPosX+14, reloadPosY-27);
+      cGame.crosshairHorz.position.set(reloadPosX+3, reloadPosY-16);
+      cGame.updateReloadBar(reloadPosX, reloadPosY, reloadBarSize);
+      //cGame.ctxUI.fillRect(reloadPosX+2, reloadPosY-17, 24, 2); //crosshair horiz
+      //cGame.ctxUI.fillRect(reloadPosX+13, reloadPosY-28, 2, 24);//crosshair vert
+      //cGame.ctxUI.fillRect(reloadPosX, reloadPosY, 30, 4);
+      //cGame.ctxUI.fillStyle = 'black';
+      //cGame.ctxUI.fillRect(reloadPosX, reloadPosY, reloadBar, 4);
     }
 
     //Respawn Timer
     if( cGame.respawnTimer > 0 ) {
-      cGame.ctxUI.font = '30px Calibri';
-      cGame.ctxUI.fillText('Respawning in:', 700, 370);
-      cGame.ctxUI.fillText(`${cGame.respawnTimer} seconds`, 740, 399);
+      //cGame.ctxUI.font = '30px Calibri';
+      //cGame.ctxUI.fillText('Respawning in:', 700, 370);
+      //cGame.ctxUI.fillText(`${cGame.respawnTimer} seconds`, 740, 399);
     }
   }
 }; //drawUI()
