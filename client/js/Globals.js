@@ -8,7 +8,7 @@ const RIFLE_RELOAD_TIME = 1000;
 const RIFLE_CLIP_RELOAD_TIME = 3000;
 
 const UI_TEXT_STYLE_OPTIONS = {fontFamily: 'Calibri', fontSize: 20, fill: 'white'};
-const PLAYER_TEXT_STYLE_OPTIONS = {fontFamily: 'Calibri', fontSize: 20, fill: 'white'};
+const PLAYER_TEXT_STYLE_OPTIONS = {fontFamily: 'Calibri', fontSize: 12, fill: 'white'};
 
 var Imgs = {};
 Imgs.IDs = [];
